@@ -12,14 +12,20 @@ type Querier interface {
 	CountAdmins(ctx context.Context) (int64, error)
 	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
 	CreateCity(ctx context.Context, arg CreateCityParams) (City, error)
+	CreateGrade(ctx context.Context, arg CreateGradeParams) (Grade, error)
 	DeleteCity(ctx context.Context, id int64) (int64, error)
+	DeleteGrade(ctx context.Context, id int64) (int64, error)
 	GetAdminByID(ctx context.Context, id int64) (Admin, error)
 	GetAdminByLogin(ctx context.Context, login string) (Admin, error)
 	GetCityByID(ctx context.Context, id int64) (City, error)
 	GetDealerByID(ctx context.Context, id int64) (Dealer, error)
 	GetDealerByLogin(ctx context.Context, login string) (Dealer, error)
+	GetGradeByID(ctx context.Context, id int64) (Grade, error)
 	ListCities(ctx context.Context) ([]City, error)
+	ListGrades(ctx context.Context) ([]Grade, error)
+	RecomputeAllDealerGrades(ctx context.Context) error
 	UpdateCity(ctx context.Context, arg UpdateCityParams) (City, error)
+	UpdateGrade(ctx context.Context, arg UpdateGradeParams) (Grade, error)
 }
 
 var _ Querier = (*Queries)(nil)

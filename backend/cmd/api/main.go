@@ -48,6 +48,7 @@ func run() error {
 
 	authService := service.NewAuthService(repo)
 	cityService := service.NewCityService(repo)
+	gradeService := service.NewGradeService(repo)
 
 	handler := transporthttp.NewRouter(transporthttp.Deps{
 		Logger: logger,
@@ -59,6 +60,7 @@ func run() error {
 		},
 		Auth:   authService,
 		Cities: cityService,
+		Grades: gradeService,
 	})
 
 	srv := &http.Server{

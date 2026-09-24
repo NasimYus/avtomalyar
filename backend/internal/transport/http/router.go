@@ -21,6 +21,7 @@ type Deps struct {
 	Session SessionConfig
 	Auth    authService
 	Cities  cityService
+	Grades  gradeService
 }
 
 // NewRouter builds the top-level chi router.
@@ -42,6 +43,7 @@ func NewRouter(deps Deps) http.Handler {
 	}
 
 	cityH := &cityHandler{service: deps.Cities, logger: deps.Logger, validator: validate}
+	gradeH := &gradeHandler{service: deps.Grades, logger: deps.Logger, validator: validate}
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
@@ -59,6 +61,14 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/{id}", cityH.get)
 				r.Put("/{id}", cityH.update)
 				r.Delete("/{id}", cityH.delete)
+			})
+
+			r.Route("/grades", func(r chi.Router) {
+				r.Get("/", gradeH.list)
+				r.Post("/", gradeH.create)
+				r.Get("/{id}", gradeH.get)
+				r.Put("/{id}", gradeH.update)
+				r.Delete("/{id}", gradeH.delete)
 			})
 		})
 	})
