@@ -16,6 +16,7 @@ type Config struct {
 	CookieName   string
 	CookieDomain string
 	Env          string
+	UploadDir    string
 }
 
 // Load reads configuration from the process environment. It returns an
@@ -29,6 +30,7 @@ func Load() (Config, error) {
 		CookieName:   getEnv("AUTH_COOKIE_NAME", "avtomalyar_session"),
 		CookieDomain: os.Getenv("AUTH_COOKIE_DOMAIN"),
 		Env:          getEnv("APP_ENV", "development"),
+		UploadDir:    getEnv("UPLOAD_DIR", "./uploads"),
 	}
 
 	if cfg.DatabaseURL == "" {

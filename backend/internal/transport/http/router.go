@@ -17,11 +17,13 @@ import (
 // Modules add fields here as they land (cities service, dealers service,
 // ...).
 type Deps struct {
-	Logger  *slog.Logger
-	Session SessionConfig
-	Auth    authService
-	Cities  cityService
-	Grades  gradeService
+	Logger    *slog.Logger
+	Session   SessionConfig
+	Auth      authService
+	Cities    cityService
+	Grades    gradeService
+	Prizes    prizeService
+	UploadDir string
 }
 
 // NewRouter builds the top-level chi router.
@@ -44,6 +46,12 @@ func NewRouter(deps Deps) http.Handler {
 
 	cityH := &cityHandler{service: deps.Cities, logger: deps.Logger, validator: validate}
 	gradeH := &gradeHandler{service: deps.Grades, logger: deps.Logger, validator: validate}
+	prizeH := &prizeHandler{service: deps.Prizes, logger: deps.Logger, validator: validate}
+
+	if deps.UploadDir != "" {
+		fileServer := http.FileServer(http.Dir(deps.UploadDir))
+		r.Handle("/media/*", http.StripPrefix("/media/", fileServer))
+	}
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
@@ -69,6 +77,15 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/{id}", gradeH.get)
 				r.Put("/{id}", gradeH.update)
 				r.Delete("/{id}", gradeH.delete)
+			})
+
+			r.Route("/prizes", func(r chi.Router) {
+				r.Get("/", prizeH.list)
+				r.Post("/", prizeH.create)
+				r.Get("/{id}", prizeH.get)
+				r.Put("/{id}", prizeH.update)
+				r.Post("/{id}/photo", prizeH.uploadPhoto)
+				r.Delete("/{id}", prizeH.delete)
 			})
 		})
 	})

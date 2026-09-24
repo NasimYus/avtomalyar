@@ -14,6 +14,7 @@ import (
 	"github.com/avtomalyar/backend/internal/config"
 	"github.com/avtomalyar/backend/internal/repository"
 	"github.com/avtomalyar/backend/internal/service"
+	"github.com/avtomalyar/backend/internal/storage"
 	transporthttp "github.com/avtomalyar/backend/internal/transport/http"
 )
 
@@ -46,9 +47,15 @@ func run() error {
 	}
 	defer repo.Close()
 
+	fileStore, err := storage.New(cfg.UploadDir)
+	if err != nil {
+		return err
+	}
+
 	authService := service.NewAuthService(repo)
 	cityService := service.NewCityService(repo)
 	gradeService := service.NewGradeService(repo)
+	prizeService := service.NewPrizeService(repo, fileStore)
 
 	handler := transporthttp.NewRouter(transporthttp.Deps{
 		Logger: logger,
@@ -58,9 +65,11 @@ func run() error {
 			CookieName:   cfg.CookieName,
 			CookieDomain: cfg.CookieDomain,
 		},
-		Auth:   authService,
-		Cities: cityService,
-		Grades: gradeService,
+		Auth:      authService,
+		Cities:    cityService,
+		Grades:    gradeService,
+		Prizes:    prizeService,
+		UploadDir: cfg.UploadDir,
 	})
 
 	srv := &http.Server{
