@@ -11,14 +11,17 @@ import (
 type Querier interface {
 	CountAdmins(ctx context.Context) (int64, error)
 	CountDealers(ctx context.Context, arg CountDealersParams) (int64, error)
+	CountPurchases(ctx context.Context, arg CountPurchasesParams) (int64, error)
 	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
 	CreateCity(ctx context.Context, arg CreateCityParams) (City, error)
 	CreateDealer(ctx context.Context, arg CreateDealerParams) (Dealer, error)
 	CreateGrade(ctx context.Context, arg CreateGradeParams) (Grade, error)
 	CreatePrize(ctx context.Context, arg CreatePrizeParams) (Prize, error)
+	CreatePurchase(ctx context.Context, arg CreatePurchaseParams) (Purchase, error)
 	DeleteCity(ctx context.Context, id int64) (int64, error)
 	DeleteGrade(ctx context.Context, id int64) (int64, error)
 	DeletePrize(ctx context.Context, id int64) (int64, error)
+	DeletePurchase(ctx context.Context, id int64) (int64, error)
 	GetAdminByID(ctx context.Context, id int64) (Admin, error)
 	GetAdminByLogin(ctx context.Context, login string) (Admin, error)
 	GetCityByID(ctx context.Context, id int64) (City, error)
@@ -26,11 +29,14 @@ type Querier interface {
 	GetDealerByLogin(ctx context.Context, login string) (Dealer, error)
 	GetGradeByID(ctx context.Context, id int64) (Grade, error)
 	GetPrizeByID(ctx context.Context, id int64) (Prize, error)
+	GetPurchaseByID(ctx context.Context, id int64) (Purchase, error)
 	ListCities(ctx context.Context) ([]City, error)
 	ListDealers(ctx context.Context, arg ListDealersParams) ([]Dealer, error)
 	ListGrades(ctx context.Context) ([]Grade, error)
 	ListPrizes(ctx context.Context) ([]Prize, error)
+	ListPurchases(ctx context.Context, arg ListPurchasesParams) ([]Purchase, error)
 	RecomputeAllDealerGrades(ctx context.Context) error
+	RecomputeDealerLifetimeTotal(ctx context.Context, dealerID int64) error
 	SetDealerActive(ctx context.Context, arg SetDealerActiveParams) (Dealer, error)
 	SetDealerGrade(ctx context.Context, arg SetDealerGradeParams) error
 	SetDealerPasswordHash(ctx context.Context, arg SetDealerPasswordHashParams) error
@@ -39,6 +45,7 @@ type Querier interface {
 	UpdateGrade(ctx context.Context, arg UpdateGradeParams) (Grade, error)
 	UpdatePrize(ctx context.Context, arg UpdatePrizeParams) (Prize, error)
 	UpdatePrizePhoto(ctx context.Context, arg UpdatePrizePhotoParams) (Prize, error)
+	UpdatePurchase(ctx context.Context, arg UpdatePurchaseParams) (Purchase, error)
 }
 
 var _ Querier = (*Queries)(nil)

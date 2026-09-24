@@ -57,6 +57,7 @@ func run() error {
 	gradeService := service.NewGradeService(repo)
 	prizeService := service.NewPrizeService(repo, fileStore)
 	dealerService := service.NewDealerService(repo)
+	purchaseService := service.NewPurchaseService(repo)
 
 	handler := transporthttp.NewRouter(transporthttp.Deps{
 		Logger: logger,
@@ -71,6 +72,7 @@ func run() error {
 		Grades:    gradeService,
 		Prizes:    prizeService,
 		Dealers:   dealerService,
+		Purchases: purchaseService,
 		UploadDir: cfg.UploadDir,
 	})
 

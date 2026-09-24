@@ -28,6 +28,7 @@ type dealerRepository interface {
 	SetDealerPasswordHash(ctx context.Context, arg db.SetDealerPasswordHashParams) error
 	SetDealerGrade(ctx context.Context, arg db.SetDealerGradeParams) error
 	ListGrades(ctx context.Context) ([]db.Grade, error)
+	WithTx(ctx context.Context, fn func(q *db.Queries) error) error
 }
 
 // DealerFilter narrows ListDealers; a nil/zero field means "don't filter
@@ -149,63 +150,45 @@ func (s *DealerService) Create(ctx context.Context, fullName, phone string, city
 
 	var dealer db.Dealer
 	for attempt := 0; attempt < maxLoginGenerationAttempts; attempt++ {
-		login, err := generateDealerLogin(fullName)
-		if err != nil {
-			return CreatedDealer{}, fmt.Errorf("generate login: %w", err)
+		login, loginErr := generateDealerLogin(fullName)
+		if loginErr != nil {
+			return CreatedDealer{}, fmt.Errorf("generate login: %w", loginErr)
 		}
 
-		dealer, err = s.repo.CreateDealer(ctx, db.CreateDealerParams{
-			FullName: fullName, Phone: phone, CityID: cityID, Login: login, PasswordHash: passwordHash,
+		txErr := s.repo.WithTx(ctx, func(q *db.Queries) error {
+			created, err := q.CreateDealer(ctx, db.CreateDealerParams{
+				FullName: fullName, Phone: phone, CityID: cityID, Login: login, PasswordHash: passwordHash,
+			})
+			if err != nil {
+				return err
+			}
+			dealer = created
+			// A brand-new dealer always starts at a lifetime_purchase_total
+			// of 0 (purchases can only be added afterwards, referencing this
+			// dealer_id), so this only needs the grade half of the shared
+			// recompute helper.
+			return recomputeSingleDealerGrade(ctx, q, dealer.ID, 0)
 		})
-		if err == nil {
+		if txErr == nil {
 			break
 		}
-		if errors.Is(repository.TranslateError(err), domain.ErrConflict) {
+		if errors.Is(repository.TranslateError(txErr), domain.ErrConflict) {
 			continue // login collision, try another random suffix
 		}
-		return CreatedDealer{}, fmt.Errorf("create dealer: %w", repository.TranslateError(err))
+		return CreatedDealer{}, fmt.Errorf("create dealer: %w", repository.TranslateError(txErr))
 	}
 	if dealer.ID == 0 {
 		return CreatedDealer{}, fmt.Errorf("create dealer: could not generate a unique login after %d attempts", maxLoginGenerationAttempts)
 	}
 
-	if err := s.assignGrade(ctx, dealer.ID, 0); err != nil {
-		return CreatedDealer{}, err
-	}
-
-	// Re-fetch: assignGrade updated grade_id in the database, but the row
-	// returned by CreateDealer above is now stale.
+	// Re-fetch: the transaction set grade_id after the row above was
+	// returned by CreateDealer, so this copy is stale.
 	dealer, err = s.repo.GetDealerByID(ctx, dealer.ID)
 	if err != nil {
 		return CreatedDealer{}, fmt.Errorf("reload created dealer: %w", repository.TranslateError(err))
 	}
 
 	return CreatedDealer{Dealer: dealer, Password: password}, nil
-}
-
-// assignGrade sets grade_id for a single dealer to whatever
-// domain.SelectGrade picks for lifetimeTotal, given the current grades.
-func (s *DealerService) assignGrade(ctx context.Context, dealerID, lifetimeTotal int64) error {
-	grades, err := s.repo.ListGrades(ctx)
-	if err != nil {
-		return fmt.Errorf("list grades for grade assignment: %w", repository.TranslateError(err))
-	}
-
-	domainGrades := make([]domain.Grade, len(grades))
-	for i, g := range grades {
-		domainGrades[i] = domain.Grade{ID: g.ID, MinPurchaseAmount: g.MinPurchaseAmount}
-	}
-
-	gradeID, ok := domain.SelectGrade(domainGrades, lifetimeTotal)
-	arg := db.SetDealerGradeParams{ID: dealerID}
-	if ok {
-		arg.GradeID = pgtype.Int8{Int64: gradeID, Valid: true}
-	}
-
-	if err := s.repo.SetDealerGrade(ctx, arg); err != nil {
-		return fmt.Errorf("assign grade: %w", repository.TranslateError(err))
-	}
-	return nil
 }
 
 // Update overwrites a dealer's name, phone and city.
