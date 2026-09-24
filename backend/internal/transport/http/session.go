@@ -1,0 +1,64 @@
+package http
+
+import (
+	"net/http"
+	"time"
+
+	"github.com/avtomalyar/backend/internal/auth"
+	"github.com/avtomalyar/backend/internal/domain"
+)
+
+// SessionConfig controls how session JWTs are signed and how the session
+// cookie carrying them is set.
+type SessionConfig struct {
+	JWTSecret    string
+	JWTTTL       time.Duration
+	CookieName   string
+	CookieDomain string
+}
+
+func (c SessionConfig) setCookie(w http.ResponseWriter, principal domain.Principal) error {
+	token, err := auth.GenerateToken(c.JWTSecret, principal, c.JWTTTL)
+	if err != nil {
+		return err
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     c.CookieName,
+		Value:    token,
+		Path:     "/",
+		Domain:   c.CookieDomain,
+		Expires:  time.Now().Add(c.JWTTTL),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+	return nil
+}
+
+func (c SessionConfig) clearCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     c.CookieName,
+		Value:    "",
+		Path:     "/",
+		Domain:   c.CookieDomain,
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func (c SessionConfig) principalFromRequest(r *http.Request) (domain.Principal, bool) {
+	cookie, err := r.Cookie(c.CookieName)
+	if err != nil || cookie.Value == "" {
+		return domain.Principal{}, false
+	}
+
+	principal, err := auth.ParseToken(c.JWTSecret, cookie.Value)
+	if err != nil {
+		return domain.Principal{}, false
+	}
+	return principal, true
+}

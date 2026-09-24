@@ -6,8 +6,9 @@ import "errors"
 
 // Sentinel errors mapped to HTTP status codes in one place at the transport layer.
 var (
-	ErrNotFound   = errors.New("not found")
-	ErrConflict   = errors.New("conflict")
-	ErrValidation = errors.New("validation error")
-	ErrForbidden  = errors.New("forbidden")
+	ErrNotFound     = errors.New("not found")
+	ErrConflict     = errors.New("conflict")
+	ErrValidation   = errors.New("validation error")
+	ErrForbidden    = errors.New("forbidden")
+	ErrUnauthorized = errors.New("unauthorized")
 )

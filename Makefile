@@ -3,7 +3,7 @@ SHELL := /bin/bash
 export
 
 MIGRATE := go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.1
-SQLC := go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0
+SQLC := go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
 
 .PHONY: up down lint test migrate-up migrate-down sqlc seed-admin seed-demo
 

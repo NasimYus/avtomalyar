@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/avtomalyar/backend/internal/config"
+	"github.com/avtomalyar/backend/internal/repository"
+	"github.com/avtomalyar/backend/internal/service"
 	transporthttp "github.com/avtomalyar/backend/internal/transport/http"
 )
 
@@ -35,16 +37,33 @@ func run() error {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
 	slog.SetDefault(logger)
 
-	handler := transporthttp.NewRouter(logger)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	repo, err := repository.New(ctx, cfg.DatabaseURL)
+	if err != nil {
+		return err
+	}
+	defer repo.Close()
+
+	authService := service.NewAuthService(repo)
+
+	handler := transporthttp.NewRouter(transporthttp.Deps{
+		Logger: logger,
+		Session: transporthttp.SessionConfig{
+			JWTSecret:    cfg.JWTSecret,
+			JWTTTL:       cfg.JWTTTL,
+			CookieName:   cfg.CookieName,
+			CookieDomain: cfg.CookieDomain,
+		},
+		Auth: authService,
+	})
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.HTTPPort,
 		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	errCh := make(chan error, 1)
 	go func() {

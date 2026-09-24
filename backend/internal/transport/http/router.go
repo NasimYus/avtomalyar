@@ -8,22 +8,44 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-playground/validator/v10"
+
+	"github.com/avtomalyar/backend/internal/domain"
 )
 
-// NewRouter builds the top-level chi router. Feature routes are mounted
-// under /api/v1 as modules land (auth, cities, grades, ...).
-func NewRouter(logger *slog.Logger) http.Handler {
+// Deps holds everything the router needs to build request handlers.
+// Modules add fields here as they land (cities service, dealers service,
+// ...).
+type Deps struct {
+	Logger  *slog.Logger
+	Session SessionConfig
+	Auth    authService
+}
+
+// NewRouter builds the top-level chi router.
+func NewRouter(deps Deps) http.Handler {
 	r := chi.NewRouter()
+	validate := validator.New()
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
-
-	logger.Debug("router initialized")
+	r.Use(authenticate(deps.Session))
 
 	r.Get("/healthz", handleHealthz)
 
-	r.Route("/api/v1", func(_ chi.Router) {
-		// auth, admin and me routes are registered here as they are implemented.
+	authH := &authHandler{
+		service:   deps.Auth,
+		session:   deps.Session,
+		logger:    deps.Logger,
+		validator: validate,
+	}
+
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Route("/auth", func(r chi.Router) {
+			r.With(rateLimitLogin).Post("/login", authH.login)
+			r.Post("/logout", authH.logout)
+			r.With(requireRole(deps.Logger, domain.RoleAdmin, domain.RoleDealer)).Get("/me", authH.me)
+		})
 	})
 
 	return r

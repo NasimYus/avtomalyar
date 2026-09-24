@@ -16,8 +16,14 @@ linters:
     - noctx
     - misspell
     - prealloc
+  exclusions:
+    paths:
+      - internal/repository/db # sqlc-generated code
 
 formatters:
   enable:
     - gofumpt
     - goimports
+  exclusions:
+    paths:
+      - internal/repository/db # sqlc-generated code
