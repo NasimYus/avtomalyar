@@ -1,0 +1,17 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-brand-red: #ff0009;
+  --color-brand-white: #ffffff;
+  --color-brand-green: #00a651;
+  --color-brand-yellow: #fcd102;
+
+  --font-brand: 'Montserrat', 'Bahnschrift', system-ui, sans-serif;
+
+  --radius-card: 30px;
+  --radius-control: 12px;
+}
+
+body {
+  font-family: var(--font-brand);
+}

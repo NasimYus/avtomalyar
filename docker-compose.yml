@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-avtomalyar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-avtomalyar}
+      POSTGRES_DB: ${POSTGRES_DB:-avtomalyar}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-avtomalyar}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      HTTP_PORT: 8080
+      DATABASE_URL: postgres://${POSTGRES_USER:-avtomalyar}:${POSTGRES_PASSWORD:-avtomalyar}@postgres:5432/${POSTGRES_DB:-avtomalyar}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET}
+      AUTH_COOKIE_NAME: avtomalyar_session
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/data/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
+  uploads:

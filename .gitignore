@@ -1,0 +1,9 @@
+.env
+.DS_Store
+
+# backend
+backend/tmp/
+*.test
+
+# uploads volume mount point when running outside docker
+/data/uploads/
