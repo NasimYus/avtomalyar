@@ -47,6 +47,7 @@ func run() error {
 	defer repo.Close()
 
 	authService := service.NewAuthService(repo)
+	cityService := service.NewCityService(repo)
 
 	handler := transporthttp.NewRouter(transporthttp.Deps{
 		Logger: logger,
@@ -56,7 +57,8 @@ func run() error {
 			CookieName:   cfg.CookieName,
 			CookieDomain: cfg.CookieDomain,
 		},
-		Auth: authService,
+		Auth:   authService,
+		Cities: cityService,
 	})
 
 	srv := &http.Server{

@@ -11,10 +11,15 @@ import (
 type Querier interface {
 	CountAdmins(ctx context.Context) (int64, error)
 	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
+	CreateCity(ctx context.Context, arg CreateCityParams) (City, error)
+	DeleteCity(ctx context.Context, id int64) (int64, error)
 	GetAdminByID(ctx context.Context, id int64) (Admin, error)
 	GetAdminByLogin(ctx context.Context, login string) (Admin, error)
+	GetCityByID(ctx context.Context, id int64) (City, error)
 	GetDealerByID(ctx context.Context, id int64) (Dealer, error)
 	GetDealerByLogin(ctx context.Context, login string) (Dealer, error)
+	ListCities(ctx context.Context) ([]City, error)
+	UpdateCity(ctx context.Context, arg UpdateCityParams) (City, error)
 }
 
 var _ Querier = (*Queries)(nil)

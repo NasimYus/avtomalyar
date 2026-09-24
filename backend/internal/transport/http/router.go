@@ -20,6 +20,7 @@ type Deps struct {
 	Logger  *slog.Logger
 	Session SessionConfig
 	Auth    authService
+	Cities  cityService
 }
 
 // NewRouter builds the top-level chi router.
@@ -40,11 +41,25 @@ func NewRouter(deps Deps) http.Handler {
 		validator: validate,
 	}
 
+	cityH := &cityHandler{service: deps.Cities, logger: deps.Logger, validator: validate}
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
 			r.With(rateLimitLogin).Post("/login", authH.login)
 			r.Post("/logout", authH.logout)
 			r.With(requireRole(deps.Logger, domain.RoleAdmin, domain.RoleDealer)).Get("/me", authH.me)
+		})
+
+		r.Route("/admin", func(r chi.Router) {
+			r.Use(requireRole(deps.Logger, domain.RoleAdmin))
+
+			r.Route("/cities", func(r chi.Router) {
+				r.Get("/", cityH.list)
+				r.Post("/", cityH.create)
+				r.Get("/{id}", cityH.get)
+				r.Put("/{id}", cityH.update)
+				r.Delete("/{id}", cityH.delete)
+			})
 		})
 	})
 
