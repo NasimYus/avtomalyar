@@ -10,8 +10,10 @@ import (
 
 type Querier interface {
 	CountAdmins(ctx context.Context) (int64, error)
+	CountDealers(ctx context.Context, arg CountDealersParams) (int64, error)
 	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
 	CreateCity(ctx context.Context, arg CreateCityParams) (City, error)
+	CreateDealer(ctx context.Context, arg CreateDealerParams) (Dealer, error)
 	CreateGrade(ctx context.Context, arg CreateGradeParams) (Grade, error)
 	CreatePrize(ctx context.Context, arg CreatePrizeParams) (Prize, error)
 	DeleteCity(ctx context.Context, id int64) (int64, error)
@@ -25,10 +27,15 @@ type Querier interface {
 	GetGradeByID(ctx context.Context, id int64) (Grade, error)
 	GetPrizeByID(ctx context.Context, id int64) (Prize, error)
 	ListCities(ctx context.Context) ([]City, error)
+	ListDealers(ctx context.Context, arg ListDealersParams) ([]Dealer, error)
 	ListGrades(ctx context.Context) ([]Grade, error)
 	ListPrizes(ctx context.Context) ([]Prize, error)
 	RecomputeAllDealerGrades(ctx context.Context) error
+	SetDealerActive(ctx context.Context, arg SetDealerActiveParams) (Dealer, error)
+	SetDealerGrade(ctx context.Context, arg SetDealerGradeParams) error
+	SetDealerPasswordHash(ctx context.Context, arg SetDealerPasswordHashParams) error
 	UpdateCity(ctx context.Context, arg UpdateCityParams) (City, error)
+	UpdateDealer(ctx context.Context, arg UpdateDealerParams) (Dealer, error)
 	UpdateGrade(ctx context.Context, arg UpdateGradeParams) (Grade, error)
 	UpdatePrize(ctx context.Context, arg UpdatePrizeParams) (Prize, error)
 	UpdatePrizePhoto(ctx context.Context, arg UpdatePrizePhotoParams) (Prize, error)

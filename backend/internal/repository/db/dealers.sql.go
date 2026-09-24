@@ -7,7 +7,80 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const countDealers = `-- name: CountDealers :one
+SELECT count(*) FROM dealers
+WHERE ($1::bigint IS NULL OR city_id = $1)
+  AND ($2::bigint IS NULL OR grade_id = $2)
+  AND ($3::boolean IS NULL OR is_active = $3)
+  AND (
+    $4::text IS NULL
+    OR full_name ILIKE '%' || $4::text || '%'
+    OR phone ILIKE '%' || $4::text || '%'
+    OR login ILIKE '%' || $4::text || '%'
+  )
+`
+
+type CountDealersParams struct {
+	CityID   pgtype.Int8 `json:"city_id"`
+	GradeID  pgtype.Int8 `json:"grade_id"`
+	IsActive pgtype.Bool `json:"is_active"`
+	Query    pgtype.Text `json:"query"`
+}
+
+func (q *Queries) CountDealers(ctx context.Context, arg CountDealersParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countDealers,
+		arg.CityID,
+		arg.GradeID,
+		arg.IsActive,
+		arg.Query,
+	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const createDealer = `-- name: CreateDealer :one
+INSERT INTO dealers (full_name, phone, city_id, login, password_hash)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, full_name, phone, city_id, grade_id, lifetime_purchase_total, login, password_hash, is_active, created_at, updated_at
+`
+
+type CreateDealerParams struct {
+	FullName     string `json:"full_name"`
+	Phone        string `json:"phone"`
+	CityID       int64  `json:"city_id"`
+	Login        string `json:"login"`
+	PasswordHash string `json:"password_hash"`
+}
+
+func (q *Queries) CreateDealer(ctx context.Context, arg CreateDealerParams) (Dealer, error) {
+	row := q.db.QueryRow(ctx, createDealer,
+		arg.FullName,
+		arg.Phone,
+		arg.CityID,
+		arg.Login,
+		arg.PasswordHash,
+	)
+	var i Dealer
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Phone,
+		&i.CityID,
+		&i.GradeID,
+		&i.LifetimePurchaseTotal,
+		&i.Login,
+		&i.PasswordHash,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
 
 const getDealerByID = `-- name: GetDealerByID :one
 SELECT id, full_name, phone, city_id, grade_id, lifetime_purchase_total, login, password_hash, is_active, created_at, updated_at FROM dealers WHERE id = $1
@@ -38,6 +111,166 @@ SELECT id, full_name, phone, city_id, grade_id, lifetime_purchase_total, login, 
 
 func (q *Queries) GetDealerByLogin(ctx context.Context, login string) (Dealer, error) {
 	row := q.db.QueryRow(ctx, getDealerByLogin, login)
+	var i Dealer
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Phone,
+		&i.CityID,
+		&i.GradeID,
+		&i.LifetimePurchaseTotal,
+		&i.Login,
+		&i.PasswordHash,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const listDealers = `-- name: ListDealers :many
+SELECT id, full_name, phone, city_id, grade_id, lifetime_purchase_total, login, password_hash, is_active, created_at, updated_at FROM dealers
+WHERE ($1::bigint IS NULL OR city_id = $1)
+  AND ($2::bigint IS NULL OR grade_id = $2)
+  AND ($3::boolean IS NULL OR is_active = $3)
+  AND (
+    $4::text IS NULL
+    OR full_name ILIKE '%' || $4::text || '%'
+    OR phone ILIKE '%' || $4::text || '%'
+    OR login ILIKE '%' || $4::text || '%'
+  )
+ORDER BY full_name
+LIMIT $6 OFFSET $5
+`
+
+type ListDealersParams struct {
+	CityID   pgtype.Int8 `json:"city_id"`
+	GradeID  pgtype.Int8 `json:"grade_id"`
+	IsActive pgtype.Bool `json:"is_active"`
+	Query    pgtype.Text `json:"query"`
+	Offset   int32       `json:"offset"`
+	Limit    int32       `json:"limit"`
+}
+
+func (q *Queries) ListDealers(ctx context.Context, arg ListDealersParams) ([]Dealer, error) {
+	rows, err := q.db.Query(ctx, listDealers,
+		arg.CityID,
+		arg.GradeID,
+		arg.IsActive,
+		arg.Query,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Dealer{}
+	for rows.Next() {
+		var i Dealer
+		if err := rows.Scan(
+			&i.ID,
+			&i.FullName,
+			&i.Phone,
+			&i.CityID,
+			&i.GradeID,
+			&i.LifetimePurchaseTotal,
+			&i.Login,
+			&i.PasswordHash,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const setDealerActive = `-- name: SetDealerActive :one
+UPDATE dealers
+SET is_active = $2
+WHERE id = $1
+RETURNING id, full_name, phone, city_id, grade_id, lifetime_purchase_total, login, password_hash, is_active, created_at, updated_at
+`
+
+type SetDealerActiveParams struct {
+	ID       int64 `json:"id"`
+	IsActive bool  `json:"is_active"`
+}
+
+func (q *Queries) SetDealerActive(ctx context.Context, arg SetDealerActiveParams) (Dealer, error) {
+	row := q.db.QueryRow(ctx, setDealerActive, arg.ID, arg.IsActive)
+	var i Dealer
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Phone,
+		&i.CityID,
+		&i.GradeID,
+		&i.LifetimePurchaseTotal,
+		&i.Login,
+		&i.PasswordHash,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const setDealerGrade = `-- name: SetDealerGrade :exec
+UPDATE dealers SET grade_id = $2 WHERE id = $1
+`
+
+type SetDealerGradeParams struct {
+	ID      int64       `json:"id"`
+	GradeID pgtype.Int8 `json:"grade_id"`
+}
+
+func (q *Queries) SetDealerGrade(ctx context.Context, arg SetDealerGradeParams) error {
+	_, err := q.db.Exec(ctx, setDealerGrade, arg.ID, arg.GradeID)
+	return err
+}
+
+const setDealerPasswordHash = `-- name: SetDealerPasswordHash :exec
+UPDATE dealers SET password_hash = $2 WHERE id = $1
+`
+
+type SetDealerPasswordHashParams struct {
+	ID           int64  `json:"id"`
+	PasswordHash string `json:"password_hash"`
+}
+
+func (q *Queries) SetDealerPasswordHash(ctx context.Context, arg SetDealerPasswordHashParams) error {
+	_, err := q.db.Exec(ctx, setDealerPasswordHash, arg.ID, arg.PasswordHash)
+	return err
+}
+
+const updateDealer = `-- name: UpdateDealer :one
+UPDATE dealers
+SET full_name = $2, phone = $3, city_id = $4
+WHERE id = $1
+RETURNING id, full_name, phone, city_id, grade_id, lifetime_purchase_total, login, password_hash, is_active, created_at, updated_at
+`
+
+type UpdateDealerParams struct {
+	ID       int64  `json:"id"`
+	FullName string `json:"full_name"`
+	Phone    string `json:"phone"`
+	CityID   int64  `json:"city_id"`
+}
+
+func (q *Queries) UpdateDealer(ctx context.Context, arg UpdateDealerParams) (Dealer, error) {
+	row := q.db.QueryRow(ctx, updateDealer,
+		arg.ID,
+		arg.FullName,
+		arg.Phone,
+		arg.CityID,
+	)
 	var i Dealer
 	err := row.Scan(
 		&i.ID,

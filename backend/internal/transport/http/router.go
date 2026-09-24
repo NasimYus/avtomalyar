@@ -23,6 +23,7 @@ type Deps struct {
 	Cities    cityService
 	Grades    gradeService
 	Prizes    prizeService
+	Dealers   dealerService
 	UploadDir string
 }
 
@@ -47,6 +48,7 @@ func NewRouter(deps Deps) http.Handler {
 	cityH := &cityHandler{service: deps.Cities, logger: deps.Logger, validator: validate}
 	gradeH := &gradeHandler{service: deps.Grades, logger: deps.Logger, validator: validate}
 	prizeH := &prizeHandler{service: deps.Prizes, logger: deps.Logger, validator: validate}
+	dealerH := &dealerHandler{service: deps.Dealers, logger: deps.Logger, validator: validate}
 
 	if deps.UploadDir != "" {
 		fileServer := http.FileServer(http.Dir(deps.UploadDir))
@@ -86,6 +88,15 @@ func NewRouter(deps Deps) http.Handler {
 				r.Put("/{id}", prizeH.update)
 				r.Post("/{id}/photo", prizeH.uploadPhoto)
 				r.Delete("/{id}", prizeH.delete)
+			})
+
+			r.Route("/dealers", func(r chi.Router) {
+				r.Get("/", dealerH.list)
+				r.Post("/", dealerH.create)
+				r.Get("/{id}", dealerH.get)
+				r.Put("/{id}", dealerH.update)
+				r.Patch("/{id}/active", dealerH.setActive)
+				r.Post("/{id}/reset-password", dealerH.resetPassword)
 			})
 		})
 	})
