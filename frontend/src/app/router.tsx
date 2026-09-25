@@ -4,6 +4,8 @@ import { AdminDashboardPage } from '@/pages/admin-dashboard'
 import { AdminDealersPage } from '@/pages/admin-dealers'
 import { AdminGradesPage } from '@/pages/admin-grades'
 import { AdminPrizesPage } from '@/pages/admin-prizes'
+import { AdminPromotionResultsPage } from '@/pages/admin-promotion-results'
+import { AdminPromotionsPage } from '@/pages/admin-promotions'
 import { AdminPurchasesPage } from '@/pages/admin-purchases'
 import { DealerHomePage } from '@/pages/dealer-home'
 import { LoginPage } from '@/pages/login'
@@ -31,6 +33,8 @@ export const router = createBrowserRouter([
           { index: true, element: <AdminDashboardPage /> },
           { path: 'dealers', element: <AdminDealersPage /> },
           { path: 'purchases', element: <AdminPurchasesPage /> },
+          { path: 'promotions', element: <AdminPromotionsPage /> },
+          { path: 'promotions/:id/results', element: <AdminPromotionResultsPage /> },
           { path: 'cities', element: <AdminCitiesPage /> },
           { path: 'grades', element: <AdminGradesPage /> },
           { path: 'prizes', element: <AdminPrizesPage /> },

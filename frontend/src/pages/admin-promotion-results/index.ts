@@ -1,0 +1,1 @@
+export { AdminPromotionResultsPage } from './ui'

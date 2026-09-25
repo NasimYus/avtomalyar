@@ -1,6 +1,12 @@
 export { cn } from './cn'
 export { formatMoney, formatMoneyWithUnit, parseMoneyInput } from './formatMoney'
-export { formatDate, formatDateShort, todayISO, BUSINESS_TIME_ZONE } from './formatDate'
+export {
+  formatDate,
+  formatDateShort,
+  formatDateTime,
+  todayISO,
+  BUSINESS_TIME_ZONE,
+} from './formatDate'
 export { initials } from './initials'
 export { formatPhone, isPhoneComplete } from './phone'
 export { useDebouncedValue } from './use-debounced-value'

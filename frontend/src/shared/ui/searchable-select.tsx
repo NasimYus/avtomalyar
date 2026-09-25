@@ -3,6 +3,9 @@ import { cn } from '@/shared/lib'
 import { fieldClasses, type FieldStatus, type FieldVariant } from './field'
 import { Spinner } from './feedback'
 
+/** Roughly the tallest the dropdown gets: search box plus a full list. */
+const PANEL_MAX_HEIGHT = 320
+
 export interface SelectOption {
   value: string
   label: string
@@ -57,6 +60,7 @@ export function SearchableSelect({
   asFilter = false,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false)
+  const [dropUp, setDropUp] = useState(false)
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
 
@@ -108,6 +112,13 @@ export function SearchableSelect({
   }, [open])
 
   const openList = () => {
+    // Open upwards when the list would otherwise run off the bottom of
+    // the window — a select at the end of a form is the common case.
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (rect) {
+      const spaceBelow = window.innerHeight - rect.bottom
+      setDropUp(spaceBelow < PANEL_MAX_HEIGHT && rect.top > spaceBelow)
+    }
     setOpen(true)
     setActiveIndex(0)
   }
@@ -154,7 +165,8 @@ export function SearchableSelect({
       {open && (
         <div
           className={cn(
-            'absolute z-30 mt-1.5 w-full min-w-[260px] overflow-hidden rounded-inner bg-surface shadow-modal',
+            'absolute z-30 w-full min-w-[260px] overflow-hidden rounded-inner bg-surface shadow-modal',
+            dropUp ? 'bottom-full mb-1.5' : 'mt-1.5',
             asFilter && 'w-max max-w-[320px]',
           )}
         >

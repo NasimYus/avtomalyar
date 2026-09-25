@@ -15,6 +15,7 @@ const MAIN_NAV: NavItem[] = [
   { to: '/admin', labelKey: 'nav.dashboard' },
   { to: '/admin/dealers', labelKey: 'nav.dealers' },
   { to: '/admin/purchases', labelKey: 'nav.purchases' },
+  { to: '/admin/promotions', labelKey: 'nav.promotions' },
 ]
 
 const REFERENCE_NAV: NavItem[] = [

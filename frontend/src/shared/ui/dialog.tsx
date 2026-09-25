@@ -56,6 +56,11 @@ export function Modal({ open, onClose, title, kicker, children, footer, classNam
       }}
       className={cn(
         'm-auto w-[min(520px,calc(100vw-32px))] rounded-card bg-surface p-6 text-ink shadow-modal',
+        // Browsers give <dialog> overflow:auto, which clips a select's
+        // dropdown at the modal edge. Modals here are short — long forms
+        // belong in a Drawer — so letting content escape is the right
+        // trade for dropdowns that stay readable.
+        'overflow-visible',
         'backdrop:bg-ink/40 open:animate-in',
         className,
       )}
