@@ -13,7 +13,11 @@ func TestSlugify(t *testing.T) {
 	}{
 		{name: "russian name", in: "Иван Петров", want: "ivan.petrov"},
 		{name: "tajik letters", in: "Ғафуров Ҷамшед", want: "ghafurov.jamshed"},
-		{name: "already latin", in: "John Smith LLC", want: "john.smith.llc"},
+		{name: "already latin", in: "John Smith", want: "john.smith"},
+		{name: "drops the legal form", in: `ООО «КрасТех»`, want: "krasteh"},
+		{name: "drops a tajik legal form", in: `ҶДММ "Шаҳристон"`, want: "shahriston"},
+		{name: "drops a latin legal form", in: "Paint Group LLC", want: "paint.group"},
+		{name: "keeps an initial after the surname", in: "ИП Рахимов А.", want: "rahimov.a"},
 		{name: "empty", in: "", want: ""},
 		{name: "only punctuation", in: "!!!", want: ""},
 	}

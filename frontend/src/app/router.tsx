@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { AdminCitiesPage } from '@/pages/admin-cities'
+import { AdminDealersPage } from '@/pages/admin-dealers'
 import { AdminGradesPage } from '@/pages/admin-grades'
 import { AdminPrizesPage } from '@/pages/admin-prizes'
 import { DealerHomePage } from '@/pages/dealer-home'
@@ -42,7 +43,7 @@ export const router = createBrowserRouter([
         element: <AdminShell />,
         children: [
           { index: true, element: <ComingSoon title="Дашборд" /> },
-          { path: 'dealers', element: <ComingSoon title="Дилеры" /> },
+          { path: 'dealers', element: <AdminDealersPage /> },
           { path: 'purchases', element: <ComingSoon title="Покупки" /> },
           { path: 'cities', element: <AdminCitiesPage /> },
           { path: 'grades', element: <AdminGradesPage /> },

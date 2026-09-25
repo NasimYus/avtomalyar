@@ -17,19 +17,39 @@ var cyrillicToLatin = map[rune]string{
 	'ғ': "gh", 'қ': "q", 'ӣ': "i", 'ӯ': "u", 'ҳ': "h", 'ҷ': "j",
 }
 
+// legalFormPrefixes are dropped from a login: «ООО "КрасТех"» should
+// become krasteh, not ooo.krasteh — the legal form says nothing about
+// which dealer this is, and every second dealer shares it.
+var legalFormPrefixes = map[string]bool{
+	"ооо": true, "зао": true, "оао": true, "ип": true, "чп": true,
+	"ҷдмм": true, "ҷсдм": true, "ltd": true, "llc": true,
+}
+
 // slugify transforms a display name into a lowercase ASCII slug suitable
-// for a login: transliterates Cyrillic, drops everything else that isn't
-// a letter, digit, dot or hyphen.
+// for a login: drops the legal form, transliterates Cyrillic, and keeps
+// only letters, digits, dots and hyphens.
 func slugify(s string) string {
+	words := make([]string, 0, 4)
+	for _, word := range strings.Fields(strings.ToLower(s)) {
+		cleaned := strings.Trim(word, `«»"'(),.`)
+		if cleaned == "" || legalFormPrefixes[cleaned] {
+			continue
+		}
+		words = append(words, cleaned)
+	}
+
 	var b strings.Builder
-	for _, r := range strings.ToLower(s) {
-		switch {
-		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '.', r == '-':
-			b.WriteRune(r)
-		case r == ' ':
+	for i, word := range words {
+		if i > 0 {
 			b.WriteByte('.')
-		default:
-			b.WriteString(cyrillicToLatin[r])
+		}
+		for _, r := range word {
+			switch {
+			case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '.', r == '-':
+				b.WriteRune(r)
+			default:
+				b.WriteString(cyrillicToLatin[r])
+			}
 		}
 	}
 	return b.String()
