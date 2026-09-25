@@ -42,7 +42,7 @@ func run(subcommand string) error {
 	case "admin":
 		return seedAdmin(ctx, repo)
 	case "demo":
-		return fmt.Errorf("seed demo: not implemented yet")
+		return seedDemo(ctx, repo)
 	default:
 		return fmt.Errorf("unknown subcommand %q", subcommand)
 	}

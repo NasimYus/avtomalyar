@@ -3,14 +3,25 @@
 Веб-система учёта покупок дилеров и программа лояльности для магазина
 автомалярной продукции «Автомаляр»: админ-панель + личный кабинет дилера.
 
-Текущий статус: **Этап 1** — фундамент и справочники (см. `docs/` за
-техническими заданиями, если они добавлены в репозиторий).
+**Текущий статус — этап 1 (30%) завершён:** фундамент, авторизация и
+админ-панель со всеми справочниками, дилерами и покупками. Акции,
+рейтинги и полноценный кабинет дилера — этап 2.
+
+## Что уже работает
+
+- Вход для админа и дилера (JWT в httpOnly-cookie), разграничение ролей.
+- Админ-панель: дашборд, дилеры, покупки, справочники (города, уровни, призы).
+- Автоматические пересчёты: накопленная сумма дилера и его уровень
+  обновляются при любой правке покупок — в той же транзакции.
+- Логин и пароль дилера генерируются при создании и показываются один раз;
+  пароль можно только сбросить.
+- Интерфейс на русском и таджикском, переключение в сайдбаре.
 
 ## Стек
 
 - **Backend**: Go, chi, pgx/sqlc, PostgreSQL, golang-migrate, JWT + bcrypt.
 - **Frontend**: React + TypeScript + Vite, Feature-Sliced Design, TanStack
-  Query, Zustand, Tailwind CSS, react-i18next (ru/tg).
+  Query, Tailwind CSS, react-i18next (ru/tg).
 - **Инфраструктура**: Docker Compose, GitHub Actions CI.
 
 ## Быстрый старт (Docker)
@@ -21,37 +32,48 @@ cp .env.example .env
 make up
 ```
 
-В отдельном терминале, пока `postgres` контейнер поднят:
+В отдельном терминале, пока контейнеры подняты:
 
 ```bash
 make migrate-up
 make seed-admin
-make seed-demo
+make seed-demo   # необязательно: демо-данные для демонстрации
 ```
 
-`make seed-admin` выведет логин и пароль первого администратора один раз —
-сохраните их.
+`make seed-admin` выведет логин и пароль администратора один раз —
+сохраните их. Пароль можно задать заранее: `ADMIN_PASSWORD=… make seed-admin`.
 
-Приложение будет доступно на `http://localhost` (фронтенд, проксирует
-`/api` на backend), backend напрямую — на `http://localhost:8080`.
+Приложение будет доступно на `http://localhost` (фронтенд проксирует
+`/api` и `/media` на backend), backend напрямую — на `http://localhost:8080`.
 
 ## Локальная разработка без Docker
+
+Postgres поднимается из compose, backend и frontend запускаются локально.
+Порт Postgres на хосте — **5433** (чтобы не конфликтовать с локально
+установленным Postgres); внутри docker-сети это по-прежнему 5432.
+
+```bash
+docker compose up -d postgres
+```
 
 Backend:
 
 ```bash
 cd backend
-cp ../.env.example .env   # либо экспортируйте переменные окружения вручную
-go run ./cmd/api
+export DATABASE_URL="postgres://avtomalyar:avtomalyar@localhost:5433/avtomalyar?sslmode=disable"
+export JWT_SECRET=dev-secret UPLOAD_DIR=./uploads
+go run ./cmd/api          # http://localhost:8080
 ```
 
-Frontend:
+Frontend (Vite проксирует `/api` и `/media` на `localhost:8080`):
 
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev               # http://localhost:5173
 ```
+
+Витрина UI-компонентов — `http://localhost:5173/admin/ui-kit`.
 
 ## Полезные команды
 
@@ -63,7 +85,7 @@ npm run dev
 | `make migrate-up` / `make migrate-down` | Применить/откатить миграции БД |
 | `make sqlc` | Сгенерировать типобезопасные запросы из `backend/queries/*.sql` |
 | `make seed-admin` | Создать первого администратора |
-| `make seed-demo` | Заполнить БД демо-данными (города, грейды, призы, дилеры, покупки) |
+| `make seed-demo` | Заполнить БД демо-данными (6 городов, 3 уровня, 5 призов, 12 дилеров, ~74 покупки) |
 
 Для `make lint` локально нужен установленный `golangci-lint`:
 
@@ -75,14 +97,42 @@ go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
 ```
 avtomalyar/
-├── backend/     # Go API: cmd/api, cmd/seed, internal/{config,domain,service,repository,auth,transport}
-├── frontend/    # React + FSD: src/{app,pages,widgets,features,entities,shared}
+├── backend/
+│   ├── cmd/{api,seed}           # HTTP-сервер и CLI для сидов
+│   ├── internal/
+│   │   ├── domain/              # чистые бизнес-правила (уровни, роли, таймзона)
+│   │   ├── service/             # бизнес-логика, транзакции, пересчёты
+│   │   ├── repository/          # обёртки над sqlc + маппинг ошибок БД
+│   │   ├── transport/http/      # роутинг, middleware, хендлеры
+│   │   ├── auth/                # bcrypt, JWT
+│   │   └── storage/             # загруженные файлы (фото призов)
+│   ├── migrations/              # golang-migrate
+│   └── queries/                 # SQL для sqlc
+├── frontend/src/                # Feature-Sliced Design
+│   ├── app/                     # провайдеры, роутинг, гарды, токены дизайна
+│   ├── pages/                   # экраны админки, вход, заглушка кабинета дилера
+│   ├── widgets/                 # каркас админки
+│   ├── features/                # действия: вход, CRUD-формы, смена языка
+│   ├── entities/                # сессия, города, уровни, призы, дилеры, покупки
+│   └── shared/                  # UI-кит, API-клиент, i18n, утилиты
 ├── docker-compose.yml
 ├── Makefile
 └── .github/workflows/ci.yml
 ```
 
+## Дизайн
+
+Визуальный язык перенесён из дизайн-системы «Автомаляр»: холодный фон
+`#F3F3F5`, белые карточки с радиусом 30px, красный `#FF0009` как цвет
+действия (со свечением), зелёный — «участвует/допущен», жёлтый —
+«осталось/золото». Шрифт Montserrat подключён локально через
+`@fontsource` — внешних CDN в рантайме нет.
+
+Все токены — в [`frontend/src/app/styles/index.css`](frontend/src/app/styles/index.css),
+компоненты — в [`frontend/src/shared/ui`](frontend/src/shared/ui).
+
 ## Переменные окружения
 
-См. `.env.example`. Обязательные для запуска — `JWT_SECRET` (production —
-длинное случайное значение) и настройки PostgreSQL.
+См. `.env.example`. Обязательные для запуска — `JWT_SECRET` (в production
+длинное случайное значение) и настройки PostgreSQL. `UPLOAD_DIR` задаёт
+папку для фото призов (в Docker — том `/data/uploads`).
