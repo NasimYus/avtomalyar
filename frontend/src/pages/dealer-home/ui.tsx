@@ -1,37 +1,130 @@
 import { useTranslation } from 'react-i18next'
-import { LogoutButton } from '@/features/logout'
-import { SwitchLanguage } from '@/features/switch-language'
-import { useSession } from '@/entities/session'
-import { Card, CardTitle } from '@/shared/ui'
+import { Link } from 'react-router-dom'
+import {
+  gradeProgress,
+  useDealerProfile,
+  useMyPromotions,
+  useMyPurchases,
+  PromotionCard,
+} from '@/entities/cabinet'
+import { formatDate, formatMoney, formatMoneyWithUnit, useLocaleName } from '@/shared/lib'
+import { Badge, Card, CardTitle, EmptyState, ProgressBar, Skeleton } from '@/shared/ui'
 
-/**
- * Placeholder dealer cabinet. Stage 1 only needs a dealer to be able to
- * sign in and see who they are; the real cabinet (purchases, grade,
- * promotions) is stage 2.
- */
+const RECENT_PURCHASES = 5
+
 export function DealerHomePage() {
   const { t } = useTranslation()
-  const { data: principal } = useSession()
+  const name = useLocaleName()
+  const { data: profile } = useDealerProfile()
+  const { data: promotions } = useMyPromotions()
+  const { data: purchases } = useMyPurchases(1, RECENT_PURCHASES)
+
+  if (!profile) {
+    return (
+      <>
+        <Skeleton className="h-[120px]" />
+        <Skeleton className="h-[160px]" />
+      </>
+    )
+  }
+
+  const next = profile.next_grade
 
   return (
-    <div className="min-h-dvh bg-canvas">
-      <header className="flex items-center justify-between border-b border-border bg-surface px-8 py-4">
-        <img src="/logo.png" alt="Автомаляр" className="w-[150px]" />
-        <div className="flex items-center gap-3">
-          <SwitchLanguage />
-          <LogoutButton className="bg-field" />
-        </div>
-      </header>
+    <>
+      <div>
+        <h1 className="text-[24px] leading-tight font-black sm:text-[28px]">{profile.full_name}</h1>
+        <p className="mt-1 text-[13px] font-semibold text-muted">
+          {name(profile.city_name_ru, profile.city_name_tg)}
+        </p>
+      </div>
 
-      <main className="mx-auto grid max-w-[720px] gap-5 px-6 py-10">
-        <h1 className="text-[28px] font-black">{principal?.name ?? ''}</h1>
-        <Card>
-          <CardTitle>{t('dealer.cabinetSoonTitle')}</CardTitle>
-          <p className="mt-2 text-[13px] leading-[1.55] text-muted">
-            {t('dealer.cabinetSoonText')}
-          </p>
-        </Card>
-      </main>
-    </div>
+      <Card tone="dark">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[13px] font-semibold text-white/65">
+            {t('cabinet.lifetimeTotal')}
+          </span>
+          {profile.grade !== undefined && (
+            <Badge tone="gold" className="uppercase">
+              {name(profile.grade.name_ru, profile.grade.name_tg)}
+            </Badge>
+          )}
+        </div>
+        <div className="mt-1.5 text-[32px] font-black">
+          {formatMoneyWithUnit(profile.lifetime_purchase_total)}
+        </div>
+
+        {next === undefined ? (
+          <p className="mt-3 text-[13px] font-semibold text-white/65">{t('cabinet.topGrade')}</p>
+        ) : (
+          <div className="mt-4">
+            <ProgressBar value={gradeProgress(profile)} tone="gold" />
+            <p className="mt-2 text-[13px] font-semibold text-white/65">
+              {t('cabinet.toNextGrade', {
+                grade: name(next.name_ru, next.name_tg),
+                amount: formatMoney(next.remaining),
+              })}
+            </p>
+          </div>
+        )}
+      </Card>
+
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <CardTitle>{t('cabinet.promotionsTitle')}</CardTitle>
+          <Link
+            to="/me/promotions"
+            className="text-[13px] font-bold text-brand-red hover:underline"
+          >
+            {t('cabinet.showAll')}
+          </Link>
+        </div>
+
+        {promotions === undefined ? (
+          <Skeleton className="h-[130px]" />
+        ) : promotions.length === 0 ? (
+          <EmptyState
+            title={t('cabinet.promotionsEmptyTitle')}
+            description={t('cabinet.promotionsEmptyDescription')}
+          />
+        ) : (
+          promotions
+            .slice(0, 2)
+            .map((promotion) => <PromotionCard key={promotion.id} promotion={promotion} />)
+        )}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <CardTitle>{t('cabinet.recentPurchases')}</CardTitle>
+          <Link to="/me/purchases" className="text-[13px] font-bold text-brand-red hover:underline">
+            {t('cabinet.showAll')}
+          </Link>
+        </div>
+
+        {purchases === undefined ? (
+          <Skeleton className="h-[140px]" />
+        ) : purchases.items.length === 0 ? (
+          <EmptyState
+            title={t('cabinet.purchasesEmptyTitle')}
+            description={t('cabinet.purchasesEmptyDescription')}
+          />
+        ) : (
+          <Card padded={false} className="divide-y divide-line px-[18px]">
+            {purchases.items.map((purchase) => (
+              <div key={purchase.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <b className="block">{formatDate(purchase.purchase_date)}</b>
+                  {purchase.comment !== undefined && (
+                    <span className="block truncate text-xs text-muted">{purchase.comment}</span>
+                  )}
+                </div>
+                <b className="whitespace-nowrap">{formatMoney(purchase.amount)}</b>
+              </div>
+            ))}
+          </Card>
+        )}
+      </section>
+    </>
   )
 }

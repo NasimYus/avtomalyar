@@ -1,0 +1,1 @@
+export { DealerPurchasesPage } from './ui'

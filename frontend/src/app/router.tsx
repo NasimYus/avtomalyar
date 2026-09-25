@@ -8,9 +8,13 @@ import { AdminPromotionResultsPage } from '@/pages/admin-promotion-results'
 import { AdminPromotionsPage } from '@/pages/admin-promotions'
 import { AdminPurchasesPage } from '@/pages/admin-purchases'
 import { DealerHomePage } from '@/pages/dealer-home'
+import { DealerPromotionPage } from '@/pages/dealer-promotion'
+import { DealerPromotionsPage } from '@/pages/dealer-promotions'
+import { DealerPurchasesPage } from '@/pages/dealer-purchases'
 import { LoginPage } from '@/pages/login'
 import { UiKitPage } from '@/pages/ui-kit'
 import { AdminShell } from '@/widgets/admin-shell'
+import { DealerShell } from '@/widgets/dealer-shell'
 import { RedirectIfAuthenticated, RequireRole, RoleHome } from './guards'
 
 export const router = createBrowserRouter([
@@ -45,6 +49,17 @@ export const router = createBrowserRouter([
   },
   {
     element: <RequireRole role="dealer" />,
-    children: [{ path: '/me', element: <DealerHomePage /> }],
+    children: [
+      {
+        path: '/me',
+        element: <DealerShell />,
+        children: [
+          { index: true, element: <DealerHomePage /> },
+          { path: 'purchases', element: <DealerPurchasesPage /> },
+          { path: 'promotions', element: <DealerPromotionsPage /> },
+          { path: 'promotions/:id', element: <DealerPromotionPage /> },
+        ],
+      },
+    ],
   },
 ])

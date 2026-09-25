@@ -10,3 +10,4 @@ export {
 export { initials } from './initials'
 export { formatPhone, isPhoneComplete } from './phone'
 export { useDebouncedValue } from './use-debounced-value'
+export { useLocaleName } from './use-locale-name'
