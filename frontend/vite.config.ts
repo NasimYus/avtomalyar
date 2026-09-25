@@ -11,6 +11,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    // The API and uploaded media come from the Go backend; in production
+    // nginx proxies the same paths (see frontend/nginx.conf).
+    proxy: {
+      '/api': { target: 'http://localhost:8080', changeOrigin: true },
+      '/media': { target: 'http://localhost:8080', changeOrigin: true },
+    },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],

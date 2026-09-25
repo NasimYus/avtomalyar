@@ -7,3 +7,7 @@ backend/tmp/
 
 # uploads volume mount point when running outside docker
 /data/uploads/
+
+# IDE
+.idea/
+.vscode/

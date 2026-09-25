@@ -1,17 +1,88 @@
+/* Montserrat is imported from app/index.tsx so Vite rewrites the font
+   URLs and emits the woff2 files — a CSS @import here goes through
+   Tailwind's resolver, which leaves them unresolved. */
 @import 'tailwindcss';
 
+/* Design tokens — taken from the «Автомаляр» loyalty design system
+   (light cool canvas, white r30 cards, red as action/energy, green as
+   "you're in", yellow as "remaining/gold"). */
 @theme {
+  /* --- brand --- */
   --color-brand-red: #ff0009;
-  --color-brand-white: #ffffff;
+  --color-brand-red-dark: #c2000a;
+  --color-brand-red-light: #ff4a50;
   --color-brand-green: #00a651;
+  --color-brand-green-dark: #00763a;
   --color-brand-yellow: #fcd102;
+  --color-brand-yellow-dark: #8a6d00;
 
-  --font-brand: 'Montserrat', 'Bahnschrift', system-ui, sans-serif;
+  /* --- surfaces --- */
+  --color-canvas: #f3f3f5; /* page background */
+  --color-surface: #ffffff; /* cards */
+  --color-surface-muted: #f7f7f9; /* rows inside cards */
+  --color-field: #f3f3f5; /* inputs */
+  --color-night: #111114; /* flagship / dark cards */
+  --color-ink: #141416; /* primary text, dark pills */
 
-  --radius-card: 30px;
-  --radius-control: 12px;
+  /* --- text --- */
+  --color-ink-soft: #4a4a52;
+  --color-muted: #6b6b73;
+  --color-faint: #9a9aa2;
+
+  /* --- lines --- */
+  --color-line: #f0f0f2; /* table row separators */
+  --color-line-strong: #e4e4e8; /* progress track */
+  --color-border: #ececef; /* panel borders */
+  --color-border-dashed: #d4d4da; /* dropzones */
+
+  /* --- state tints --- */
+  --color-danger-bg: #fff6f6;
+  --color-warning-bg: #fffbea;
+
+  /* --- grade colors --- */
+  --color-grade-bronze: #e8c3a6;
+  --color-grade-silver: #dadce1;
+  --color-grade-gold: #fcd102;
+
+  /* --- typography --- */
+  --font-sans: 'Montserrat', 'Bahnschrift', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* --- radii --- */
+  --radius-card: 30px; /* cards, pills, primary buttons */
+  --radius-inner: 20px; /* nested blocks, badges */
+  --radius-field: 16px; /* inputs, nav items */
+  --radius-chip: 14px; /* compact inputs */
+  --radius-page: 12px; /* pagination */
+
+  /* --- shadows --- */
+  --shadow-glow: 0 6px 18px rgb(255 0 9 / 0.3); /* primary button */
+  --shadow-glow-lg: 0 0 30px rgb(255 0 9 / 0.25); /* dark flagship card */
+  --shadow-modal: 0 20px 50px rgb(0 0 0 / 0.12);
+  --shadow-drawer: -20px 0 50px rgb(0 0 0 / 0.1);
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.06);
 }
 
-body {
-  font-family: var(--font-brand);
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Headings carry the brand's heavy weights and tight tracking. */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-red);
+    outline-offset: 2px;
+  }
 }
