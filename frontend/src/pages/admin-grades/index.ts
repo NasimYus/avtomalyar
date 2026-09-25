@@ -1,0 +1,1 @@
+export { AdminGradesPage } from './ui'

@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
@@ -21,7 +20,16 @@ interface CityFormDrawerProps {
   onClose: () => void
 }
 
+/**
+ * Mounts the form only while the drawer is open, so it always starts
+ * from the city being edited without resetting state from an effect.
+ */
 export function CityFormDrawer({ open, city, onClose }: CityFormDrawerProps) {
+  if (!open) return null
+  return <CityForm city={city} onClose={onClose} />
+}
+
+function CityForm({ city, onClose }: { city?: City; onClose: () => void }) {
   const { t } = useTranslation()
   const toast = useToast()
   const create = useCreateCity()
@@ -30,17 +38,11 @@ export function CityFormDrawer({ open, city, onClose }: CityFormDrawerProps) {
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name_ru: '', name_tg: '' },
+    defaultValues: { name_ru: city?.name_ru ?? '', name_tg: city?.name_tg ?? '' },
   })
-
-  // The drawer stays mounted between openings, so refill it each time.
-  useEffect(() => {
-    if (open) reset({ name_ru: city?.name_ru ?? '', name_tg: city?.name_tg ?? '' })
-  }, [open, city, reset])
 
   const pending = create.isPending || update.isPending
 
@@ -62,7 +64,7 @@ export function CityFormDrawer({ open, city, onClose }: CityFormDrawerProps) {
 
   return (
     <Drawer
-      open={open}
+      open
       onClose={onClose}
       title={city ? t('cities.editTitle') : t('cities.createTitle')}
       footer={
