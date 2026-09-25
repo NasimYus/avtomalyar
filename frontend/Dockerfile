@@ -1,4 +1,6 @@
-FROM node:22-alpine AS build
+# Node 24 matches the toolchain the lockfile was generated with (npm 11);
+# npm 10 from node:22 resolves peers differently and rejects it.
+FROM node:24-alpine AS build
 WORKDIR /src
 COPY package.json package-lock.json ./
 RUN npm ci
