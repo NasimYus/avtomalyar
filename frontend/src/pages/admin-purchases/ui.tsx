@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useDealers } from '@/entities/dealer'
+import { useDealer, useDealers } from '@/entities/dealer'
 import { usePurchases, type Purchase } from '@/entities/purchase'
 import { DeletePurchaseDialog, PurchaseFormDrawer } from '@/features/manage-purchase'
-import { formatDate, formatMoney, formatMoneyWithUnit } from '@/shared/lib'
+import { formatDate, formatMoney, formatMoneyWithUnit, useDebouncedValue } from '@/shared/lib'
 import {
   Button,
   Card,
@@ -12,7 +12,7 @@ import {
   PageHeader,
   Pagination,
   PillGroup,
-  Select,
+  SearchableSelect,
   type Column,
 } from '@/shared/ui'
 
@@ -33,7 +33,14 @@ function currentMonthRange(): { from: string; to: string } {
 
 export function AdminPurchasesPage() {
   const { t } = useTranslation()
-  const { data: dealerPage } = useDealers({ per_page: 200 })
+  // Dealer names for the table come from the page currently listed; the
+  // filter itself searches on the server so it scales past one page.
+  const [dealerQuery, setDealerQuery] = useState('')
+  const debouncedDealerQuery = useDebouncedValue(dealerQuery)
+  const { data: dealerPage, isFetching: dealersLoading } = useDealers({
+    q: debouncedDealerQuery || undefined,
+    per_page: 20,
+  })
   const dealers = dealerPage?.items ?? []
 
   const thisMonth = currentMonthRange()
@@ -54,7 +61,12 @@ export function AdminPurchasesPage() {
   const [editing, setEditing] = useState<Purchase | undefined>(undefined)
   const [deleting, setDeleting] = useState<Purchase | undefined>(undefined)
 
-  const dealerName = (id: number) => dealers.find((dealer) => dealer.id === id)?.full_name ?? '—'
+  // The selected dealer may fall outside the current search results.
+  const { data: selectedDealer } = useDealer(dealerId)
+  const filterDealerOptions = [...dealers]
+  if (selectedDealer && !filterDealerOptions.some((d) => d.id === selectedDealer.id)) {
+    filterDealerOptions.unshift(selectedDealer)
+  }
 
   const resetFilters = () => {
     setDealerId(undefined)
@@ -76,7 +88,7 @@ export function AdminPurchasesPage() {
       key: 'dealer',
       header: t('purchases.columnDealer'),
       width: '1.5fr',
-      render: (purchase) => <b className="block truncate">{dealerName(purchase.dealer_id)}</b>,
+      render: (purchase) => <b className="block truncate">{purchase.dealer_name ?? '—'}</b>,
     },
     {
       key: 'comment',
@@ -145,21 +157,25 @@ export function AdminPurchasesPage() {
       />
 
       <PillGroup>
-        <Select
-          className="w-auto rounded-card border-transparent bg-surface py-3 font-bold"
-          value={dealerId ?? ''}
-          onChange={(event) => {
-            setDealerId(event.target.value === '' ? undefined : Number(event.target.value))
+        <SearchableSelect
+          asFilter
+          value={dealerId === undefined ? '' : String(dealerId)}
+          onChange={(next) => {
+            setDealerId(next === '' ? undefined : Number(next))
             setPage(1)
           }}
-        >
-          <option value="">{t('purchases.allDealers')}</option>
-          {dealers.map((dealer) => (
-            <option key={dealer.id} value={dealer.id}>
-              {dealer.full_name}
-            </option>
-          ))}
-        </Select>
+          options={filterDealerOptions.map((dealer) => ({
+            value: String(dealer.id),
+            label: dealer.full_name,
+            hint: dealer.phone,
+          }))}
+          placeholder={t('purchases.allDealers')}
+          searchPlaceholder={t('common.searchDealer')}
+          emptyText={t('common.notFound')}
+          allOption={t('purchases.allDealers')}
+          onSearch={setDealerQuery}
+          loading={dealersLoading}
+        />
 
         <label className="flex items-center gap-2 rounded-card bg-surface px-4 py-2 text-sm font-bold">
           {t('purchases.from')}
@@ -243,7 +259,7 @@ export function AdminPurchasesPage() {
       />
       <DeletePurchaseDialog
         purchase={deleting}
-        dealerName={deleting ? dealerName(deleting.dealer_id) : undefined}
+        dealerName={deleting?.dealer_name}
         onClose={() => {
           setDeleting(undefined)
         }}

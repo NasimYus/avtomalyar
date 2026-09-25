@@ -37,7 +37,9 @@ type Querier interface {
 	ListDealers(ctx context.Context, arg ListDealersParams) ([]Dealer, error)
 	ListGrades(ctx context.Context) ([]Grade, error)
 	ListPrizes(ctx context.Context) ([]Prize, error)
-	ListPurchases(ctx context.Context, arg ListPurchasesParams) ([]Purchase, error)
+	// The dealer's name comes along so the table doesn't have to resolve ids
+	// against a separately paginated dealer list.
+	ListPurchases(ctx context.Context, arg ListPurchasesParams) ([]ListPurchasesRow, error)
 	RecomputeAllDealerGrades(ctx context.Context) error
 	RecomputeDealerLifetimeTotal(ctx context.Context, dealerID int64) error
 	SetDealerActive(ctx context.Context, arg SetDealerActiveParams) (Dealer, error)

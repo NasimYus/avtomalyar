@@ -20,7 +20,7 @@ import {
   FormNote,
   Input,
   PhoneInput,
-  Select,
+  SearchableSelect,
   useToast,
 } from '@/shared/ui'
 
@@ -168,14 +168,26 @@ function DealerForm({ dealer, onClose, onCreated }: Omit<DealerFormDrawerProps, 
           message={errors.city_id ? t('errors.required') : undefined}
         >
           {({ id, status }) => (
-            <Select id={id} status={status} {...register('city_id')}>
-              <option value="">{t('dealers.selectCity')}</option>
-              {cities.map((city) => (
-                <option key={city.id} value={city.id}>
-                  {city.name_ru}
-                </option>
-              ))}
-            </Select>
+            <Controller
+              control={control}
+              name="city_id"
+              render={({ field }) => (
+                <SearchableSelect
+                  id={id}
+                  status={status}
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={cities.map((city) => ({
+                    value: String(city.id),
+                    label: city.name_ru,
+                    hint: city.name_tg,
+                  }))}
+                  placeholder={t('dealers.selectCity')}
+                  searchPlaceholder={t('common.searchCity')}
+                  emptyText={t('common.notFound')}
+                />
+              )}
+            />
           )}
         </FormField>
 

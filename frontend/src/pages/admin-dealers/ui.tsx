@@ -25,8 +25,8 @@ import {
   PencilIcon,
   PillGroup,
   PowerIcon,
+  SearchableSelect,
   SearchInput,
-  Select,
   TrashIcon,
   type Column,
 } from '@/shared/ui'
@@ -207,21 +207,19 @@ export function AdminDealersPage() {
             setPage(1)
           }}
         />
-        <Select
-          className="w-auto rounded-card border-transparent bg-surface py-3 font-bold"
-          value={cityId ?? ''}
-          onChange={(event) => {
-            setCityId(event.target.value === '' ? undefined : Number(event.target.value))
+        <SearchableSelect
+          asFilter
+          value={cityId === undefined ? '' : String(cityId)}
+          onChange={(next) => {
+            setCityId(next === '' ? undefined : Number(next))
             setPage(1)
           }}
-        >
-          <option value="">{t('dealers.allCities')}</option>
-          {cities.map((city) => (
-            <option key={city.id} value={city.id}>
-              {city.name_ru}
-            </option>
-          ))}
-        </Select>
+          options={cities.map((city) => ({ value: String(city.id), label: city.name_ru }))}
+          placeholder={t('dealers.allCities')}
+          searchPlaceholder={t('common.searchCity')}
+          emptyText={t('common.notFound')}
+          allOption={t('dealers.allCities')}
+        />
 
         <FilterPill
           active={gradeId === undefined}

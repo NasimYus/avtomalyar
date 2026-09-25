@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
-import { useDealers, type Dealer } from '@/entities/dealer'
+import { useDealer, useDealers, type Dealer } from '@/entities/dealer'
 import { useGrades } from '@/entities/grade'
 import {
   useCreatePurchase,
@@ -11,7 +12,13 @@ import {
   type Purchase,
 } from '@/entities/purchase'
 import { ApiError } from '@/shared/api'
-import { formatMoney, formatMoneyWithUnit, parseMoneyInput, todayISO } from '@/shared/lib'
+import {
+  formatMoney,
+  formatMoneyWithUnit,
+  parseMoneyInput,
+  todayISO,
+  useDebouncedValue,
+} from '@/shared/lib'
 import {
   Button,
   ConfirmDialog,
@@ -19,7 +26,7 @@ import {
   FormField,
   FormNote,
   Input,
-  Select,
+  SearchableSelect,
   Textarea,
   useToast,
 } from '@/shared/ui'
@@ -55,14 +62,28 @@ function PurchaseForm({ purchase, dealerId, onClose }: Omit<PurchaseFormDrawerPr
   const create = useCreatePurchase()
   const update = useUpdatePurchase()
 
-  // Dealers are picked from a list; the admin panel is for one shop, so
-  // the full list is small enough to load at once.
-  const { data: dealerPage } = useDealers({ per_page: 200, is_active: true })
+  // The dealer list can grow well past a page, so the picker searches on
+  // the server instead of loading everyone up front.
+  const [dealerQuery, setDealerQuery] = useState('')
+  const debouncedQuery = useDebouncedValue(dealerQuery)
+  const { data: dealerPage, isFetching: dealersLoading } = useDealers({
+    q: debouncedQuery || undefined,
+    is_active: true,
+    per_page: 20,
+  })
   const { data: grades = [] } = useGrades()
   const dealers = dealerPage?.items ?? []
 
+  // The dealer being edited may not be in the current search results.
+  const { data: editedDealer } = useDealer(purchase?.dealer_id)
+  const dealerOptions = [...dealers]
+  if (editedDealer && !dealerOptions.some((d) => d.id === editedDealer.id)) {
+    dealerOptions.unshift(editedDealer)
+  }
+
   const {
     register,
+    control,
     handleSubmit,
     watch,
     formState: { errors },
@@ -78,7 +99,7 @@ function PurchaseForm({ purchase, dealerId, onClose }: Omit<PurchaseFormDrawerPr
 
   const selectedDealerId = watch('dealer_id')
   const amountInput = watch('amount')
-  const selected: Dealer | undefined = dealers.find(
+  const selected: Dealer | undefined = dealerOptions.find(
     (dealer) => String(dealer.id) === selectedDealerId,
   )
 
@@ -162,14 +183,28 @@ function PurchaseForm({ purchase, dealerId, onClose }: Omit<PurchaseFormDrawerPr
           message={errors.dealer_id ? t('errors.required') : undefined}
         >
           {({ id, status }) => (
-            <Select id={id} status={status} {...register('dealer_id')}>
-              <option value="">{t('purchases.selectDealer')}</option>
-              {dealers.map((dealer) => (
-                <option key={dealer.id} value={dealer.id}>
-                  {dealer.full_name}
-                </option>
-              ))}
-            </Select>
+            <Controller
+              control={control}
+              name="dealer_id"
+              render={({ field }) => (
+                <SearchableSelect
+                  id={id}
+                  status={status}
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={dealerOptions.map((dealer) => ({
+                    value: String(dealer.id),
+                    label: dealer.full_name,
+                    hint: dealer.phone,
+                  }))}
+                  placeholder={t('purchases.selectDealer')}
+                  searchPlaceholder={t('common.searchDealer')}
+                  emptyText={t('common.notFound')}
+                  onSearch={setDealerQuery}
+                  loading={dealersLoading}
+                />
+              )}
+            />
           )}
         </FormField>
 

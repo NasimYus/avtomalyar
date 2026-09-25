@@ -2,11 +2,30 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCities, type City } from '@/entities/city'
 import { CityFormDrawer, DeleteCityDialog } from '@/features/manage-city'
-import { Button, DataTable, EmptyState, PageHeader, type Column } from '@/shared/ui'
+import {
+  Button,
+  DataTable,
+  EmptyState,
+  PageHeader,
+  PillGroup,
+  SearchInput,
+  type Column,
+} from '@/shared/ui'
 
 export function AdminCitiesPage() {
   const { t } = useTranslation()
   const { data: cities = [], isPending } = useCities()
+  const [search, setSearch] = useState('')
+
+  const query = search.trim().toLowerCase()
+  const visibleCities =
+    query === ''
+      ? cities
+      : cities.filter(
+          (city) =>
+            city.name_ru.toLowerCase().includes(query) ||
+            city.name_tg.toLowerCase().includes(query),
+        )
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<City | undefined>(undefined)
@@ -64,17 +83,48 @@ export function AdminCitiesPage() {
         actions={<Button onClick={openCreate}>{t('cities.add')}</Button>}
       />
 
+      {cities.length > 0 && (
+        <PillGroup>
+          <SearchInput
+            value={search}
+            placeholder={t('cities.searchPlaceholder')}
+            onChange={(event) => {
+              setSearch(event.target.value)
+            }}
+          />
+        </PillGroup>
+      )}
+
       <DataTable
         columns={columns}
-        rows={cities}
+        rows={visibleCities}
         rowKey={(city) => city.id}
         loading={isPending}
         empty={
-          <EmptyState
-            title={t('cities.emptyTitle')}
-            description={t('cities.emptyDescription')}
-            action={<Button onClick={openCreate}>{t('cities.add')}</Button>}
-          />
+          query === '' ? (
+            <EmptyState
+              title={t('cities.emptyTitle')}
+              description={t('cities.emptyDescription')}
+              action={<Button onClick={openCreate}>{t('cities.add')}</Button>}
+            />
+          ) : (
+            <EmptyState
+              title={t('common.notFound')}
+              description={t('common.notFoundHint')}
+              action={
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="bg-field"
+                  onClick={() => {
+                    setSearch('')
+                  }}
+                >
+                  {t('common.reset')}
+                </Button>
+              }
+            />
+          )
         }
       />
 

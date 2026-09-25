@@ -2,11 +2,22 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePrizes, type Prize } from '@/entities/prize'
 import { DeletePrizeDialog, PrizeFormDrawer } from '@/features/manage-prize'
-import { Button, Card, EmptyState, PageHeader, Skeleton } from '@/shared/ui'
+import { Button, Card, EmptyState, PageHeader, PillGroup, SearchInput, Skeleton } from '@/shared/ui'
 
 export function AdminPrizesPage() {
   const { t } = useTranslation()
   const { data: prizes = [], isPending } = usePrizes()
+  const [search, setSearch] = useState('')
+
+  const query = search.trim().toLowerCase()
+  const visiblePrizes =
+    query === ''
+      ? prizes
+      : prizes.filter((prize) =>
+          [prize.name_ru, prize.name_tg, prize.description_ru ?? ''].some((text) =>
+            text.toLowerCase().includes(query),
+          ),
+        )
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Prize | undefined>(undefined)
@@ -37,6 +48,37 @@ export function AdminPrizesPage() {
         </div>
       )}
 
+      {!isPending && prizes.length > 0 && (
+        <PillGroup>
+          <SearchInput
+            value={search}
+            placeholder={t('prizes.searchPlaceholder')}
+            onChange={(event) => {
+              setSearch(event.target.value)
+            }}
+          />
+        </PillGroup>
+      )}
+
+      {!isPending && prizes.length > 0 && visiblePrizes.length === 0 && (
+        <EmptyState
+          title={t('common.notFound')}
+          description={t('common.notFoundHint')}
+          action={
+            <Button
+              variant="secondary"
+              size="sm"
+              className="bg-field"
+              onClick={() => {
+                setSearch('')
+              }}
+            >
+              {t('common.reset')}
+            </Button>
+          }
+        />
+      )}
+
       {!isPending && prizes.length === 0 && (
         <EmptyState
           title={t('prizes.emptyTitle')}
@@ -49,9 +91,9 @@ export function AdminPrizesPage() {
         />
       )}
 
-      {!isPending && prizes.length > 0 && (
+      {!isPending && visiblePrizes.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
-          {prizes.map((prize) => (
+          {visiblePrizes.map((prize) => (
             <Card key={prize.id} padded={false} className="overflow-hidden">
               {prize.photo_url === undefined ? (
                 <div

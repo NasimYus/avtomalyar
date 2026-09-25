@@ -1,9 +1,13 @@
 -- name: ListPurchases :many
-SELECT * FROM purchases
-WHERE (sqlc.narg('dealer_id')::bigint IS NULL OR dealer_id = sqlc.narg('dealer_id'))
-  AND (sqlc.narg('date_from')::date IS NULL OR purchase_date >= sqlc.narg('date_from'))
-  AND (sqlc.narg('date_to')::date IS NULL OR purchase_date <= sqlc.narg('date_to'))
-ORDER BY purchase_date DESC, id DESC
+-- The dealer's name comes along so the table doesn't have to resolve ids
+-- against a separately paginated dealer list.
+SELECT p.*, d.full_name AS dealer_name
+FROM purchases p
+JOIN dealers d ON d.id = p.dealer_id
+WHERE (sqlc.narg('dealer_id')::bigint IS NULL OR p.dealer_id = sqlc.narg('dealer_id'))
+  AND (sqlc.narg('date_from')::date IS NULL OR p.purchase_date >= sqlc.narg('date_from'))
+  AND (sqlc.narg('date_to')::date IS NULL OR p.purchase_date <= sqlc.narg('date_to'))
+ORDER BY p.purchase_date DESC, p.id DESC
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: CountPurchases :one

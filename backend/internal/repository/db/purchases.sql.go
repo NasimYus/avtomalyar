@@ -100,11 +100,13 @@ func (q *Queries) GetPurchaseByID(ctx context.Context, id int64) (Purchase, erro
 }
 
 const listPurchases = `-- name: ListPurchases :many
-SELECT id, dealer_id, amount, purchase_date, comment, created_by, created_at, updated_at FROM purchases
-WHERE ($1::bigint IS NULL OR dealer_id = $1)
-  AND ($2::date IS NULL OR purchase_date >= $2)
-  AND ($3::date IS NULL OR purchase_date <= $3)
-ORDER BY purchase_date DESC, id DESC
+SELECT p.id, p.dealer_id, p.amount, p.purchase_date, p.comment, p.created_by, p.created_at, p.updated_at, d.full_name AS dealer_name
+FROM purchases p
+JOIN dealers d ON d.id = p.dealer_id
+WHERE ($1::bigint IS NULL OR p.dealer_id = $1)
+  AND ($2::date IS NULL OR p.purchase_date >= $2)
+  AND ($3::date IS NULL OR p.purchase_date <= $3)
+ORDER BY p.purchase_date DESC, p.id DESC
 LIMIT $5 OFFSET $4
 `
 
@@ -116,7 +118,21 @@ type ListPurchasesParams struct {
 	Limit    int32       `json:"limit"`
 }
 
-func (q *Queries) ListPurchases(ctx context.Context, arg ListPurchasesParams) ([]Purchase, error) {
+type ListPurchasesRow struct {
+	ID           int64              `json:"id"`
+	DealerID     int64              `json:"dealer_id"`
+	Amount       int64              `json:"amount"`
+	PurchaseDate pgtype.Date        `json:"purchase_date"`
+	Comment      pgtype.Text        `json:"comment"`
+	CreatedBy    int64              `json:"created_by"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	DealerName   string             `json:"dealer_name"`
+}
+
+// The dealer's name comes along so the table doesn't have to resolve ids
+// against a separately paginated dealer list.
+func (q *Queries) ListPurchases(ctx context.Context, arg ListPurchasesParams) ([]ListPurchasesRow, error) {
 	rows, err := q.db.Query(ctx, listPurchases,
 		arg.DealerID,
 		arg.DateFrom,
@@ -128,9 +144,9 @@ func (q *Queries) ListPurchases(ctx context.Context, arg ListPurchasesParams) ([
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Purchase{}
+	items := []ListPurchasesRow{}
 	for rows.Next() {
-		var i Purchase
+		var i ListPurchasesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.DealerID,
@@ -140,6 +156,7 @@ func (q *Queries) ListPurchases(ctx context.Context, arg ListPurchasesParams) ([
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DealerName,
 		); err != nil {
 			return nil, err
 		}

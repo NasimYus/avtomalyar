@@ -32,8 +32,11 @@ type purchaseRequest struct {
 }
 
 type purchaseResponse struct {
-	ID           int64   `json:"id"`
-	DealerID     int64   `json:"dealer_id"`
+	ID       int64 `json:"id"`
+	DealerID int64 `json:"dealer_id"`
+	// Included on list responses so the table doesn't need a second
+	// lookup; empty on single-purchase responses.
+	DealerName   string  `json:"dealer_name,omitempty"`
 	Amount       int64   `json:"amount"`
 	PurchaseDate string  `json:"purchase_date"`
 	Comment      *string `json:"comment,omitempty"`
@@ -93,7 +96,17 @@ func (h *purchaseHandler) list(w http.ResponseWriter, r *http.Request) {
 
 	items := make([]purchaseResponse, len(page.Items))
 	for i, p := range page.Items {
-		items[i] = toPurchaseResponse(p)
+		items[i] = purchaseResponse{
+			ID:           p.ID,
+			DealerID:     p.DealerID,
+			DealerName:   p.DealerName,
+			Amount:       p.Amount,
+			PurchaseDate: p.PurchaseDate.Time.Format(dateLayout),
+			CreatedBy:    p.CreatedBy,
+		}
+		if p.Comment.Valid {
+			items[i].Comment = &p.Comment.String
+		}
 	}
 	writeJSON(w, http.StatusOK, purchaseListResponse{
 		Items:       items,

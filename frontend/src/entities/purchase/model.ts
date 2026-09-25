@@ -1,6 +1,8 @@
 export interface Purchase {
   id: number
   dealer_id: number
+  /** Present on list responses so tables don't resolve ids themselves. */
+  dealer_name?: string
   /** Amount in dirams. */
   amount: number
   /** ISO date, e.g. "2026-09-24". */

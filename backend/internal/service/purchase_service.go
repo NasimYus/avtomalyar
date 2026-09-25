@@ -13,7 +13,7 @@ import (
 )
 
 type purchaseRepository interface {
-	ListPurchases(ctx context.Context, arg db.ListPurchasesParams) ([]db.Purchase, error)
+	ListPurchases(ctx context.Context, arg db.ListPurchasesParams) ([]db.ListPurchasesRow, error)
 	CountPurchases(ctx context.Context, arg db.CountPurchasesParams) (int64, error)
 	SumPurchases(ctx context.Context, arg db.SumPurchasesParams) (int64, error)
 	GetPurchaseByID(ctx context.Context, id int64) (db.Purchase, error)
@@ -34,7 +34,7 @@ type PurchaseFilter struct {
 // (not just this page), how many there are and what they add up to — the
 // "итого за период" figure the purchases screen shows.
 type PurchasePage struct {
-	Items       []db.Purchase
+	Items       []db.ListPurchasesRow
 	Total       int64
 	TotalAmount int64
 	Page        int

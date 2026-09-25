@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useDashboardSummary } from '@/entities/dashboard'
-import { useDealers } from '@/entities/dealer'
 import { gradeToneByIndex } from '@/entities/grade'
 import { usePurchases } from '@/entities/purchase'
 import { cn, formatDate, formatMoney, formatMoneyWithUnit } from '@/shared/lib'
@@ -26,7 +25,7 @@ const GRADE_BAR_TONES: Record<string, string> = {
 
 interface RecentPurchase {
   id: number
-  dealer_id: number
+  dealer_name?: string
   amount: number
   purchase_date: string
 }
@@ -35,11 +34,6 @@ export function AdminDashboardPage() {
   const { t } = useTranslation()
   const { data: summary, isPending } = useDashboardSummary()
   const { data: recent } = usePurchases({ per_page: RECENT_PURCHASES })
-  const { data: dealerPage } = useDealers({ per_page: 200 })
-
-  const dealerName = (id: number) =>
-    dealerPage?.items.find((dealer) => dealer.id === id)?.full_name ?? '—'
-
   const averagePurchase =
     summary && summary.period_count > 0
       ? Math.round(summary.period_amount / summary.period_count)
@@ -63,7 +57,7 @@ export function AdminDashboardPage() {
       key: 'dealer',
       header: t('purchases.columnDealer'),
       width: '1fr',
-      render: (purchase) => <b className="block truncate">{dealerName(purchase.dealer_id)}</b>,
+      render: (purchase) => <b className="block truncate">{purchase.dealer_name ?? '—'}</b>,
     },
     {
       key: 'amount',
