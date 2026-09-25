@@ -1,2 +1,7 @@
-export { DealerFormDrawer, ToggleDealerActiveDialog, ResetPasswordDialog } from './ui'
+export {
+  DealerFormDrawer,
+  ToggleDealerActiveDialog,
+  ResetPasswordDialog,
+  DeleteDealerDialog,
+} from './ui'
 export { CredentialsDialog } from './credentials-dialog'

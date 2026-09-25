@@ -21,6 +21,7 @@ type Querier interface {
 	DashboardTotals(ctx context.Context, arg DashboardTotalsParams) (DashboardTotalsRow, error)
 	DealerCountsByGrade(ctx context.Context) ([]DealerCountsByGradeRow, error)
 	DeleteCity(ctx context.Context, id int64) (int64, error)
+	DeleteDealer(ctx context.Context, id int64) (int64, error)
 	DeleteGrade(ctx context.Context, id int64) (int64, error)
 	DeletePrize(ctx context.Context, id int64) (int64, error)
 	DeletePurchase(ctx context.Context, id int64) (int64, error)

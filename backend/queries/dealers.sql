@@ -52,3 +52,6 @@ UPDATE dealers SET password_hash = $2 WHERE id = $1;
 
 -- name: SetDealerGrade :exec
 UPDATE dealers SET grade_id = $2 WHERE id = $1;
+
+-- name: DeleteDealer :execrows
+DELETE FROM dealers WHERE id = $1;

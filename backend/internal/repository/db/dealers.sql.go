@@ -82,6 +82,18 @@ func (q *Queries) CreateDealer(ctx context.Context, arg CreateDealerParams) (Dea
 	return i, err
 }
 
+const deleteDealer = `-- name: DeleteDealer :execrows
+DELETE FROM dealers WHERE id = $1
+`
+
+func (q *Queries) DeleteDealer(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteDealer, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getDealerByID = `-- name: GetDealerByID :one
 SELECT id, full_name, phone, city_id, grade_id, lifetime_purchase_total, login, password_hash, is_active, created_at, updated_at FROM dealers WHERE id = $1
 `

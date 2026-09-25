@@ -38,8 +38,12 @@ const MESSAGE_CLASSES: Record<Exclude<FieldStatus, 'default'>, string> = {
   warning: 'text-brand-yellow-dark',
 }
 
-/** Shared look for every control; the 2px border is reserved for states. */
-function controlClasses(
+/**
+ * Shared look for every control; the 2px border is reserved for states.
+ * Exported so custom inputs (PhoneInput) look identical without
+ * duplicating the styling.
+ */
+export function fieldClasses(
   status: FieldStatus,
   variant: FieldVariant = 'field',
   className?: string,
@@ -112,7 +116,7 @@ export function Input({
 }: InputProps) {
   return (
     <input
-      className={controlClasses(
+      className={fieldClasses(
         status,
         variant,
         cn(emphasis && 'py-3.5 text-[22px] font-black', className),
@@ -134,7 +138,7 @@ export function Textarea({
   rows = 3,
   ...props
 }: TextareaProps) {
-  return <textarea rows={rows} className={controlClasses(status, variant, className)} {...props} />
+  return <textarea rows={rows} className={fieldClasses(status, variant, className)} {...props} />
 }
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
@@ -151,7 +155,7 @@ export function Select({
 }: SelectProps) {
   return (
     <select
-      className={cn(controlClasses(status, variant, className), 'appearance-none pr-9')}
+      className={cn(fieldClasses(status, variant, className), 'appearance-none pr-9')}
       {...props}
     >
       {children}

@@ -20,6 +20,7 @@ type dealerService interface {
 	Update(ctx context.Context, id int64, fullName, phone string, cityID int64) (db.Dealer, error)
 	SetActive(ctx context.Context, id int64, active bool) (db.Dealer, error)
 	ResetPassword(ctx context.Context, id int64) (string, error)
+	Delete(ctx context.Context, id int64) error
 }
 
 type dealerRequest struct {
@@ -211,4 +212,18 @@ func atoiOrDefault(s string, fallback int) int {
 		return fallback
 	}
 	return v
+}
+
+func (h *dealerHandler) delete(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "validation_error", "invalid id", nil)
+		return
+	}
+
+	if err := h.service.Delete(r.Context(), id); err != nil {
+		writeError(w, h.logger, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

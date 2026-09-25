@@ -56,3 +56,11 @@ export function useResetDealerPassword() {
       api.post<{ password: string }>(`/admin/dealers/${String(id)}/reset-password`),
   })
 }
+
+export function useDeleteDealer() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.delete<undefined>(`/admin/dealers/${String(id)}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: dealerKeys.root }),
+  })
+}

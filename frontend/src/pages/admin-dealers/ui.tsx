@@ -6,6 +6,7 @@ import { gradeToneByIndex, useGrades } from '@/entities/grade'
 import {
   CredentialsDialog,
   DealerFormDrawer,
+  DeleteDealerDialog,
   ResetPasswordDialog,
   ToggleDealerActiveDialog,
 } from '@/features/manage-dealer'
@@ -52,6 +53,7 @@ export function AdminDealersPage() {
   const [editing, setEditing] = useState<Dealer | undefined>(undefined)
   const [toggling, setToggling] = useState<Dealer | undefined>(undefined)
   const [resetting, setResetting] = useState<Dealer | undefined>(undefined)
+  const [deleting, setDeleting] = useState<Dealer | undefined>(undefined)
   const [credentials, setCredentials] = useState<{ login: string; password: string } | undefined>(
     undefined,
   )
@@ -124,7 +126,7 @@ export function AdminDealersPage() {
     {
       key: 'actions',
       header: '',
-      width: '300px',
+      width: '380px',
       align: 'right',
       render: (dealer) => (
         <div className="flex justify-end gap-1.5">
@@ -156,6 +158,16 @@ export function AdminDealersPage() {
             }}
           >
             {dealer.is_active ? t('dealers.deactivate') : t('dealers.activate')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-brand-red hover:text-brand-red-dark"
+            onClick={() => {
+              setDeleting(dealer)
+            }}
+          >
+            {t('common.delete')}
           </Button>
         </div>
       ),
@@ -295,6 +307,12 @@ export function AdminDealersPage() {
           setResetting(undefined)
         }}
         onReset={setCredentials}
+      />
+      <DeleteDealerDialog
+        dealer={deleting}
+        onClose={() => {
+          setDeleting(undefined)
+        }}
       />
       <CredentialsDialog
         credentials={credentials}

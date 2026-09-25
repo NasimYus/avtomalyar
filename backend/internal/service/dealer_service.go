@@ -27,6 +27,7 @@ type dealerRepository interface {
 	SetDealerActive(ctx context.Context, arg db.SetDealerActiveParams) (db.Dealer, error)
 	SetDealerPasswordHash(ctx context.Context, arg db.SetDealerPasswordHashParams) error
 	SetDealerGrade(ctx context.Context, arg db.SetDealerGradeParams) error
+	DeleteDealer(ctx context.Context, id int64) (int64, error)
 	ListGrades(ctx context.Context) ([]db.Grade, error)
 	WithTx(ctx context.Context, fn func(q *db.Queries) error) error
 }
@@ -228,4 +229,24 @@ func (s *DealerService) ResetPassword(ctx context.Context, id int64) (string, er
 		return "", fmt.Errorf("reset dealer password: %w", repository.TranslateError(err))
 	}
 	return password, nil
+}
+
+// Delete removes a dealer outright. The ToR's rule is that dealers are
+// deactivated rather than deleted, so history survives — the purchases
+// foreign key enforces it: a dealer who ever bought anything can't be
+// deleted and comes back as domain.ErrConflict, leaving deactivation as
+// the only option. Deletion therefore only clears out records created by
+// mistake.
+func (s *DealerService) Delete(ctx context.Context, id int64) error {
+	rows, err := s.repo.DeleteDealer(ctx, id)
+	if err != nil {
+		if errors.Is(repository.TranslateError(err), domain.ErrConflict) {
+			return fmt.Errorf("%w: dealer has purchases and can only be deactivated", domain.ErrConflict)
+		}
+		return fmt.Errorf("delete dealer: %w", repository.TranslateError(err))
+	}
+	if rows == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
 }

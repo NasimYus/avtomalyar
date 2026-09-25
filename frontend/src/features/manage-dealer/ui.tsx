@@ -1,16 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { useCities } from '@/entities/city'
 import {
   useCreateDealer,
+  useDeleteDealer,
   useResetDealerPassword,
   useSetDealerActive,
   useUpdateDealer,
   type Dealer,
 } from '@/entities/dealer'
 import { ApiError } from '@/shared/api'
+import { formatMoney, formatPhone, isPhoneComplete } from '@/shared/lib'
 import {
   Button,
   ConfirmDialog,
@@ -18,13 +20,14 @@ import {
   FormField,
   FormNote,
   Input,
+  PhoneInput,
   Select,
   useToast,
 } from '@/shared/ui'
 
 const schema = z.object({
   full_name: z.string().trim().min(1),
-  phone: z.string().trim().min(1),
+  phone: z.string().refine(isPhoneComplete, 'incomplete'),
   city_id: z.string().min(1),
 })
 
@@ -52,13 +55,14 @@ function DealerForm({ dealer, onClose, onCreated }: Omit<DealerFormDrawerProps, 
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       full_name: dealer?.full_name ?? '',
-      phone: dealer?.phone ?? '',
+      phone: formatPhone(dealer?.phone ?? ''),
       city_id: dealer ? String(dealer.city_id) : '',
     },
   })
@@ -140,10 +144,23 @@ function DealerForm({ dealer, onClose, onCreated }: Omit<DealerFormDrawerProps, 
 
         <FormField
           label={t('dealers.phone')}
-          message={errors.phone ? t('errors.required') : undefined}
+          message={errors.phone ? t('dealers.phoneInvalid') : undefined}
         >
           {({ id, status }) => (
-            <Input id={id} status={status} placeholder="+992 …" {...register('phone')} />
+            <Controller
+              control={control}
+              name="phone"
+              render={({ field }) => (
+                <PhoneInput
+                  id={id}
+                  status={status}
+                  placeholder="+992 92 555 01 10"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
+              )}
+            />
           )}
         </FormField>
 
@@ -248,6 +265,53 @@ export function ResetPasswordDialog({
           },
           onError: () => {
             toast.error(t('errors.generic'))
+            onClose()
+          },
+        })
+      }}
+    />
+  )
+}
+
+export function DeleteDealerDialog({ dealer, onClose }: { dealer?: Dealer; onClose: () => void }) {
+  const { t } = useTranslation()
+  const toast = useToast()
+  const remove = useDeleteDealer()
+
+  // A dealer who has ever bought something can't be deleted — the API
+  // refuses, so the dialog says upfront what will happen instead.
+  const hasPurchases = (dealer?.lifetime_purchase_total ?? 0) > 0
+
+  return (
+    <ConfirmDialog
+      open={dealer !== undefined}
+      title={t('dealers.deleteTitle', { name: dealer?.full_name ?? '' })}
+      description={
+        hasPurchases
+          ? t('dealers.deleteBlocked', {
+              total: formatMoney(dealer?.lifetime_purchase_total ?? 0),
+            })
+          : t('dealers.deleteDescription')
+      }
+      confirmLabel={t('common.delete')}
+      cancelLabel={hasPurchases ? t('common.close') : t('common.cancel')}
+      destructive
+      busy={remove.isPending}
+      confirmDisabled={hasPurchases}
+      onCancel={onClose}
+      onConfirm={() => {
+        if (!dealer) return
+        remove.mutate(dealer.id, {
+          onSuccess: () => {
+            toast.success(t('dealers.deleted'))
+            onClose()
+          },
+          onError: (error) => {
+            toast.error(
+              error instanceof ApiError && error.isConflict
+                ? t('dealers.deleteConflict')
+                : t('errors.generic'),
+            )
             onClose()
           },
         })

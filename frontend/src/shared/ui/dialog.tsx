@@ -81,6 +81,8 @@ interface ConfirmDialogProps {
   cancelLabel: string
   destructive?: boolean
   busy?: boolean
+  /** Blocks confirmation when the action is known to be impossible. */
+  confirmDisabled?: boolean
   onConfirm: () => void
   onCancel: () => void
 }
@@ -93,6 +95,7 @@ export function ConfirmDialog({
   cancelLabel,
   destructive = false,
   busy = false,
+  confirmDisabled = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -109,7 +112,7 @@ export function ConfirmDialog({
           <Button
             variant={destructive ? 'danger' : 'primary'}
             size="sm"
-            disabled={busy}
+            disabled={busy || confirmDisabled}
             onClick={onConfirm}
           >
             {confirmLabel}
