@@ -1,6 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet } from 'react-router-dom'
+import { useSession } from '@/entities/session'
+import { LogoutButton } from '@/features/logout'
+import { SwitchLanguage } from '@/features/switch-language'
 import { cn } from '@/shared/lib'
+import { Avatar } from '@/shared/ui'
 
 interface NavItem {
   to: string
@@ -30,6 +34,7 @@ function navItemClasses(isActive: boolean, dense: boolean): string {
 /** Left sidebar + content area — the frame every admin page renders into. */
 export function AdminShell() {
   const { t } = useTranslation()
+  const { data: principal } = useSession()
 
   return (
     <div className="grid min-h-dvh grid-cols-[240px_1fr] bg-canvas">
@@ -60,6 +65,20 @@ export function AdminShell() {
             {t(item.labelKey)}
           </NavLink>
         ))}
+
+        <div className="mt-auto grid gap-3 pt-6">
+          <div className="flex items-center gap-2.5 px-1">
+            <Avatar name={principal?.name ?? '—'} tone="dark" size="sm" />
+            <div className="min-w-0">
+              <div className="truncate text-[13px] font-bold">{principal?.name}</div>
+              <div className="text-xs text-faint">{t('auth.roleAdmin')}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <SwitchLanguage />
+            <LogoutButton className="flex-1 bg-field" />
+          </div>
+        </div>
       </nav>
 
       <main className="grid content-start gap-5 px-8 py-7">

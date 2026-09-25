@@ -9,10 +9,28 @@ import { cn } from '@/shared/lib'
 
 export type FieldStatus = 'default' | 'error' | 'warning'
 
-const STATUS_CLASSES: Record<FieldStatus, string> = {
-  default: 'border-transparent bg-field',
-  error: 'border-brand-red bg-danger-bg',
-  warning: 'border-brand-yellow bg-warning-bg',
+/**
+ * "field" is the grey control used across admin forms; "outlined" is the
+ * larger white control from the sign-in screen.
+ */
+export type FieldVariant = 'field' | 'outlined'
+
+const STATUS_CLASSES: Record<FieldVariant, Record<FieldStatus, string>> = {
+  field: {
+    default: 'border-transparent bg-field focus:border-brand-red',
+    error: 'border-brand-red bg-danger-bg',
+    warning: 'border-brand-yellow bg-warning-bg',
+  },
+  outlined: {
+    default: 'border-line-strong bg-surface focus:border-ink',
+    error: 'border-brand-red bg-surface',
+    warning: 'border-brand-yellow bg-surface',
+  },
+}
+
+const VARIANT_CLASSES: Record<FieldVariant, string> = {
+  field: 'rounded-field px-3.5 py-3 text-sm',
+  outlined: 'rounded-inner px-[18px] py-[15px] text-base',
 }
 
 const MESSAGE_CLASSES: Record<Exclude<FieldStatus, 'default'>, string> = {
@@ -20,14 +38,19 @@ const MESSAGE_CLASSES: Record<Exclude<FieldStatus, 'default'>, string> = {
   warning: 'text-brand-yellow-dark',
 }
 
-/** Shared look for every control: soft grey field, 2px border reserved for states. */
-function controlClasses(status: FieldStatus, className?: string): string {
+/** Shared look for every control; the 2px border is reserved for states. */
+function controlClasses(
+  status: FieldStatus,
+  variant: FieldVariant = 'field',
+  className?: string,
+): string {
   return cn(
-    'w-full rounded-field border-2 px-3.5 py-3 text-sm font-semibold text-ink',
+    'w-full border-2 font-semibold text-ink',
     'placeholder:font-medium placeholder:text-faint',
-    'focus:border-brand-red focus:outline-none',
+    'focus:outline-none',
     'disabled:cursor-not-allowed disabled:opacity-60',
-    STATUS_CLASSES[status],
+    VARIANT_CLASSES[variant],
+    STATUS_CLASSES[variant][status],
     className,
   )
 }
@@ -75,14 +98,25 @@ export function FormField({
 
 interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   status?: FieldStatus
+  variant?: FieldVariant
   /** Larger type for money fields, as in the "Сумма, сомони" input. */
   emphasis?: boolean
 }
 
-export function Input({ status = 'default', emphasis = false, className, ...props }: InputProps) {
+export function Input({
+  status = 'default',
+  variant = 'field',
+  emphasis = false,
+  className,
+  ...props
+}: InputProps) {
   return (
     <input
-      className={controlClasses(status, cn(emphasis && 'py-3.5 text-[22px] font-black', className))}
+      className={controlClasses(
+        status,
+        variant,
+        cn(emphasis && 'py-3.5 text-[22px] font-black', className),
+      )}
       {...props}
     />
   )
@@ -90,19 +124,36 @@ export function Input({ status = 'default', emphasis = false, className, ...prop
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   status?: FieldStatus
+  variant?: FieldVariant
 }
 
-export function Textarea({ status = 'default', className, rows = 3, ...props }: TextareaProps) {
-  return <textarea rows={rows} className={controlClasses(status, className)} {...props} />
+export function Textarea({
+  status = 'default',
+  variant = 'field',
+  className,
+  rows = 3,
+  ...props
+}: TextareaProps) {
+  return <textarea rows={rows} className={controlClasses(status, variant, className)} {...props} />
 }
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   status?: FieldStatus
+  variant?: FieldVariant
 }
 
-export function Select({ status = 'default', className, children, ...props }: SelectProps) {
+export function Select({
+  status = 'default',
+  variant = 'field',
+  className,
+  children,
+  ...props
+}: SelectProps) {
   return (
-    <select className={cn(controlClasses(status, className), 'appearance-none pr-9')} {...props}>
+    <select
+      className={cn(controlClasses(status, variant, className), 'appearance-none pr-9')}
+      {...props}
+    >
       {children}
     </select>
   )
