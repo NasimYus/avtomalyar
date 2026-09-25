@@ -40,6 +40,7 @@ type Querier interface {
 	SetDealerActive(ctx context.Context, arg SetDealerActiveParams) (Dealer, error)
 	SetDealerGrade(ctx context.Context, arg SetDealerGradeParams) error
 	SetDealerPasswordHash(ctx context.Context, arg SetDealerPasswordHashParams) error
+	SumPurchases(ctx context.Context, arg SumPurchasesParams) (int64, error)
 	UpdateCity(ctx context.Context, arg UpdateCityParams) (City, error)
 	UpdateDealer(ctx context.Context, arg UpdateDealerParams) (Dealer, error)
 	UpdateGrade(ctx context.Context, arg UpdateGradeParams) (Grade, error)

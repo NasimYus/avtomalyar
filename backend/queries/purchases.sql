@@ -12,6 +12,12 @@ WHERE (sqlc.narg('dealer_id')::bigint IS NULL OR dealer_id = sqlc.narg('dealer_i
   AND (sqlc.narg('date_from')::date IS NULL OR purchase_date >= sqlc.narg('date_from'))
   AND (sqlc.narg('date_to')::date IS NULL OR purchase_date <= sqlc.narg('date_to'));
 
+-- name: SumPurchases :one
+SELECT COALESCE(SUM(amount), 0)::bigint FROM purchases
+WHERE (sqlc.narg('dealer_id')::bigint IS NULL OR dealer_id = sqlc.narg('dealer_id'))
+  AND (sqlc.narg('date_from')::date IS NULL OR purchase_date >= sqlc.narg('date_from'))
+  AND (sqlc.narg('date_to')::date IS NULL OR purchase_date <= sqlc.narg('date_to'));
+
 -- name: GetPurchaseByID :one
 SELECT * FROM purchases WHERE id = $1;
 

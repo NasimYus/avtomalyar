@@ -164,6 +164,26 @@ func (q *Queries) RecomputeDealerLifetimeTotal(ctx context.Context, dealerID int
 	return err
 }
 
+const sumPurchases = `-- name: SumPurchases :one
+SELECT COALESCE(SUM(amount), 0)::bigint FROM purchases
+WHERE ($1::bigint IS NULL OR dealer_id = $1)
+  AND ($2::date IS NULL OR purchase_date >= $2)
+  AND ($3::date IS NULL OR purchase_date <= $3)
+`
+
+type SumPurchasesParams struct {
+	DealerID pgtype.Int8 `json:"dealer_id"`
+	DateFrom pgtype.Date `json:"date_from"`
+	DateTo   pgtype.Date `json:"date_to"`
+}
+
+func (q *Queries) SumPurchases(ctx context.Context, arg SumPurchasesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, sumPurchases, arg.DealerID, arg.DateFrom, arg.DateTo)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const updatePurchase = `-- name: UpdatePurchase :one
 UPDATE purchases
 SET dealer_id = $2, amount = $3, purchase_date = $4, comment = $5

@@ -3,6 +3,7 @@ import { AdminCitiesPage } from '@/pages/admin-cities'
 import { AdminDealersPage } from '@/pages/admin-dealers'
 import { AdminGradesPage } from '@/pages/admin-grades'
 import { AdminPrizesPage } from '@/pages/admin-prizes'
+import { AdminPurchasesPage } from '@/pages/admin-purchases'
 import { DealerHomePage } from '@/pages/dealer-home'
 import { LoginPage } from '@/pages/login'
 import { UiKitPage } from '@/pages/ui-kit'
@@ -44,7 +45,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <ComingSoon title="Дашборд" /> },
           { path: 'dealers', element: <AdminDealersPage /> },
-          { path: 'purchases', element: <ComingSoon title="Покупки" /> },
+          { path: 'purchases', element: <AdminPurchasesPage /> },
           { path: 'cities', element: <AdminCitiesPage /> },
           { path: 'grades', element: <AdminGradesPage /> },
           { path: 'prizes', element: <AdminPrizesPage /> },

@@ -55,10 +55,12 @@ func toPurchaseResponse(p db.Purchase) purchaseResponse {
 }
 
 type purchaseListResponse struct {
-	Items   []purchaseResponse `json:"items"`
-	Total   int64              `json:"total"`
-	Page    int                `json:"page"`
-	PerPage int                `json:"per_page"`
+	Items []purchaseResponse `json:"items"`
+	Total int64              `json:"total"`
+	// Sum over everything matching the filter, not just this page.
+	TotalAmount int64 `json:"total_amount"`
+	Page        int   `json:"page"`
+	PerPage     int   `json:"per_page"`
 }
 
 type purchaseHandler struct {
@@ -93,7 +95,13 @@ func (h *purchaseHandler) list(w http.ResponseWriter, r *http.Request) {
 	for i, p := range page.Items {
 		items[i] = toPurchaseResponse(p)
 	}
-	writeJSON(w, http.StatusOK, purchaseListResponse{Items: items, Total: page.Total, Page: page.Page, PerPage: page.PerPage})
+	writeJSON(w, http.StatusOK, purchaseListResponse{
+		Items:       items,
+		Total:       page.Total,
+		TotalAmount: page.TotalAmount,
+		Page:        page.Page,
+		PerPage:     page.PerPage,
+	})
 }
 
 func (h *purchaseHandler) get(w http.ResponseWriter, r *http.Request) {

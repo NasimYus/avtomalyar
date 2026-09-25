@@ -15,6 +15,7 @@ import (
 type purchaseRepository interface {
 	ListPurchases(ctx context.Context, arg db.ListPurchasesParams) ([]db.Purchase, error)
 	CountPurchases(ctx context.Context, arg db.CountPurchasesParams) (int64, error)
+	SumPurchases(ctx context.Context, arg db.SumPurchasesParams) (int64, error)
 	GetPurchaseByID(ctx context.Context, id int64) (db.Purchase, error)
 	WithTx(ctx context.Context, fn func(q *db.Queries) error) error
 }
@@ -29,13 +30,15 @@ type PurchaseFilter struct {
 	PerPage  int
 }
 
-// PurchasePage is a page of purchases plus the total count matching the
-// filter.
+// PurchasePage is a page of purchases plus, for the whole filtered set
+// (not just this page), how many there are and what they add up to — the
+// "итого за период" figure the purchases screen shows.
 type PurchasePage struct {
-	Items   []db.Purchase
-	Total   int64
-	Page    int
-	PerPage int
+	Items       []db.Purchase
+	Total       int64
+	TotalAmount int64
+	Page        int
+	PerPage     int
 }
 
 // PurchaseService implements CRUD for purchases. Every write recomputes
@@ -79,7 +82,20 @@ func (s *PurchaseService) List(ctx context.Context, filter PurchaseFilter) (Purc
 		return PurchasePage{}, fmt.Errorf("count purchases: %w", repository.TranslateError(err))
 	}
 
-	return PurchasePage{Items: items, Total: total, Page: page, PerPage: perPage}, nil
+	totalAmount, err := s.repo.SumPurchases(ctx, db.SumPurchasesParams{
+		DealerID: dealerID, DateFrom: dateFrom, DateTo: dateTo,
+	})
+	if err != nil {
+		return PurchasePage{}, fmt.Errorf("sum purchases: %w", repository.TranslateError(err))
+	}
+
+	return PurchasePage{
+		Items:       items,
+		Total:       total,
+		TotalAmount: totalAmount,
+		Page:        page,
+		PerPage:     perPage,
+	}, nil
 }
 
 func purchaseFilterParams(filter PurchaseFilter) (pgtype.Int8, pgtype.Date, pgtype.Date) {
