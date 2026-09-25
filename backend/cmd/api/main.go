@@ -59,6 +59,7 @@ func run() error {
 	dealerService := service.NewDealerService(repo)
 	purchaseService := service.NewPurchaseService(repo)
 	promotionService := service.NewPromotionService(repo)
+	cabinetService := service.NewCabinetService(repo, purchaseService)
 	dashboardService := service.NewDashboardService(repo)
 
 	handler := transporthttp.NewRouter(transporthttp.Deps{
@@ -76,6 +77,7 @@ func run() error {
 		Dealers:    dealerService,
 		Purchases:  purchaseService,
 		Promotions: promotionService,
+		Cabinet:    cabinetService,
 		Dashboard:  dashboardService,
 		UploadDir:  cfg.UploadDir,
 	})

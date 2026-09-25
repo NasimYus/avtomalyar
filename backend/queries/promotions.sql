@@ -65,6 +65,7 @@ RETURNING *;
 -- hundreds, so loading them all is fine.
 SELECT
     d.id AS dealer_id,
+    d.full_name AS dealer_name,
     d.city_id,
     d.grade_id,
     d.lifetime_purchase_total,

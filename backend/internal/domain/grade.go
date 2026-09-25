@@ -34,3 +34,29 @@ func SelectGrade(grades []Grade, lifetimeTotal int64) (id int64, ok bool) {
 	}
 	return best.ID, true
 }
+
+// NextGrade returns the grade a dealer with the given lifetime purchase
+// total is working towards — the one with the lowest threshold still above
+// their total — together with how much is left to reach it (in dirams).
+//
+// It returns ok=false for a dealer who has already reached the top grade;
+// the cabinet then shows the grade as final rather than a progress bar
+// that can never fill.
+func NextGrade(grades []Grade, lifetimeTotal int64) (next Grade, remaining int64, ok bool) {
+	found := false
+
+	for _, g := range grades {
+		if g.MinPurchaseAmount <= lifetimeTotal {
+			continue
+		}
+		if !found || g.MinPurchaseAmount < next.MinPurchaseAmount {
+			next = g
+			found = true
+		}
+	}
+
+	if !found {
+		return Grade{}, 0, false
+	}
+	return next, next.MinPurchaseAmount - lifetimeTotal, true
+}

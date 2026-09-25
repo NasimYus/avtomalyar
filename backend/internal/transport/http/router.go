@@ -26,6 +26,7 @@ type Deps struct {
 	Dealers    dealerService
 	Purchases  purchaseService
 	Promotions promotionService
+	Cabinet    cabinetService
 	Dashboard  dashboardService
 	UploadDir  string
 }
@@ -55,6 +56,7 @@ func NewRouter(deps Deps) http.Handler {
 	purchaseH := &purchaseHandler{service: deps.Purchases, logger: deps.Logger, validator: validate}
 	promotionH := &promotionHandler{service: deps.Promotions, logger: deps.Logger, validator: validate}
 	dashboardH := &dashboardHandler{service: deps.Dashboard, logger: deps.Logger}
+	cabinetH := &cabinetHandler{service: deps.Cabinet, logger: deps.Logger}
 
 	if deps.UploadDir != "" {
 		fileServer := http.FileServer(http.Dir(deps.UploadDir))
@@ -66,6 +68,17 @@ func NewRouter(deps Deps) http.Handler {
 			r.With(rateLimitLogin).Post("/login", authH.login)
 			r.Post("/logout", authH.logout)
 			r.With(requireRole(deps.Logger, domain.RoleAdmin, domain.RoleDealer)).Get("/me", authH.me)
+		})
+
+		// The dealer cabinet. Every handler reads the dealer id from the
+		// session, so these routes carry no dealer id of their own.
+		r.Route("/me", func(r chi.Router) {
+			r.Use(requireRole(deps.Logger, domain.RoleDealer))
+
+			r.Get("/profile", cabinetH.profile)
+			r.Get("/purchases", cabinetH.purchases)
+			r.Get("/promotions", cabinetH.promotions)
+			r.Get("/promotions/{id}", cabinetH.promotion)
 		})
 
 		r.Route("/admin", func(r chi.Router) {

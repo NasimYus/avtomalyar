@@ -231,6 +231,7 @@ func (q *Queries) GetPromotionResult(ctx context.Context, arg GetPromotionResult
 const listActiveDealersWithPeriodTotals = `-- name: ListActiveDealersWithPeriodTotals :many
 SELECT
     d.id AS dealer_id,
+    d.full_name AS dealer_name,
     d.city_id,
     d.grade_id,
     d.lifetime_purchase_total,
@@ -253,6 +254,7 @@ type ListActiveDealersWithPeriodTotalsParams struct {
 
 type ListActiveDealersWithPeriodTotalsRow struct {
 	DealerID              int64              `json:"dealer_id"`
+	DealerName            string             `json:"dealer_name"`
 	CityID                int64              `json:"city_id"`
 	GradeID               pgtype.Int8        `json:"grade_id"`
 	LifetimePurchaseTotal int64              `json:"lifetime_purchase_total"`
@@ -277,6 +279,7 @@ func (q *Queries) ListActiveDealersWithPeriodTotals(ctx context.Context, arg Lis
 		var i ListActiveDealersWithPeriodTotalsRow
 		if err := rows.Scan(
 			&i.DealerID,
+			&i.DealerName,
 			&i.CityID,
 			&i.GradeID,
 			&i.LifetimePurchaseTotal,

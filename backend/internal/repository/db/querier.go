@@ -39,6 +39,9 @@ type Querier interface {
 	GetCityByID(ctx context.Context, id int64) (City, error)
 	GetDealerByID(ctx context.Context, id int64) (Dealer, error)
 	GetDealerByLogin(ctx context.Context, login string) (Dealer, error)
+	// Everything the cabinet's header needs in one row: the dealer plus the
+	// names their ids stand for.
+	GetDealerProfile(ctx context.Context, id int64) (GetDealerProfileRow, error)
 	GetGradeByID(ctx context.Context, id int64) (Grade, error)
 	GetPrizeByID(ctx context.Context, id int64) (Prize, error)
 	GetPromotionByID(ctx context.Context, id int64) (Promotion, error)
@@ -51,6 +54,13 @@ type Querier interface {
 	// hundreds, so loading them all is fine.
 	ListActiveDealersWithPeriodTotals(ctx context.Context, arg ListActiveDealersWithPeriodTotalsParams) ([]ListActiveDealersWithPeriodTotalsRow, error)
 	ListCities(ctx context.Context) ([]City, error)
+	// Promotions a dealer may see: the ones running now, the ones whose
+	// results are being reviewed, and the ones already published. Drafts and
+	// archived promotions stay out of the cabinet.
+	//
+	// Whether the dealer actually takes part is decided by domain.IsEligible,
+	// not here, so the rule has a single tested implementation.
+	ListDealerPromotions(ctx context.Context) ([]Promotion, error)
 	ListDealers(ctx context.Context, arg ListDealersParams) ([]Dealer, error)
 	ListGrades(ctx context.Context) ([]Grade, error)
 	ListPrizePlaces(ctx context.Context, promotionID int64) ([]ListPrizePlacesRow, error)
