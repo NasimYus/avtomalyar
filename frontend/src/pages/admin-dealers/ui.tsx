@@ -4,10 +4,9 @@ import { useCities } from '@/entities/city'
 import { useDealers, type Dealer } from '@/entities/dealer'
 import { gradeToneByIndex, useGrades } from '@/entities/grade'
 import {
-  CredentialsDialog,
+  DealerAccessDialog,
   DealerFormDrawer,
   DeleteDealerDialog,
-  ResetPasswordDialog,
   ToggleDealerActiveDialog,
 } from '@/features/manage-dealer'
 import { formatMoney } from '@/shared/lib'
@@ -19,11 +18,16 @@ import {
   DataTable,
   EmptyState,
   FilterPill,
+  IconButton,
+  KeyIcon,
   PageHeader,
   Pagination,
+  PencilIcon,
   PillGroup,
+  PowerIcon,
   SearchInput,
   Select,
+  TrashIcon,
   type Column,
 } from '@/shared/ui'
 
@@ -52,11 +56,10 @@ export function AdminDealersPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Dealer | undefined>(undefined)
   const [toggling, setToggling] = useState<Dealer | undefined>(undefined)
-  const [resetting, setResetting] = useState<Dealer | undefined>(undefined)
   const [deleting, setDeleting] = useState<Dealer | undefined>(undefined)
-  const [credentials, setCredentials] = useState<{ login: string; password: string } | undefined>(
-    undefined,
-  )
+  // Access dialog: opened from a row, or automatically right after a
+  // dealer is created so their first password can be handed over.
+  const [access, setAccess] = useState<{ dealer: Dealer; password?: string } | undefined>(undefined)
 
   const gradeToneById = (id: number | undefined) => {
     if (id === undefined) return 'neutral' as const
@@ -126,49 +129,49 @@ export function AdminDealersPage() {
     {
       key: 'actions',
       header: '',
-      width: '380px',
+      width: '172px',
       align: 'right',
       render: (dealer) => (
-        <div className="flex justify-end gap-1.5">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="bg-field"
+        <div className="flex justify-end gap-1">
+          <IconButton
+            label={t('common.edit')}
+            variant="ghost"
             onClick={() => {
               setEditing(dealer)
               setFormOpen(true)
             }}
           >
-            {t('common.edit')}
-          </Button>
-          <Button
+            <PencilIcon />
+          </IconButton>
+          <IconButton
+            label={t('dealers.access')}
             variant="ghost"
-            size="sm"
             onClick={() => {
-              setResetting(dealer)
+              setAccess({ dealer })
             }}
           >
-            {t('dealers.resetShort')}
-          </Button>
-          <Button
+            <KeyIcon />
+          </IconButton>
+          <IconButton
+            label={dealer.is_active ? t('dealers.deactivate') : t('dealers.activate')}
             variant="ghost"
-            size="sm"
+            className={dealer.is_active ? undefined : 'text-brand-green'}
             onClick={() => {
               setToggling(dealer)
             }}
           >
-            {dealer.is_active ? t('dealers.deactivate') : t('dealers.activate')}
-          </Button>
-          <Button
+            <PowerIcon />
+          </IconButton>
+          <IconButton
+            label={t('common.delete')}
             variant="ghost"
-            size="sm"
-            className="text-brand-red hover:text-brand-red-dark"
+            tone="danger"
             onClick={() => {
               setDeleting(dealer)
             }}
           >
-            {t('common.delete')}
-          </Button>
+            <TrashIcon />
+          </IconButton>
         </div>
       ),
     },
@@ -293,7 +296,9 @@ export function AdminDealersPage() {
         onClose={() => {
           setFormOpen(false)
         }}
-        onCreated={setCredentials}
+        onCreated={(dealer, password) => {
+          setAccess({ dealer, password })
+        }}
       />
       <ToggleDealerActiveDialog
         dealer={toggling}
@@ -301,23 +306,17 @@ export function AdminDealersPage() {
           setToggling(undefined)
         }}
       />
-      <ResetPasswordDialog
-        dealer={resetting}
-        onClose={() => {
-          setResetting(undefined)
-        }}
-        onReset={setCredentials}
-      />
       <DeleteDealerDialog
         dealer={deleting}
         onClose={() => {
           setDeleting(undefined)
         }}
       />
-      <CredentialsDialog
-        credentials={credentials}
+      <DealerAccessDialog
+        dealer={access?.dealer}
+        initialPassword={access?.password}
         onClose={() => {
-          setCredentials(undefined)
+          setAccess(undefined)
         }}
       />
     </>

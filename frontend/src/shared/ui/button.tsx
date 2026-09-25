@@ -49,20 +49,38 @@ export function Button({
 }
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  /** Accessible name; also shown as the native tooltip. */
   label: string
   children: ReactNode
+  /** "solid" is the grey circle used for close buttons. */
+  variant?: 'solid' | 'ghost'
+  tone?: 'neutral' | 'danger'
 }
 
-/** Round 36px button used for "close" and row actions. */
-export function IconButton({ label, className, children, ...props }: IconButtonProps) {
+const ICON_TONES: Record<NonNullable<IconButtonProps['tone']>, string> = {
+  neutral: 'text-ink-soft hover:text-ink',
+  danger: 'text-brand-red hover:text-brand-red-dark',
+}
+
+/** Round icon button used for close and for compact row actions. */
+export function IconButton({
+  label,
+  variant = 'solid',
+  tone = 'neutral',
+  className,
+  children,
+  ...props
+}: IconButtonProps) {
   return (
     <button
       type="button"
       aria-label={label}
+      title={label}
       className={cn(
-        'grid size-9 place-items-center rounded-full bg-field text-base',
-        'transition-colors hover:bg-line-strong',
+        'grid size-9 shrink-0 place-items-center rounded-full transition-colors',
         'disabled:cursor-not-allowed disabled:opacity-50',
+        variant === 'solid' ? 'bg-field text-base hover:bg-line-strong' : 'hover:bg-field',
+        ICON_TONES[tone],
         className,
       )}
       {...props}

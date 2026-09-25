@@ -6,7 +6,6 @@ import { useCities } from '@/entities/city'
 import {
   useCreateDealer,
   useDeleteDealer,
-  useResetDealerPassword,
   useSetDealerActive,
   useUpdateDealer,
   type Dealer,
@@ -37,8 +36,8 @@ interface DealerFormDrawerProps {
   open: boolean
   dealer?: Dealer
   onClose: () => void
-  /** Called with the one-time credentials after a dealer is created. */
-  onCreated: (credentials: { login: string; password: string }) => void
+  /** Called with the new dealer and their one-time password. */
+  onCreated: (dealer: Dealer, password: string) => void
 }
 
 export function DealerFormDrawer({ open, dealer, onClose, onCreated }: DealerFormDrawerProps) {
@@ -95,7 +94,7 @@ function DealerForm({ dealer, onClose, onCreated }: Omit<DealerFormDrawerProps, 
       create.mutate(payload, {
         onSuccess: (created) => {
           onClose()
-          onCreated({ login: created.login, password: created.password })
+          onCreated(created, created.password)
         },
         onError,
       })
@@ -154,7 +153,7 @@ function DealerForm({ dealer, onClose, onCreated }: Omit<DealerFormDrawerProps, 
                 <PhoneInput
                   id={id}
                   status={status}
-                  placeholder="+992 92 555 01 10"
+                  placeholder="92 555 01 10"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -229,45 +228,6 @@ export function ToggleDealerActiveDialog({
             },
           },
         )
-      }}
-    />
-  )
-}
-
-export function ResetPasswordDialog({
-  dealer,
-  onClose,
-  onReset,
-}: {
-  dealer?: Dealer
-  onClose: () => void
-  onReset: (credentials: { login: string; password: string }) => void
-}) {
-  const { t } = useTranslation()
-  const toast = useToast()
-  const reset = useResetDealerPassword()
-
-  return (
-    <ConfirmDialog
-      open={dealer !== undefined}
-      title={t('dealers.resetTitle', { name: dealer?.full_name ?? '' })}
-      description={t('dealers.resetDescription')}
-      confirmLabel={t('dealers.reset')}
-      cancelLabel={t('common.cancel')}
-      busy={reset.isPending}
-      onCancel={onClose}
-      onConfirm={() => {
-        if (!dealer) return
-        reset.mutate(dealer.id, {
-          onSuccess: ({ password }) => {
-            onClose()
-            onReset({ login: dealer.login, password })
-          },
-          onError: () => {
-            toast.error(t('errors.generic'))
-            onClose()
-          },
-        })
       }}
     />
   )
