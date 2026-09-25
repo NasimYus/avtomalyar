@@ -183,5 +183,20 @@
     "deleteDescription": "Маблағи {{dealer}} ба {{amount}} кам мешавад. Сатҳ худкор аз нав ҳисоб мешавад.",
     "emptyTitle": "Ҳоло хариде нест",
     "emptyDescription": "Аввалин харидро илова кунед — маблағ ва сатҳи дилер худкор аз нав ҳисоб мешаванд"
+  },
+  "dashboard": {
+    "title": "Ҷамъбасти моҳ",
+    "dealers": "Дилерон",
+    "dealersActive": "фаъол: {{count}}",
+    "periodPurchases": "Харидҳои моҳ",
+    "periodCount": "{{count}} харид",
+    "lifetimeTotal": "Ҳамагӣ ҷамъшуда",
+    "averagePurchase": "Хариди миёна",
+    "averageNote": "дар моҳи ҷорӣ",
+    "recentPurchases": "Харидҳои охирин",
+    "allPurchases": "Ҳамаи харидҳо ›",
+    "noPurchases": "Ҳоло хариде нест",
+    "dealersByGrade": "Дилерон аз рӯи сатҳ",
+    "noGrades": "Сатҳҳо ҳанӯз муайян нашудаанд"
   }
 }

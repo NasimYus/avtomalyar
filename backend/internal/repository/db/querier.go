@@ -18,6 +18,8 @@ type Querier interface {
 	CreateGrade(ctx context.Context, arg CreateGradeParams) (Grade, error)
 	CreatePrize(ctx context.Context, arg CreatePrizeParams) (Prize, error)
 	CreatePurchase(ctx context.Context, arg CreatePurchaseParams) (Purchase, error)
+	DashboardTotals(ctx context.Context, arg DashboardTotalsParams) (DashboardTotalsRow, error)
+	DealerCountsByGrade(ctx context.Context) ([]DealerCountsByGradeRow, error)
 	DeleteCity(ctx context.Context, id int64) (int64, error)
 	DeleteGrade(ctx context.Context, id int64) (int64, error)
 	DeletePrize(ctx context.Context, id int64) (int64, error)

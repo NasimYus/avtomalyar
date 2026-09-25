@@ -218,25 +218,16 @@ func (s *PurchaseService) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-// businessLocation is the shop's timezone (ToR 3.6) — "purchase date not in
-// the future" is judged against today's date there, not the server's.
-var businessLocation = func() *time.Location {
-	loc, err := time.LoadLocation("Asia/Dushanbe")
-	if err != nil {
-		return time.UTC
-	}
-	return loc
-}()
-
 func validatePurchase(amount int64, purchaseDate time.Time) error {
 	if amount <= 0 {
 		return fmt.Errorf("%w: purchase amount must be positive", domain.ErrValidation)
 	}
 
-	today := time.Now().In(businessLocation)
-	todayDate := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, businessLocation)
-	givenDate := time.Date(purchaseDate.Year(), purchaseDate.Month(), purchaseDate.Day(), 0, 0, 0, 0, businessLocation)
-	if givenDate.After(todayDate) {
+	givenDate := time.Date(
+		purchaseDate.Year(), purchaseDate.Month(), purchaseDate.Day(),
+		0, 0, 0, 0, domain.BusinessLocation,
+	)
+	if givenDate.After(domain.Today()) {
 		return fmt.Errorf("%w: purchase date cannot be in the future", domain.ErrValidation)
 	}
 	return nil

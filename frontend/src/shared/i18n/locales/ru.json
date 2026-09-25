@@ -183,5 +183,20 @@
     "deleteDescription": "Сумма {{dealer}} уменьшится на {{amount}}. Уровень пересчитается автоматически.",
     "emptyTitle": "Покупок пока нет",
     "emptyDescription": "Добавьте первую покупку — сумма и уровень дилера пересчитаются автоматически"
+  },
+  "dashboard": {
+    "title": "Сводка за месяц",
+    "dealers": "Дилеров",
+    "dealersActive": "активных: {{count}}",
+    "periodPurchases": "Покупки за месяц",
+    "periodCount": "{{count}} покупок",
+    "lifetimeTotal": "Накоплено всего",
+    "averagePurchase": "Средняя покупка",
+    "averageNote": "за текущий месяц",
+    "recentPurchases": "Последние покупки",
+    "allPurchases": "Все покупки ›",
+    "noPurchases": "Покупок пока нет",
+    "dealersByGrade": "Дилеры по уровням",
+    "noGrades": "Уровни ещё не заданы"
   }
 }

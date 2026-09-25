@@ -25,6 +25,7 @@ type Deps struct {
 	Prizes    prizeService
 	Dealers   dealerService
 	Purchases purchaseService
+	Dashboard dashboardService
 	UploadDir string
 }
 
@@ -51,6 +52,7 @@ func NewRouter(deps Deps) http.Handler {
 	prizeH := &prizeHandler{service: deps.Prizes, logger: deps.Logger, validator: validate}
 	dealerH := &dealerHandler{service: deps.Dealers, logger: deps.Logger, validator: validate}
 	purchaseH := &purchaseHandler{service: deps.Purchases, logger: deps.Logger, validator: validate}
+	dashboardH := &dashboardHandler{service: deps.Dashboard, logger: deps.Logger}
 
 	if deps.UploadDir != "" {
 		fileServer := http.FileServer(http.Dir(deps.UploadDir))
@@ -66,6 +68,8 @@ func NewRouter(deps Deps) http.Handler {
 
 		r.Route("/admin", func(r chi.Router) {
 			r.Use(requireRole(deps.Logger, domain.RoleAdmin))
+
+			r.Get("/dashboard/summary", dashboardH.summary)
 
 			r.Route("/cities", func(r chi.Router) {
 				r.Get("/", cityH.list)
