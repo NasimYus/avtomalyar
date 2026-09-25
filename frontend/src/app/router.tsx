@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom'
+import { AdminCitiesPage } from '@/pages/admin-cities'
 import { DealerHomePage } from '@/pages/dealer-home'
 import { LoginPage } from '@/pages/login'
 import { UiKitPage } from '@/pages/ui-kit'
@@ -41,7 +42,7 @@ export const router = createBrowserRouter([
           { index: true, element: <ComingSoon title="Дашборд" /> },
           { path: 'dealers', element: <ComingSoon title="Дилеры" /> },
           { path: 'purchases', element: <ComingSoon title="Покупки" /> },
-          { path: 'cities', element: <ComingSoon title="Города" /> },
+          { path: 'cities', element: <AdminCitiesPage /> },
           { path: 'grades', element: <ComingSoon title="Уровни" /> },
           { path: 'prizes', element: <ComingSoon title="Призы" /> },
           { path: 'ui-kit', element: <UiKitPage /> },
