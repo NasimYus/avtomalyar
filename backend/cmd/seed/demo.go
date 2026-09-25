@@ -134,17 +134,20 @@ func seedDemo(ctx context.Context, repo *repository.Repository) error {
 	}
 	fmt.Printf("grades:   %d\n", len(demoGrades))
 
+	prizeIDs := make([]int64, 0, len(demoPrizes))
 	for _, prize := range demoPrizes {
 		description := prize.description
 		stock := prize.stock
-		if _, err := prizeService.Create(ctx, service.PrizeFields{
+		created, err := prizeService.Create(ctx, service.PrizeFields{
 			NameRu:        prize.ru,
 			NameTg:        prize.tg,
 			DescriptionRu: &description,
 			StockQuantity: &stock,
-		}); err != nil {
+		})
+		if err != nil {
 			return fmt.Errorf("create prize %q: %w", prize.ru, err)
 		}
+		prizeIDs = append(prizeIDs, created.ID)
 	}
 	fmt.Printf("prizes:   %d\n", len(demoPrizes))
 
@@ -179,6 +182,10 @@ func seedDemo(ctx context.Context, repo *repository.Repository) error {
 		}
 	}
 
+	if err := seedDemoPromotions(ctx, service.NewPromotionService(repo), prizeIDs); err != nil {
+		return err
+	}
+
 	fmt.Printf("dealers:  %d\n", len(demoDealers))
 	fmt.Printf("purchases: %d\n", purchaseCount)
 	fmt.Println()
@@ -189,3 +196,80 @@ func seedDemo(ctx context.Context, repo *repository.Repository) error {
 
 	return nil
 }
+
+// seedDemoPromotions creates one promotion per interesting state, so the
+// admin panel has something to show in every tab: a finished one with
+// published results, one running now, and one still being set up.
+func seedDemoPromotions(ctx context.Context, promotions *service.PromotionService, prizeIDs []int64) error {
+	if len(prizeIDs) < len(demoPrizes) {
+		return fmt.Errorf("expected %d demo prizes, got %d", len(demoPrizes), len(prizeIDs))
+	}
+	today := domain.Today()
+
+	finished, err := promotions.Create(ctx, service.PromotionInput{
+		TitleRu:       "Летняя гонка",
+		TitleTg:       "Пойгаи тобистона",
+		DescriptionRu: ptr("Кто больше закупил за лето — тот и на пьедестале."),
+		DescriptionTg: ptr("Ҳар кӣ дар тобистон бештар харид — дар пойгоҳ аст."),
+		StartDate:     today.AddDate(0, 0, -120),
+		EndDate:       today.AddDate(0, 0, -30),
+	})
+	if err != nil {
+		return fmt.Errorf("create finished promotion: %w", err)
+	}
+	if err := promotions.SetPrizePlaces(ctx, finished.ID, []service.PrizePlaceInput{
+		{PlaceRank: 1, PrizeID: prizeIDs[0]},
+		{PlaceRank: 2, PrizeID: prizeIDs[1]},
+		{PlaceRank: 3, PrizeID: prizeIDs[2]},
+	}); err != nil {
+		return fmt.Errorf("set prize places: %w", err)
+	}
+	if _, err := promotions.Start(ctx, finished.ID); err != nil {
+		return fmt.Errorf("start finished promotion: %w", err)
+	}
+	if _, err := promotions.Calculate(ctx, finished.ID); err != nil {
+		return fmt.Errorf("calculate finished promotion: %w", err)
+	}
+	if _, err := promotions.Publish(ctx, finished.ID); err != nil {
+		return fmt.Errorf("publish finished promotion: %w", err)
+	}
+
+	running, err := promotions.Create(ctx, service.PromotionInput{
+		TitleRu:       "Осенний рывок",
+		TitleTg:       "Ҳамлаи тирамоҳӣ",
+		DescriptionRu: ptr("Идёт прямо сейчас — итоги подведём после окончания."),
+		StartDate:     today.AddDate(0, 0, -15),
+		EndDate:       today.AddDate(0, 0, 45),
+	})
+	if err != nil {
+		return fmt.Errorf("create running promotion: %w", err)
+	}
+	if err := promotions.SetPrizePlaces(ctx, running.ID, []service.PrizePlaceInput{
+		{PlaceRank: 1, PrizeID: prizeIDs[3]},
+		{PlaceRank: 2, PrizeID: prizeIDs[1]},
+	}); err != nil {
+		return fmt.Errorf("set prize places: %w", err)
+	}
+	if _, err := promotions.Start(ctx, running.ID); err != nil {
+		return fmt.Errorf("start running promotion: %w", err)
+	}
+
+	// Still a draft: the car is the promotion the whole programme is built
+	// around, so it shows the threshold condition in the form.
+	threshold := int64(3_000_000 * diramsPerSomoni)
+	if _, err := promotions.Create(ctx, service.PromotionInput{
+		TitleRu:              "Главный приз года",
+		TitleTg:              "Ҷоизаи асосии сол",
+		DescriptionRu:        ptr("Для дилеров, закупивших от 3 000 000 сомони за всё время."),
+		StartDate:            today.AddDate(0, 0, 10),
+		EndDate:              today.AddDate(0, 0, 190),
+		MinLifetimeThreshold: &threshold,
+	}); err != nil {
+		return fmt.Errorf("create draft promotion: %w", err)
+	}
+
+	fmt.Println("promotions: 3 (published, active, draft)")
+	return nil
+}
+
+func ptr(s string) *string { return &s }

@@ -60,6 +60,46 @@ type Prize struct {
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Promotion struct {
+	ID                           int64              `json:"id"`
+	TitleRu                      string             `json:"title_ru"`
+	TitleTg                      string             `json:"title_tg"`
+	DescriptionRu                pgtype.Text        `json:"description_ru"`
+	DescriptionTg                pgtype.Text        `json:"description_tg"`
+	StartDate                    pgtype.Date        `json:"start_date"`
+	EndDate                      pgtype.Date        `json:"end_date"`
+	CityID                       pgtype.Int8        `json:"city_id"`
+	GradeID                      pgtype.Int8        `json:"grade_id"`
+	MinLifetimePurchaseThreshold pgtype.Int8        `json:"min_lifetime_purchase_threshold"`
+	Status                       string             `json:"status"`
+	CalculatedAt                 pgtype.Timestamptz `json:"calculated_at"`
+	PublishedAt                  pgtype.Timestamptz `json:"published_at"`
+	CreatedAt                    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt                    pgtype.Timestamptz `json:"updated_at"`
+}
+
+type PromotionPrizePlace struct {
+	ID          int64              `json:"id"`
+	PromotionID int64              `json:"promotion_id"`
+	PlaceRank   int32              `json:"place_rank"`
+	PrizeID     int64              `json:"prize_id"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type PromotionResult struct {
+	ID                 int64              `json:"id"`
+	PromotionID        int64              `json:"promotion_id"`
+	DealerID           int64              `json:"dealer_id"`
+	PeriodTotal        int64              `json:"period_total"`
+	PlaceRank          pgtype.Int4        `json:"place_rank"`
+	PrizeID            pgtype.Int8        `json:"prize_id"`
+	IsManuallyAdjusted bool               `json:"is_manually_adjusted"`
+	Awarded            bool               `json:"awarded"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Purchase struct {
 	ID           int64              `json:"id"`
 	DealerID     int64              `json:"dealer_id"`

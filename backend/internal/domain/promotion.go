@@ -148,3 +148,15 @@ func RankParticipants(participants []Participant) []RankedParticipant {
 	}
 	return ranked
 }
+
+// AllPromotionStatuses lists the statuses in lifecycle order, for the tabs
+// above the promotions list.
+func AllPromotionStatuses() []PromotionStatus {
+	return []PromotionStatus{
+		PromotionDraft,
+		PromotionActive,
+		PromotionCalculated,
+		PromotionPublished,
+		PromotionArchived,
+	}
+}

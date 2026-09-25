@@ -121,17 +121,3 @@ func (s *PrizeService) Delete(ctx context.Context, id int64) error {
 	}
 	return nil
 }
-
-func textOrNull(v *string) pgtype.Text {
-	if v == nil {
-		return pgtype.Text{}
-	}
-	return pgtype.Text{String: *v, Valid: true}
-}
-
-func int4OrNull(v *int32) pgtype.Int4 {
-	if v == nil {
-		return pgtype.Int4{}
-	}
-	return pgtype.Int4{Int32: *v, Valid: true}
-}

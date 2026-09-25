@@ -6,17 +6,23 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	CountAdmins(ctx context.Context) (int64, error)
 	CountDealers(ctx context.Context, arg CountDealersParams) (int64, error)
+	CountPromotionsByStatus(ctx context.Context) ([]CountPromotionsByStatusRow, error)
 	CountPurchases(ctx context.Context, arg CountPurchasesParams) (int64, error)
 	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
 	CreateCity(ctx context.Context, arg CreateCityParams) (City, error)
 	CreateDealer(ctx context.Context, arg CreateDealerParams) (Dealer, error)
 	CreateGrade(ctx context.Context, arg CreateGradeParams) (Grade, error)
 	CreatePrize(ctx context.Context, arg CreatePrizeParams) (Prize, error)
+	CreatePrizePlace(ctx context.Context, arg CreatePrizePlaceParams) (PromotionPrizePlace, error)
+	CreatePromotion(ctx context.Context, arg CreatePromotionParams) (Promotion, error)
+	CreatePromotionResult(ctx context.Context, arg CreatePromotionResultParams) error
 	CreatePurchase(ctx context.Context, arg CreatePurchaseParams) (Purchase, error)
 	DashboardTotals(ctx context.Context, arg DashboardTotalsParams) (DashboardTotalsRow, error)
 	DealerCountsByGrade(ctx context.Context) ([]DealerCountsByGradeRow, error)
@@ -24,6 +30,9 @@ type Querier interface {
 	DeleteDealer(ctx context.Context, id int64) (int64, error)
 	DeleteGrade(ctx context.Context, id int64) (int64, error)
 	DeletePrize(ctx context.Context, id int64) (int64, error)
+	DeletePrizePlaces(ctx context.Context, promotionID int64) error
+	DeletePromotion(ctx context.Context, id int64) (int64, error)
+	DeletePromotionResults(ctx context.Context, promotionID int64) error
 	DeletePurchase(ctx context.Context, id int64) (int64, error)
 	GetAdminByID(ctx context.Context, id int64) (Admin, error)
 	GetAdminByLogin(ctx context.Context, login string) (Admin, error)
@@ -32,11 +41,22 @@ type Querier interface {
 	GetDealerByLogin(ctx context.Context, login string) (Dealer, error)
 	GetGradeByID(ctx context.Context, id int64) (Grade, error)
 	GetPrizeByID(ctx context.Context, id int64) (Prize, error)
+	GetPromotionByID(ctx context.Context, id int64) (Promotion, error)
+	GetPromotionResult(ctx context.Context, arg GetPromotionResultParams) (PromotionResult, error)
 	GetPurchaseByID(ctx context.Context, id int64) (Purchase, error)
+	// Period totals for every active dealer, including those who bought
+	// nothing in the window (they still take part, with a total of 0).
+	// Eligibility filters are deliberately left to domain.IsEligible so the
+	// rule has a single, tested implementation; the dealer count is in the
+	// hundreds, so loading them all is fine.
+	ListActiveDealersWithPeriodTotals(ctx context.Context, arg ListActiveDealersWithPeriodTotalsParams) ([]ListActiveDealersWithPeriodTotalsRow, error)
 	ListCities(ctx context.Context) ([]City, error)
 	ListDealers(ctx context.Context, arg ListDealersParams) ([]Dealer, error)
 	ListGrades(ctx context.Context) ([]Grade, error)
+	ListPrizePlaces(ctx context.Context, promotionID int64) ([]ListPrizePlacesRow, error)
 	ListPrizes(ctx context.Context) ([]Prize, error)
+	ListPromotionResults(ctx context.Context, promotionID int64) ([]ListPromotionResultsRow, error)
+	ListPromotions(ctx context.Context, status pgtype.Text) ([]Promotion, error)
 	// The dealer's name comes along so the table doesn't have to resolve ids
 	// against a separately paginated dealer list.
 	ListPurchases(ctx context.Context, arg ListPurchasesParams) ([]ListPurchasesRow, error)
@@ -45,12 +65,18 @@ type Querier interface {
 	SetDealerActive(ctx context.Context, arg SetDealerActiveParams) (Dealer, error)
 	SetDealerGrade(ctx context.Context, arg SetDealerGradeParams) error
 	SetDealerPasswordHash(ctx context.Context, arg SetDealerPasswordHashParams) error
+	SetPromotionStatus(ctx context.Context, arg SetPromotionStatusParams) (Promotion, error)
 	SumPurchases(ctx context.Context, arg SumPurchasesParams) (int64, error)
 	UpdateCity(ctx context.Context, arg UpdateCityParams) (City, error)
 	UpdateDealer(ctx context.Context, arg UpdateDealerParams) (Dealer, error)
 	UpdateGrade(ctx context.Context, arg UpdateGradeParams) (Grade, error)
 	UpdatePrize(ctx context.Context, arg UpdatePrizeParams) (Prize, error)
 	UpdatePrizePhoto(ctx context.Context, arg UpdatePrizePhotoParams) (Prize, error)
+	UpdatePromotion(ctx context.Context, arg UpdatePromotionParams) (Promotion, error)
+	// Manual correction before publication: an admin can move a dealer off a
+	// prize place or swap the prize; the row is flagged so the change is
+	// visible afterwards.
+	UpdatePromotionResult(ctx context.Context, arg UpdatePromotionResultParams) (PromotionResult, error)
 	UpdatePurchase(ctx context.Context, arg UpdatePurchaseParams) (Purchase, error)
 }
 

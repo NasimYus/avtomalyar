@@ -58,6 +58,7 @@ func run() error {
 	prizeService := service.NewPrizeService(repo, fileStore)
 	dealerService := service.NewDealerService(repo)
 	purchaseService := service.NewPurchaseService(repo)
+	promotionService := service.NewPromotionService(repo)
 	dashboardService := service.NewDashboardService(repo)
 
 	handler := transporthttp.NewRouter(transporthttp.Deps{
@@ -68,14 +69,15 @@ func run() error {
 			CookieName:   cfg.CookieName,
 			CookieDomain: cfg.CookieDomain,
 		},
-		Auth:      authService,
-		Cities:    cityService,
-		Grades:    gradeService,
-		Prizes:    prizeService,
-		Dealers:   dealerService,
-		Purchases: purchaseService,
-		Dashboard: dashboardService,
-		UploadDir: cfg.UploadDir,
+		Auth:       authService,
+		Cities:     cityService,
+		Grades:     gradeService,
+		Prizes:     prizeService,
+		Dealers:    dealerService,
+		Purchases:  purchaseService,
+		Promotions: promotionService,
+		Dashboard:  dashboardService,
+		UploadDir:  cfg.UploadDir,
 	})
 
 	srv := &http.Server{

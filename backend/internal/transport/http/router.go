@@ -17,16 +17,17 @@ import (
 // Modules add fields here as they land (cities service, dealers service,
 // ...).
 type Deps struct {
-	Logger    *slog.Logger
-	Session   SessionConfig
-	Auth      authService
-	Cities    cityService
-	Grades    gradeService
-	Prizes    prizeService
-	Dealers   dealerService
-	Purchases purchaseService
-	Dashboard dashboardService
-	UploadDir string
+	Logger     *slog.Logger
+	Session    SessionConfig
+	Auth       authService
+	Cities     cityService
+	Grades     gradeService
+	Prizes     prizeService
+	Dealers    dealerService
+	Purchases  purchaseService
+	Promotions promotionService
+	Dashboard  dashboardService
+	UploadDir  string
 }
 
 // NewRouter builds the top-level chi router.
@@ -52,6 +53,7 @@ func NewRouter(deps Deps) http.Handler {
 	prizeH := &prizeHandler{service: deps.Prizes, logger: deps.Logger, validator: validate}
 	dealerH := &dealerHandler{service: deps.Dealers, logger: deps.Logger, validator: validate}
 	purchaseH := &purchaseHandler{service: deps.Purchases, logger: deps.Logger, validator: validate}
+	promotionH := &promotionHandler{service: deps.Promotions, logger: deps.Logger, validator: validate}
 	dashboardH := &dashboardHandler{service: deps.Dashboard, logger: deps.Logger}
 
 	if deps.UploadDir != "" {
@@ -112,6 +114,21 @@ func NewRouter(deps Deps) http.Handler {
 				r.Get("/{id}", purchaseH.get)
 				r.Put("/{id}", purchaseH.update)
 				r.Delete("/{id}", purchaseH.delete)
+			})
+
+			r.Route("/promotions", func(r chi.Router) {
+				r.Get("/", promotionH.list)
+				r.Post("/", promotionH.create)
+				r.Get("/{id}", promotionH.get)
+				r.Put("/{id}", promotionH.update)
+				r.Delete("/{id}", promotionH.delete)
+				r.Put("/{id}/prize-places", promotionH.setPrizePlaces)
+				r.Post("/{id}/start", promotionH.transition(deps.Promotions.Start))
+				r.Post("/{id}/calculate", promotionH.calculate)
+				r.Get("/{id}/results", promotionH.results)
+				r.Patch("/{id}/results", promotionH.adjustResult)
+				r.Post("/{id}/publish", promotionH.transition(deps.Promotions.Publish))
+				r.Post("/{id}/archive", promotionH.transition(deps.Promotions.Archive))
 			})
 		})
 	})
