@@ -32,14 +32,19 @@ function navItemClasses(isActive: boolean, dense: boolean): string {
   )
 }
 
-/** Left sidebar + content area — the frame every admin page renders into. */
+/**
+ * Left sidebar + content area — the frame every admin page renders into.
+ * The sidebar is pinned to the viewport: a long page scrolls under it, so
+ * the account block and "log out" stay at the bottom of the screen rather
+ * than at the bottom of the page. On a short screen it scrolls on its own.
+ */
 export function AdminShell() {
   const { t } = useTranslation()
   const { data: principal } = useSession()
 
   return (
     <div className="grid min-h-dvh grid-cols-[240px_1fr] bg-canvas">
-      <nav className="flex flex-col gap-1 border-r border-border bg-surface px-4 py-6.5">
+      <nav className="sticky top-0 flex h-dvh flex-col gap-1 self-start overflow-y-auto border-r border-border bg-surface px-4 py-6.5">
         <img src="/logo.png" alt="Автомаляр" className="mx-2 mb-7 w-[170px]" />
 
         {MAIN_NAV.map((item) => (
@@ -82,7 +87,7 @@ export function AdminShell() {
         </div>
       </nav>
 
-      <main className="grid content-start gap-5 px-8 py-7">
+      <main className="grid min-w-0 content-start gap-5 px-8 py-7">
         <Outlet />
       </main>
     </div>
