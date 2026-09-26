@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { usePrizes, type Prize } from '@/entities/prize'
+import { PrizePhoto, usePrizes, type Prize } from '@/entities/prize'
 import { DeletePrizeDialog, PrizeFormDrawer } from '@/features/manage-prize'
 import { Button, Card, EmptyState, PageHeader, PillGroup, SearchInput, Skeleton } from '@/shared/ui'
 
@@ -95,19 +95,7 @@ export function AdminPrizesPage() {
         <div className="grid grid-cols-3 gap-3">
           {visiblePrizes.map((prize) => (
             <Card key={prize.id} padded={false} className="overflow-hidden">
-              {prize.photo_url === undefined ? (
-                <div
-                  className="grid h-[120px] place-items-center text-xs font-medium text-faint"
-                  style={{
-                    background:
-                      'repeating-linear-gradient(135deg, #ececef 0 10px, #f5f5f7 10px 20px)',
-                  }}
-                >
-                  {t('prizes.noPhoto')}
-                </div>
-              ) : (
-                <img src={prize.photo_url} alt="" className="h-[120px] w-full object-cover" />
-              )}
+              <PrizePhoto src={prize.photo_url} />
 
               <div className="grid gap-1 px-4 py-3.5">
                 <div className="text-sm font-extrabold">{prize.name_ru}</div>

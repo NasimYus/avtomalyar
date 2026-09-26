@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
@@ -11,11 +11,8 @@ import {
   type Prize,
 } from '@/entities/prize'
 import { ApiError } from '@/shared/api'
-import { cn } from '@/shared/lib'
 import { Button, ConfirmDialog, Drawer, FormField, Input, Textarea, useToast } from '@/shared/ui'
-
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024
-const ACCEPTED_PHOTO_TYPES = 'image/jpeg,image/png,image/webp'
+import { PrizePhotoField } from './photo-field'
 
 const schema = z.object({
   name_ru: z.string().trim().min(1),
@@ -55,9 +52,8 @@ function PrizeForm({ prize, onClose }: { prize?: Prize; onClose: () => void }) {
   const update = useUpdatePrize()
   const uploadPhoto = useUploadPrizePhoto()
 
-  const fileInput = useRef<HTMLInputElement>(null)
+  // The framed photo, ready to upload; null while the stored one stands.
   const [photo, setPhoto] = useState<File | null>(null)
-  const [photoError, setPhotoError] = useState<string | null>(null)
 
   const {
     register,
@@ -135,17 +131,6 @@ function PrizeForm({ prize, onClose }: { prize?: Prize; onClose: () => void }) {
     }
   })
 
-  const pickPhoto = (file: File | undefined) => {
-    if (!file) return
-    if (file.size > MAX_PHOTO_BYTES) {
-      setPhotoError(t('prizes.photoTooLarge'))
-      setPhoto(null)
-      return
-    }
-    setPhotoError(null)
-    setPhoto(file)
-  }
-
   return (
     <Drawer
       open
@@ -171,48 +156,7 @@ function PrizeForm({ prize, onClose }: { prize?: Prize; onClose: () => void }) {
         className="grid gap-4"
         noValidate
       >
-        <div className="grid gap-1.5">
-          <span className="text-[13px] font-bold">{t('prizes.photo')}</span>
-          <button
-            type="button"
-            onClick={() => {
-              fileInput.current?.click()
-            }}
-            className={cn(
-              'grid h-[140px] place-items-center rounded-[22px] border-2 border-dashed px-3 text-center',
-              'text-xs font-semibold text-muted transition-colors hover:border-brand-red',
-              photoError === null ? 'border-border-dashed' : 'border-brand-red',
-            )}
-          >
-            {photo ? (
-              <img
-                src={URL.createObjectURL(photo)}
-                alt=""
-                className="h-[132px] w-full rounded-[18px] object-cover"
-              />
-            ) : prize?.photo_url !== undefined ? (
-              <img
-                src={prize.photo_url}
-                alt=""
-                className="h-[132px] w-full rounded-[18px] object-cover"
-              />
-            ) : (
-              <span>{t('prizes.photoHint')}</span>
-            )}
-          </button>
-          <input
-            ref={fileInput}
-            type="file"
-            accept={ACCEPTED_PHOTO_TYPES}
-            className="hidden"
-            onChange={(event) => {
-              pickPhoto(event.target.files?.[0])
-            }}
-          />
-          {photoError !== null && (
-            <span className="text-xs font-bold text-brand-red-dark">{photoError}</span>
-          )}
-        </div>
+        <PrizePhotoField currentUrl={prize?.photo_url} onChange={setPhoto} />
 
         <FormField
           label={t('prizes.nameRu')}

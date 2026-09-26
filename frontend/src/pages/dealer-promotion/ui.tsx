@@ -9,6 +9,7 @@ import {
   useMyPromotion,
   type RankingEntry,
 } from '@/entities/cabinet'
+import { PrizePhoto } from '@/entities/prize'
 import { cn, formatDate, formatMoney, todayISO, useLocaleName } from '@/shared/lib'
 import { Badge, Card, CardTitle, EmptyState, LockIcon, Skeleton, TrophyIcon } from '@/shared/ui'
 
@@ -153,16 +154,10 @@ export function DealerPromotionPage() {
                 <PlaceMedal place={place.place_rank} size="md" />
 
                 {place.prize_photo_path !== undefined && (
-                  <img
+                  <PrizePhoto
                     src={place.prize_photo_path}
-                    alt=""
-                    className="size-12 shrink-0 rounded-inner object-cover"
-                    // A prize's photo can be replaced or removed after the
-                    // promotion was set up; a broken image icon next to the
-                    // top prize is worse than no picture at all.
-                    onError={(event) => {
-                      event.currentTarget.hidden = true
-                    }}
+                    placeholder={false}
+                    className="w-16 shrink-0 rounded-[12px]"
                   />
                 )}
 
