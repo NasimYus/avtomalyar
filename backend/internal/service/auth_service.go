@@ -11,12 +11,14 @@ import (
 
 	"github.com/avtomalyar/backend/internal/auth"
 	"github.com/avtomalyar/backend/internal/domain"
+	"github.com/avtomalyar/backend/internal/repository"
 	"github.com/avtomalyar/backend/internal/repository/db"
 )
 
 type authRepository interface {
 	GetAdminByLogin(ctx context.Context, login string) (db.Admin, error)
 	GetDealerByLogin(ctx context.Context, login string) (db.Dealer, error)
+	GetDealerByID(ctx context.Context, id int64) (db.Dealer, error)
 }
 
 // AuthService authenticates admins and dealers against a single
@@ -59,4 +61,17 @@ func (s *AuthService) Login(ctx context.Context, login, password string) (domain
 	}
 
 	return domain.Principal{}, domain.ErrUnauthorized
+}
+
+// IsDealerActive reports whether a dealer may still use the cabinet.
+//
+// Deactivation has to bite immediately, not when the session expires: a
+// blocked dealer with a browser tab already open would otherwise keep
+// their access for the rest of the token's life.
+func (s *AuthService) IsDealerActive(ctx context.Context, id int64) (bool, error) {
+	dealer, err := s.repo.GetDealerByID(ctx, id)
+	if err != nil {
+		return false, fmt.Errorf("look up dealer: %w", repository.TranslateError(err))
+	}
+	return dealer.IsActive, nil
 }

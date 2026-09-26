@@ -74,6 +74,7 @@ func NewRouter(deps Deps) http.Handler {
 		// session, so these routes carry no dealer id of their own.
 		r.Route("/me", func(r chi.Router) {
 			r.Use(requireRole(deps.Logger, domain.RoleDealer))
+			r.Use(requireActiveDealer(deps.Logger, deps.Auth))
 
 			r.Get("/profile", cabinetH.profile)
 			r.Get("/purchases", cabinetH.purchases)

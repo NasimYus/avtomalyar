@@ -14,6 +14,8 @@ import (
 
 type authService interface {
 	Login(ctx context.Context, login, password string) (domain.Principal, error)
+	// Checked on every cabinet request, so deactivation takes hold at once.
+	IsDealerActive(ctx context.Context, id int64) (bool, error)
 }
 
 type loginRequest struct {
@@ -71,6 +73,23 @@ func (h *authHandler) me(w http.ResponseWriter, r *http.Request) {
 		writeError(w, h.logger, domain.ErrUnauthorized)
 		return
 	}
+
+	// A dealer deactivated mid-session has no session left. Answering
+	// "signed out" here rather than letting every cabinet request fail
+	// with 403 is what sends them back to the login screen.
+	if principal.Role == domain.RoleDealer {
+		active, err := h.service.IsDealerActive(r.Context(), principal.ID)
+		if err != nil {
+			writeError(w, h.logger, err)
+			return
+		}
+		if !active {
+			h.session.clearCookie(w)
+			writeError(w, h.logger, domain.ErrUnauthorized)
+			return
+		}
+	}
+
 	writeJSON(w, http.StatusOK, principalResponse{ID: principal.ID, Role: principal.Role, Name: principal.Name})
 }
 

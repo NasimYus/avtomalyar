@@ -33,6 +33,13 @@ func (f fakeAuthRepository) GetDealerByLogin(_ context.Context, login string) (d
 	return db.Dealer{}, pgx.ErrNoRows
 }
 
+func (f fakeAuthRepository) GetDealerByID(_ context.Context, id int64) (db.Dealer, error) {
+	if f.hasDealer && f.dealer.ID == id {
+		return f.dealer, nil
+	}
+	return db.Dealer{}, pgx.ErrNoRows
+}
+
 func mustHash(t *testing.T, plaintext string) string {
 	t.Helper()
 	hash, err := auth.HashPassword(plaintext)
@@ -117,5 +124,46 @@ func TestAuthService_Login_DeactivatedDealer(t *testing.T) {
 	_, err := svc.Login(context.Background(), "dealer1", "dealer-pass")
 	if !errors.Is(err, domain.ErrUnauthorized) {
 		t.Fatalf("Login() error = %v, want %v", err, domain.ErrUnauthorized)
+	}
+}
+
+func TestIsDealerActive(t *testing.T) {
+	tests := []struct {
+		name   string
+		dealer db.Dealer
+		want   bool
+	}{
+		{
+			name:   "an active dealer may use the cabinet",
+			dealer: db.Dealer{ID: 7, Login: "rangsoz", IsActive: true},
+			want:   true,
+		},
+		{
+			name:   "a deactivated dealer may not",
+			dealer: db.Dealer{ID: 7, Login: "rangsoz", IsActive: false},
+			want:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc := NewAuthService(fakeAuthRepository{dealer: tt.dealer, hasDealer: true})
+
+			got, err := svc.IsDealerActive(context.Background(), tt.dealer.ID)
+			if err != nil {
+				t.Fatalf("IsDealerActive() error = %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("IsDealerActive() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsDealerActiveUnknownDealer(t *testing.T) {
+	svc := NewAuthService(fakeAuthRepository{})
+
+	if _, err := svc.IsDealerActive(context.Background(), 404); !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("IsDealerActive() error = %v, want domain.ErrNotFound", err)
 	}
 }
