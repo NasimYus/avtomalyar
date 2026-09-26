@@ -11,13 +11,14 @@ import {
   useUpdatePurchase,
   type Purchase,
 } from '@/entities/purchase'
-import { ApiError } from '@/shared/api'
+import { apiErrorMessage } from '@/shared/api'
 import {
   formatMoney,
   useMoneyWithUnit,
   parseMoneyInput,
   todayISO,
   useDebouncedValue,
+  useLocaleName,
 } from '@/shared/lib'
 import {
   Button,
@@ -58,6 +59,7 @@ export function PurchaseFormDrawer({ open, purchase, dealerId, onClose }: Purcha
 
 function PurchaseForm({ purchase, dealerId, onClose }: Omit<PurchaseFormDrawerProps, 'open'>) {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const money = useMoneyWithUnit()
   const toast = useToast()
   const create = useCreatePurchase()
@@ -122,7 +124,9 @@ function PurchaseForm({ purchase, dealerId, onClose }: Omit<PurchaseFormDrawerPr
     return {
       newTotal,
       gradeChange:
-        nextGrade !== undefined && nextGrade.id !== currentGrade?.id ? nextGrade.name_ru : null,
+        nextGrade !== undefined && nextGrade.id !== currentGrade?.id
+          ? localName(nextGrade.name_ru, nextGrade.name_tg)
+          : null,
     }
   })()
 
@@ -144,7 +148,7 @@ function PurchaseForm({ purchase, dealerId, onClose }: Omit<PurchaseFormDrawerPr
       onClose()
     }
     const onError = (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
+      toast.error(apiErrorMessage(error, t))
     }
 
     if (purchase) {
@@ -299,8 +303,8 @@ export function DeletePurchaseDialog({
             toast.success(t('purchases.deleted'))
             onClose()
           },
-          onError: () => {
-            toast.error(t('errors.generic'))
+          onError: (error) => {
+            toast.error(apiErrorMessage(error, t))
             onClose()
           },
         })

@@ -7,8 +7,8 @@ import {
   type Promotion,
   type PromotionResult,
 } from '@/entities/promotion'
-import { ApiError } from '@/shared/api'
-import { useMoneyWithUnit } from '@/shared/lib'
+import { apiErrorMessage } from '@/shared/api'
+import { useMoneyWithUnit, useLocaleName } from '@/shared/lib'
 import {
   Button,
   ConfirmDialog,
@@ -45,6 +45,7 @@ function AdjustResultForm({
   onClose: () => void
 }) {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const money = useMoneyWithUnit()
   const toast = useToast()
   const adjust = useAdjustResult()
@@ -77,7 +78,7 @@ function AdjustResultForm({
           onClose()
         },
         onError: (error) => {
-          toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
+          toast.error(apiErrorMessage(error, t))
         },
       },
     )
@@ -128,7 +129,10 @@ function AdjustResultForm({
               value={prizeId}
               onChange={setPrizeId}
               options={
-                prizes?.map((prize) => ({ value: String(prize.id), label: prize.name_ru })) ?? []
+                prizes?.map((prize) => ({
+                  value: String(prize.id),
+                  label: localName(prize.name_ru, prize.name_tg),
+                })) ?? []
               }
               placeholder={t('results.noPrize')}
               searchPlaceholder={t('common.search')}
@@ -189,7 +193,7 @@ export function PublishResultsCard({ promotion }: { promotion: Promotion }) {
               setConfirming(false)
             },
             onError: (error) => {
-              toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
+              toast.error(apiErrorMessage(error, t))
               setConfirming(false)
             },
           })

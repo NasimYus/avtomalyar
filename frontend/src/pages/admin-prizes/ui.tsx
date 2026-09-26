@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { PrizePhoto, usePrizes, type Prize } from '@/entities/prize'
 import { DeletePrizeDialog, PrizeFormDrawer } from '@/features/manage-prize'
 import { Button, Card, EmptyState, PageHeader, PillGroup, SearchInput, Skeleton } from '@/shared/ui'
+import { useLocaleName } from '@/shared/lib'
 
 export function AdminPrizesPage() {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const { data: prizes = [], isPending } = usePrizes()
   const [search, setSearch] = useState('')
 
@@ -41,7 +43,7 @@ export function AdminPrizesPage() {
       />
 
       {isPending && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-3">
           <Skeleton className="h-[220px] rounded-card" />
           <Skeleton className="h-[220px] rounded-card" />
           <Skeleton className="h-[220px] rounded-card" />
@@ -92,15 +94,18 @@ export function AdminPrizesPage() {
       )}
 
       {!isPending && visiblePrizes.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-3">
           {visiblePrizes.map((prize) => (
             <Card key={prize.id} padded={false} className="overflow-hidden">
               <PrizePhoto src={prize.photo_url} />
 
               <div className="grid gap-1 px-4 py-3.5">
-                <div className="text-sm font-extrabold">{prize.name_ru}</div>
+                <div className="text-sm font-extrabold">
+                  {localName(prize.name_ru, prize.name_tg)}
+                </div>
                 <div className="text-xs leading-[1.4] text-muted">
-                  {prize.description_ru ?? prize.name_tg}
+                  {localName(prize.description_ru ?? '', prize.description_tg) ||
+                    localName(prize.name_tg, prize.name_ru)}
                   {prize.stock_quantity !== undefined &&
                     ` · ${t('prizes.stockCount', { count: prize.stock_quantity })}`}
                 </div>

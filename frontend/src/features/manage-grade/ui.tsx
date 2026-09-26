@@ -3,8 +3,15 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { useCreateGrade, useDeleteGrade, useUpdateGrade, type Grade } from '@/entities/grade'
-import { ApiError } from '@/shared/api'
-import { TIER_COLORS, cn, formatMoney, isTierColor, parseMoneyInput } from '@/shared/lib'
+import { ApiError, apiErrorMessage } from '@/shared/api'
+import {
+  TIER_COLORS,
+  cn,
+  formatMoney,
+  isTierColor,
+  parseMoneyInput,
+  useLocaleName,
+} from '@/shared/lib'
 import { Button, ConfirmDialog, Drawer, FormField, FormNote, Input, useToast } from '@/shared/ui'
 
 const schema = z.object({
@@ -74,7 +81,7 @@ function GradeForm({ grade, onClose }: { grade?: Grade; onClose: () => void }) {
       toast.error(
         error instanceof ApiError && error.isConflict
           ? t('grades.thresholdTaken')
-          : t('errors.generic'),
+          : apiErrorMessage(error, t),
       )
     }
 
@@ -173,13 +180,16 @@ function GradeForm({ grade, onClose }: { grade?: Grade; onClose: () => void }) {
 
 export function DeleteGradeDialog({ grade, onClose }: { grade?: Grade; onClose: () => void }) {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const toast = useToast()
   const remove = useDeleteGrade()
 
   return (
     <ConfirmDialog
       open={grade !== undefined}
-      title={t('grades.deleteTitle', { name: grade?.name_ru ?? '' })}
+      title={t('grades.deleteTitle', {
+        name: grade ? localName(grade.name_ru, grade.name_tg) : '',
+      })}
       description={t('grades.deleteDescription')}
       confirmLabel={t('common.delete')}
       cancelLabel={t('common.cancel')}
@@ -193,8 +203,8 @@ export function DeleteGradeDialog({ grade, onClose }: { grade?: Grade; onClose: 
             toast.success(t('grades.deleted'))
             onClose()
           },
-          onError: () => {
-            toast.error(t('errors.generic'))
+          onError: (error) => {
+            toast.error(apiErrorMessage(error, t))
             onClose()
           },
         })

@@ -241,7 +241,7 @@ func (s *DealerService) Delete(ctx context.Context, id int64) error {
 	rows, err := s.repo.DeleteDealer(ctx, id)
 	if err != nil {
 		if errors.Is(repository.TranslateError(err), domain.ErrConflict) {
-			return fmt.Errorf("%w: dealer has purchases and can only be deactivated", domain.ErrConflict)
+			return domain.Reasoned(domain.ErrConflict, "dealer_has_purchases", "dealer has purchases and can only be deactivated")
 		}
 		return fmt.Errorf("delete dealer: %w", repository.TranslateError(err))
 	}

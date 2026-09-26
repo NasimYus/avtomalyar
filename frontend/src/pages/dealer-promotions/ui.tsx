@@ -24,9 +24,11 @@ export function DealerPromotionsPage() {
           {current.length > 0 && (
             <section className="flex flex-col gap-3">
               <CardTitle>{t('cabinet.promotionsTitle')}</CardTitle>
-              {current.map((promotion) => (
-                <PromotionCard key={promotion.id} promotion={promotion} />
-              ))}
+              <div className="grid gap-3 lg:grid-cols-2">
+                {current.map((promotion) => (
+                  <PromotionCard key={promotion.id} promotion={promotion} />
+                ))}
+              </div>
             </section>
           )}
 
@@ -38,9 +40,11 @@ export function DealerPromotionsPage() {
                   {t('cabinet.aheadDescription')}
                 </p>
               </div>
-              {ahead.map((promotion) => (
-                <PromotionCard key={promotion.id} promotion={promotion} />
-              ))}
+              <div className="grid gap-3 lg:grid-cols-2">
+                {ahead.map((promotion) => (
+                  <PromotionCard key={promotion.id} promotion={promotion} />
+                ))}
+              </div>
             </section>
           )}
 
@@ -53,9 +57,11 @@ export function DealerPromotionsPage() {
                   {t('cabinet.archiveDescription')}
                 </p>
               </div>
-              {archive.map((promotion) => (
-                <PromotionCard key={promotion.id} promotion={promotion} />
-              ))}
+              <div className="grid gap-3 lg:grid-cols-2">
+                {archive.map((promotion) => (
+                  <PromotionCard key={promotion.id} promotion={promotion} />
+                ))}
+              </div>
             </section>
           )}
         </>

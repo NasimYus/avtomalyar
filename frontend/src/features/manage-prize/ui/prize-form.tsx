@@ -10,9 +10,10 @@ import {
   useUploadPrizePhoto,
   type Prize,
 } from '@/entities/prize'
-import { ApiError } from '@/shared/api'
+import { ApiError, apiErrorMessage } from '@/shared/api'
 import { Button, ConfirmDialog, Drawer, FormField, Input, Textarea, useToast } from '@/shared/ui'
 import { PrizePhotoField } from './photo-field'
+import { useLocaleName } from '@/shared/lib'
 
 const schema = z.object({
   name_ru: z.string().trim().min(1),
@@ -104,7 +105,7 @@ function PrizeForm({ prize, onClose }: { prize?: Prize; onClose: () => void }) {
       onClose()
     }
     const onError = (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
+      toast.error(apiErrorMessage(error, t))
     }
 
     if (prize) {
@@ -214,13 +215,16 @@ function PrizeForm({ prize, onClose }: { prize?: Prize; onClose: () => void }) {
 
 export function DeletePrizeDialog({ prize, onClose }: { prize?: Prize; onClose: () => void }) {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const toast = useToast()
   const remove = useDeletePrize()
 
   return (
     <ConfirmDialog
       open={prize !== undefined}
-      title={t('prizes.deleteTitle', { name: prize?.name_ru ?? '' })}
+      title={t('prizes.deleteTitle', {
+        name: prize ? localName(prize.name_ru, prize.name_tg) : '',
+      })}
       description={t('prizes.deleteDescription')}
       confirmLabel={t('common.delete')}
       cancelLabel={t('common.cancel')}
@@ -238,7 +242,7 @@ export function DeletePrizeDialog({ prize, onClose }: { prize?: Prize; onClose: 
             toast.error(
               error instanceof ApiError && error.isConflict
                 ? t('prizes.deleteConflict')
-                : t('errors.generic'),
+                : apiErrorMessage(error, t),
             )
             onClose()
           },

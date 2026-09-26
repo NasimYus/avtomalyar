@@ -220,7 +220,7 @@ func (s *PurchaseService) Delete(ctx context.Context, id int64) error {
 
 func validatePurchase(amount int64, purchaseDate time.Time) error {
 	if amount <= 0 {
-		return fmt.Errorf("%w: purchase amount must be positive", domain.ErrValidation)
+		return domain.Reasoned(domain.ErrValidation, "purchase_amount_not_positive", "purchase amount must be positive")
 	}
 
 	givenDate := time.Date(
@@ -228,7 +228,7 @@ func validatePurchase(amount int64, purchaseDate time.Time) error {
 		0, 0, 0, 0, domain.BusinessLocation,
 	)
 	if givenDate.After(domain.Today()) {
-		return fmt.Errorf("%w: purchase date cannot be in the future", domain.ErrValidation)
+		return domain.Reasoned(domain.ErrValidation, "purchase_date_in_future", "purchase date cannot be in the future")
 	}
 	return nil
 }

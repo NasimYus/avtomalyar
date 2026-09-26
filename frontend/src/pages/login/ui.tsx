@@ -25,7 +25,7 @@ export function LoginPage() {
             }}
           />
           <div className="relative">
-            <img src="/logo.png" alt="Автомаляр" className="w-[220px] brightness-0 invert" />
+            <img src="/logo.png" alt={t('app.name')} className="w-[220px] brightness-0 invert" />
             <h1 className="mt-7 text-[30px] leading-[1.1] font-black">{t('auth.heroTitle')}</h1>
             <p className="mt-2.5 text-sm font-medium opacity-90">{t('auth.heroSubtitle')}</p>
           </div>

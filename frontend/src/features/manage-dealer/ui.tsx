@@ -10,8 +10,8 @@ import {
   useUpdateDealer,
   type Dealer,
 } from '@/entities/dealer'
-import { ApiError } from '@/shared/api'
-import { formatMoney, formatPhone, isPhoneComplete } from '@/shared/lib'
+import { ApiError, apiErrorMessage } from '@/shared/api'
+import { formatMoney, formatPhone, isPhoneComplete, useLocaleName } from '@/shared/lib'
 import {
   Button,
   ConfirmDialog,
@@ -50,6 +50,7 @@ export function DealerFormDrawer({ open, dealer, onClose, onCreated }: DealerFor
 
 function DealerForm({ dealer, onClose, onCreated }: Omit<DealerFormDrawerProps, 'open'>) {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const toast = useToast()
   const { data: cities = [] } = useCities()
   const create = useCreateDealer()
@@ -79,7 +80,7 @@ function DealerForm({ dealer, onClose, onCreated }: Omit<DealerFormDrawerProps, 
     }
 
     const onError = (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
+      toast.error(apiErrorMessage(error, t))
     }
 
     if (dealer) {
@@ -188,7 +189,7 @@ function DealerForm({ dealer, onClose, onCreated }: Omit<DealerFormDrawerProps, 
                   onChange={field.onChange}
                   options={cities.map((city) => ({
                     value: String(city.id),
-                    label: city.name_ru,
+                    label: localName(city.name_ru, city.name_tg),
                     hint: city.name_tg,
                   }))}
                   placeholder={t('dealers.selectCity')}
@@ -243,8 +244,8 @@ export function ToggleDealerActiveDialog({
               toast.success(deactivating ? t('dealers.deactivated') : t('dealers.activated'))
               onClose()
             },
-            onError: () => {
-              toast.error(t('errors.generic'))
+            onError: (error) => {
+              toast.error(apiErrorMessage(error, t))
               onClose()
             },
           },
@@ -291,7 +292,7 @@ export function DeleteDealerDialog({ dealer, onClose }: { dealer?: Dealer; onClo
             toast.error(
               error instanceof ApiError && error.isConflict
                 ? t('dealers.deleteConflict')
-                : t('errors.generic'),
+                : apiErrorMessage(error, t),
             )
             onClose()
           },

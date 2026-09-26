@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGrades, type Grade } from '@/entities/grade'
 import { DeleteGradeDialog, GradeFormDrawer } from '@/features/manage-grade'
-import { isTierColor, tierAt, useMoneyWithUnit } from '@/shared/lib'
+import { isTierColor, tierAt, useMoneyWithUnit, useLocaleName } from '@/shared/lib'
 import {
   Button,
   Card,
@@ -16,6 +16,7 @@ import {
 
 export function AdminGradesPage() {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const money = useMoneyWithUnit()
   const { data: grades = [], isPending } = useGrades()
 
@@ -41,7 +42,7 @@ export function AdminGradesPage() {
       />
 
       {isPending && (
-        <div className="grid gap-3.5">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-3.5">
           <Skeleton className="h-[76px] rounded-card" />
           <Skeleton className="h-[76px] rounded-card" />
         </div>
@@ -60,7 +61,7 @@ export function AdminGradesPage() {
       )}
 
       {!isPending && grades.length > 0 && (
-        <div className="grid gap-3.5">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-3.5">
           {/* The whole ladder as the cabinet paints it, so the admin sees
               the effect of a colour change without logging in as a dealer. */}
           <Card>
@@ -68,7 +69,7 @@ export function AdminGradesPage() {
             <div className="mt-3.5 flex flex-wrap items-center gap-x-2 gap-y-3">
               {grades.map((grade, index) => (
                 <TierBadge key={grade.id} tier={tierAt(index, grades.length, grade.color)}>
-                  {grade.name_ru}
+                  {localName(grade.name_ru, grade.name_tg)}
                 </TierBadge>
               ))}
             </div>
@@ -80,14 +81,21 @@ export function AdminGradesPage() {
               <Card
                 key={grade.id}
                 padded={false}
-                className="grid grid-cols-[44px_1fr_auto_auto] items-center gap-3.5 px-[18px] py-4"
+                className="flex flex-wrap items-center gap-x-3.5 gap-y-3 px-[18px] py-4"
               >
-                <TierMedal tier={tier} size="md" label={grade.name_ru} className="size-11" />
-                <div className="min-w-0">
-                  <div className="text-[15px] font-extrabold">{grade.name_ru}</div>
+                <TierMedal
+                  tier={tier}
+                  size="md"
+                  label={localName(grade.name_ru, grade.name_tg)}
+                  className="size-11"
+                />
+                <div className="min-w-0 flex-1 basis-[200px]">
+                  <div className="text-[15px] font-extrabold">
+                    {localName(grade.name_ru, grade.name_tg)}
+                  </div>
                   <div className="truncate text-xs text-muted">
-                    {grade.name_tg} · {t('grades.level', { level: tier.level })} ·{' '}
-                    {t(`grades.colors.${tier.color}`)}
+                    {localName(grade.name_tg, grade.name_ru)} ·{' '}
+                    {t('grades.level', { level: tier.level })} · {t(`grades.colors.${tier.color}`)}
                     {!isTierColor(grade.color) && ` (${t('grades.autoColor')})`}
                   </div>
                 </div>

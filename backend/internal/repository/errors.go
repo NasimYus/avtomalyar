@@ -2,7 +2,6 @@ package repository
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -33,8 +32,10 @@ func TranslateError(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		switch pgErr.Code {
-		case pgErrUniqueViolation, pgErrForeignKeyViolation:
-			return fmt.Errorf("%w: %s", domain.ErrConflict, pgErr.Message)
+		case pgErrUniqueViolation:
+			return domain.Reasoned(domain.ErrConflict, "duplicate", "%s", pgErr.Message)
+		case pgErrForeignKeyViolation:
+			return domain.Reasoned(domain.ErrConflict, "in_use", "%s", pgErr.Message)
 		}
 	}
 

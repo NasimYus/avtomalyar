@@ -10,7 +10,7 @@ import {
   DeleteDealerDialog,
   ToggleDealerActiveDialog,
 } from '@/features/manage-dealer'
-import { formatMoney, tierOf } from '@/shared/lib'
+import { formatMoney, tierOf, useLocaleName } from '@/shared/lib'
 import {
   Avatar,
   Badge,
@@ -37,6 +37,7 @@ const PER_PAGE = 20
 
 export function AdminDealersPage() {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const { data: cities = [] } = useCities()
   const { data: grades = [] } = useGrades()
 
@@ -63,10 +64,15 @@ export function AdminDealersPage() {
   // dealer is created so their first password can be handed over.
   const [access, setAccess] = useState<{ dealer: Dealer; password?: string } | undefined>(undefined)
 
-  const gradeName = (id: number | undefined) =>
-    grades.find((grade) => grade.id === id)?.name_ru ?? '—'
+  const gradeName = (id: number | undefined) => {
+    const grade = grades.find((item) => item.id === id)
+    return grade ? localName(grade.name_ru, grade.name_tg) : '—'
+  }
 
-  const cityName = (id: number) => cities.find((city) => city.id === id)?.name_ru ?? '—'
+  const cityName = (id: number) => {
+    const city = cities.find((item) => item.id === id)
+    return city ? localName(city.name_ru, city.name_tg) : '—'
+  }
 
   const resetFilters = () => {
     setSearch('')
@@ -106,6 +112,7 @@ export function AdminDealersPage() {
     },
     {
       key: 'grade',
+      mobile: 'aside',
       header: t('dealers.columnGrade'),
       width: '1fr',
       render: (dealer) => {
@@ -120,6 +127,7 @@ export function AdminDealersPage() {
     },
     {
       key: 'total',
+      mobile: 'aside',
       header: t('dealers.columnTotal'),
       width: '140px',
       align: 'right',
@@ -213,7 +221,10 @@ export function AdminDealersPage() {
             setCityId(next === '' ? undefined : Number(next))
             setPage(1)
           }}
-          options={cities.map((city) => ({ value: String(city.id), label: city.name_ru }))}
+          options={cities.map((city) => ({
+            value: String(city.id),
+            label: localName(city.name_ru, city.name_tg),
+          }))}
           placeholder={t('dealers.allCities')}
           searchPlaceholder={t('common.searchCity')}
           emptyText={t('common.notFound')}
@@ -238,7 +249,7 @@ export function AdminDealersPage() {
               setPage(1)
             }}
           >
-            {grade.name_ru}
+            {localName(grade.name_ru, grade.name_tg)}
           </FilterPill>
         ))}
 

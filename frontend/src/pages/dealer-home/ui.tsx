@@ -42,86 +42,99 @@ export function DealerHomePage() {
         </p>
       </div>
 
-      <LevelUpCard profile={profile} />
-      <GradeCard profile={profile} />
-      <GradeLadder profile={profile} />
-
-      <section className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <CardTitle>{t('cabinet.promotionsTitle')}</CardTitle>
-          <Link
-            to="/me/promotions"
-            className="text-[13px] font-bold text-brand-red hover:underline"
-          >
-            {t('cabinet.showAll')}
-          </Link>
+      {/* One column on a phone; from lg the grade and the road ahead sit on
+          the left, promotions and purchases on the right. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
+        <div className="grid content-start gap-4">
+          <LevelUpCard profile={profile} />
+          <GradeCard profile={profile} />
+          <GradeLadder profile={profile} />
         </div>
 
-        {promotions === undefined ? (
-          <Skeleton className="h-[130px]" />
-        ) : current.length === 0 ? (
-          <EmptyState
-            title={t('cabinet.promotionsEmptyTitle')}
-            description={t('cabinet.promotionsEmptyDescription')}
-          />
-        ) : (
-          current
-            .slice(0, 2)
-            .map((promotion) => <PromotionCard key={promotion.id} promotion={promotion} />)
-        )}
-      </section>
+        <div className="grid content-start gap-4">
+          <section className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <CardTitle>{t('cabinet.promotionsTitle')}</CardTitle>
+              <Link
+                to="/me/promotions"
+                className="text-[13px] font-bold text-brand-red hover:underline"
+              >
+                {t('cabinet.showAll')}
+              </Link>
+            </div>
 
-      {/*
-        What the dealer can aim at next: promotions that have not started
-        and ones whose conditions they have not met. Hidden entirely when
-        there is nothing ahead, rather than shown as an empty block.
-      */}
-      {ahead.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <div>
-            <CardTitle>{t('cabinet.aheadTitle')}</CardTitle>
-            <p className="mt-0.5 text-[13px] font-semibold text-muted">
-              {t('cabinet.aheadDescription')}
-            </p>
-          </div>
+            {promotions === undefined ? (
+              <Skeleton className="h-[130px]" />
+            ) : current.length === 0 ? (
+              <EmptyState
+                title={t('cabinet.promotionsEmptyTitle')}
+                description={t('cabinet.promotionsEmptyDescription')}
+              />
+            ) : (
+              current
+                .slice(0, 2)
+                .map((promotion) => <PromotionCard key={promotion.id} promotion={promotion} />)
+            )}
+          </section>
 
-          {ahead.slice(0, 3).map((promotion) => (
-            <PromotionCard key={promotion.id} promotion={promotion} />
-          ))}
-        </section>
-      )}
-
-      <section className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <CardTitle>{t('cabinet.recentPurchases')}</CardTitle>
-          <Link to="/me/purchases" className="text-[13px] font-bold text-brand-red hover:underline">
-            {t('cabinet.showAll')}
-          </Link>
-        </div>
-
-        {purchases === undefined ? (
-          <Skeleton className="h-[140px]" />
-        ) : purchases.items.length === 0 ? (
-          <EmptyState
-            title={t('cabinet.purchasesEmptyTitle')}
-            description={t('cabinet.purchasesEmptyDescription')}
-          />
-        ) : (
-          <Card padded={false} className="divide-y divide-line px-[18px]">
-            {purchases.items.map((purchase) => (
-              <div key={purchase.id} className="flex items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <b className="block">{formatDate(purchase.purchase_date)}</b>
-                  {purchase.comment !== undefined && (
-                    <span className="block truncate text-xs text-muted">{purchase.comment}</span>
-                  )}
-                </div>
-                <b className="whitespace-nowrap">{formatMoney(purchase.amount)}</b>
+          {/*
+            What the dealer can aim at next: promotions that have not started
+            and ones whose conditions they have not met. Hidden entirely when
+            there is nothing ahead, rather than shown as an empty block.
+          */}
+          {ahead.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <div>
+                <CardTitle>{t('cabinet.aheadTitle')}</CardTitle>
+                <p className="mt-0.5 text-[13px] font-semibold text-muted">
+                  {t('cabinet.aheadDescription')}
+                </p>
               </div>
-            ))}
-          </Card>
-        )}
-      </section>
+
+              {ahead.slice(0, 3).map((promotion) => (
+                <PromotionCard key={promotion.id} promotion={promotion} />
+              ))}
+            </section>
+          )}
+
+          <section className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <CardTitle>{t('cabinet.recentPurchases')}</CardTitle>
+              <Link
+                to="/me/purchases"
+                className="text-[13px] font-bold text-brand-red hover:underline"
+              >
+                {t('cabinet.showAll')}
+              </Link>
+            </div>
+
+            {purchases === undefined ? (
+              <Skeleton className="h-[140px]" />
+            ) : purchases.items.length === 0 ? (
+              <EmptyState
+                title={t('cabinet.purchasesEmptyTitle')}
+                description={t('cabinet.purchasesEmptyDescription')}
+              />
+            ) : (
+              <Card padded={false} className="divide-y divide-line px-[18px]">
+                {purchases.items.map((purchase) => (
+                  <div key={purchase.id} className="flex items-center justify-between gap-3 py-3">
+                    <div className="min-w-0">
+                      <b className="block">{formatDate(purchase.purchase_date)}</b>
+                      {purchase.comment !== undefined && (
+                        <span className="block truncate text-xs text-muted">
+                          {purchase.comment}
+                        </span>
+                      )}
+                    </div>
+                    <b className="whitespace-nowrap">{formatMoney(purchase.amount)}</b>
+                  </div>
+                ))}
+              </Card>
+            )}
+          </section>
+        </div>
+      </div>
     </>
   )
 }

@@ -2,6 +2,8 @@
 interface ApiErrorBody {
   error?: {
     code?: string
+    /** Which rule was broken ("city_in_use"), when the API says. */
+    reason?: string
     message?: string
     fields?: Record<string, string>
   }
@@ -12,13 +14,22 @@ export class ApiError extends Error {
   readonly status: number
   readonly code: string
   readonly fields: Record<string, string>
+  /** Machine-readable cause, translated by apiErrorMessage; '' if none. */
+  readonly reason: string
 
-  constructor(status: number, code: string, message: string, fields: Record<string, string> = {}) {
+  constructor(
+    status: number,
+    code: string,
+    message: string,
+    fields: Record<string, string> = {},
+    reason = '',
+  ) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
     this.fields = fields
+    this.reason = reason
   }
 
   get isUnauthorized(): boolean {
@@ -54,6 +65,7 @@ async function toApiError(response: Response): Promise<ApiError> {
     body.error?.code ?? 'unknown_error',
     body.error?.message ?? response.statusText,
     body.error?.fields ?? {},
+    body.error?.reason ?? '',
   )
 }
 

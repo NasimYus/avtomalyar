@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
+	"github.com/avtomalyar/backend/internal/domain"
 	"github.com/avtomalyar/backend/internal/repository/db"
 	"github.com/avtomalyar/backend/internal/service"
 )
@@ -172,7 +173,7 @@ func (h *prizeHandler) uploadPhoto(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var maxBytesErr *http.MaxBytesError
 		if errors.As(err, &maxBytesErr) {
-			writeJSONError(w, http.StatusBadRequest, "validation_error", "photo exceeds the 5MB limit", nil)
+			writeError(w, h.logger, domain.Reasoned(domain.ErrValidation, "photo_too_large", "photo exceeds the 5MB limit"))
 			return
 		}
 		writeJSONError(w, http.StatusBadRequest, "validation_error", "missing \"photo\" file field", nil)
@@ -189,7 +190,7 @@ func (h *prizeHandler) uploadPhoto(w http.ResponseWriter, r *http.Request) {
 	contentType := http.DetectContentType(data)
 	ext, ok := allowedPhotoExtensions[contentType]
 	if !ok {
-		writeJSONError(w, http.StatusBadRequest, "validation_error", "photo must be JPEG, PNG or WebP", nil)
+		writeError(w, h.logger, domain.Reasoned(domain.ErrValidation, "photo_type", "photo must be JPEG, PNG or WebP"))
 		return
 	}
 

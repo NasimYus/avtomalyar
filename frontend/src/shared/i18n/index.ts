@@ -43,4 +43,12 @@ void i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
 })
 
+// Screen readers and the browser's hyphenation follow <html lang>, so it
+// tracks the interface language rather than staying "ru" from index.html.
+const syncDocumentLanguage = (language: string) => {
+  if (typeof document !== 'undefined') document.documentElement.lang = language
+}
+syncDocumentLanguage(i18n.language)
+i18n.on('languageChanged', syncDocumentLanguage)
+
 export default i18n

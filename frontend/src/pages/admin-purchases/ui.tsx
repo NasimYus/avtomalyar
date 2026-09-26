@@ -88,6 +88,7 @@ export function AdminPurchasesPage() {
   const columns: Column<Purchase>[] = [
     {
       key: 'date',
+      mobile: 'field',
       header: t('purchases.columnDate'),
       width: '110px',
       render: (purchase) => (
@@ -96,6 +97,7 @@ export function AdminPurchasesPage() {
     },
     {
       key: 'dealer',
+      mobile: 'title',
       header: t('purchases.columnDealer'),
       width: '1.5fr',
       render: (purchase) => <b className="block truncate">{purchase.dealer_name ?? '—'}</b>,
@@ -110,6 +112,7 @@ export function AdminPurchasesPage() {
     },
     {
       key: 'amount',
+      mobile: 'aside',
       header: t('purchases.columnAmount'),
       width: '130px',
       align: 'right',

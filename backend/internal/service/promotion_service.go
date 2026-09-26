@@ -197,10 +197,10 @@ func (s *PromotionService) Get(ctx context.Context, id int64) (db.Promotion, []d
 
 func validatePromotionInput(input PromotionInput) error {
 	if input.EndDate.Before(input.StartDate) {
-		return fmt.Errorf("%w: end date cannot be before the start date", domain.ErrValidation)
+		return domain.Reasoned(domain.ErrValidation, "end_before_start", "end date cannot be before the start date")
 	}
 	if input.MinLifetimeThreshold != nil && *input.MinLifetimeThreshold < 0 {
-		return fmt.Errorf("%w: threshold cannot be negative", domain.ErrValidation)
+		return domain.Reasoned(domain.ErrValidation, "threshold_negative", "threshold cannot be negative")
 	}
 	return nil
 }
@@ -241,7 +241,7 @@ func (s *PromotionService) Update(ctx context.Context, id int64, input Promotion
 		return db.Promotion{}, fmt.Errorf("get promotion: %w", repository.TranslateError(err))
 	}
 	if !domain.PromotionStatus(existing.Status).IsEditable() {
-		return db.Promotion{}, fmt.Errorf("%w: promotion is no longer editable", domain.ErrConflict)
+		return db.Promotion{}, domain.Reasoned(domain.ErrConflict, "promotion_not_editable", "promotion is no longer editable")
 	}
 
 	promotion, err := s.repo.UpdatePromotion(ctx, db.UpdatePromotionParams{
@@ -270,16 +270,16 @@ func (s *PromotionService) SetPrizePlaces(ctx context.Context, id int64, places 
 		return fmt.Errorf("get promotion: %w", repository.TranslateError(err))
 	}
 	if !domain.PromotionStatus(existing.Status).IsEditable() {
-		return fmt.Errorf("%w: promotion is no longer editable", domain.ErrConflict)
+		return domain.Reasoned(domain.ErrConflict, "promotion_not_editable", "promotion is no longer editable")
 	}
 
 	seen := make(map[int32]bool, len(places))
 	for _, place := range places {
 		if place.PlaceRank < 1 {
-			return fmt.Errorf("%w: place must be positive", domain.ErrValidation)
+			return domain.Reasoned(domain.ErrValidation, "place_not_positive", "place must be positive")
 		}
 		if seen[place.PlaceRank] {
-			return fmt.Errorf("%w: place %d is listed twice", domain.ErrValidation, place.PlaceRank)
+			return domain.Reasoned(domain.ErrValidation, "place_duplicate", "place %d is listed twice", place.PlaceRank)
 		}
 		seen[place.PlaceRank] = true
 	}
@@ -313,7 +313,7 @@ func (s *PromotionService) Delete(ctx context.Context, id int64) error {
 		return fmt.Errorf("get promotion: %w", repository.TranslateError(err))
 	}
 	if domain.PromotionStatus(existing.Status) != domain.PromotionDraft {
-		return fmt.Errorf("%w: only a draft can be deleted, archive it instead", domain.ErrConflict)
+		return domain.Reasoned(domain.ErrConflict, "promotion_not_draft", "only a draft can be deleted, archive it instead")
 	}
 
 	rows, err := s.repo.DeletePromotion(ctx, id)
@@ -336,8 +336,8 @@ func (s *PromotionService) transition(ctx context.Context, id int64, to domain.P
 
 	from := domain.PromotionStatus(existing.Status)
 	if !domain.CanTransition(from, to) {
-		return db.Promotion{}, fmt.Errorf(
-			"%w: cannot move a promotion from %q to %q", domain.ErrConflict, from, to)
+		return db.Promotion{}, domain.Reasoned(
+			domain.ErrConflict, "promotion_bad_transition", "cannot move a promotion from %q to %q", from, to)
 	}
 
 	var updated db.Promotion

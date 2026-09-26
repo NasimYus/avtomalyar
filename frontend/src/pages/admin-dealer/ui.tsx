@@ -10,7 +10,7 @@ import {
   DealerFormDrawer,
   ToggleDealerActiveDialog,
 } from '@/features/manage-dealer'
-import { formatDate, formatMoney, tierAt, useMoneyWithUnit } from '@/shared/lib'
+import { formatDate, formatMoney, tierAt, useMoneyWithUnit, useLocaleName } from '@/shared/lib'
 import {
   Badge,
   TierBadge,
@@ -42,6 +42,7 @@ interface PurchaseRow {
  */
 export function AdminDealerPage() {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const money = useMoneyWithUnit()
   const { id } = useParams()
   const dealerId = Number(id)
@@ -102,6 +103,7 @@ export function AdminDealerPage() {
     },
     {
       key: 'amount',
+      mobile: 'aside',
       header: t('purchases.columnAmount'),
       width: '140px',
       align: 'right',
@@ -122,7 +124,7 @@ export function AdminDealerPage() {
             {!dealer.is_active && <Badge tone="danger">{t('dealers.inactive')}</Badge>}
             {grade !== undefined && grades !== undefined && (
               <TierBadge tier={tierAt(gradeIndex, grades.length, grade.color)}>
-                {grade.name_ru}
+                {localName(grade.name_ru, grade.name_tg)}
               </TierBadge>
             )}
           </span>
@@ -162,28 +164,38 @@ export function AdminDealerPage() {
         }
       />
 
-      <section className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
+      <section className="grid grid-cols-1 gap-3.5 min-[480px]:grid-cols-2 xl:grid-cols-4">
         <Card padded={false} className="px-[22px] py-5">
-          <div className="text-[13px] font-semibold text-muted">{t('dealers.columnTotal')}</div>
+          <div className="text-xs font-bold tracking-[0.04em] text-muted uppercase">
+            {t('dealers.columnTotal')}
+          </div>
           <div className="mt-1.5 text-[26px] font-black whitespace-nowrap">
             {money(dealer.lifetime_purchase_total)}
           </div>
         </Card>
         <Card padded={false} className="px-[22px] py-5">
-          <div className="text-[13px] font-semibold text-muted">{t('dealers.columnCity')}</div>
-          <div className="mt-1.5 text-[20px] font-black">{city?.name_ru ?? '—'}</div>
+          <div className="text-xs font-bold tracking-[0.04em] text-muted uppercase">
+            {t('dealers.columnCity')}
+          </div>
+          <div className="mt-1.5 text-[20px] font-black">
+            {city ? localName(city.name_ru, city.name_tg) : '—'}
+          </div>
         </Card>
         <Card padded={false} className="px-[22px] py-5">
-          <div className="text-[13px] font-semibold text-muted">{t('dealers.phone')}</div>
+          <div className="text-xs font-bold tracking-[0.04em] text-muted uppercase">
+            {t('dealers.phone')}
+          </div>
           <div className="mt-1.5 text-[20px] font-black whitespace-nowrap">{dealer.phone}</div>
         </Card>
         <Card padded={false} className="px-[22px] py-5">
-          <div className="text-[13px] font-semibold text-muted">{t('dealers.login')}</div>
+          <div className="text-xs font-bold tracking-[0.04em] text-muted uppercase">
+            {t('dealers.login')}
+          </div>
           <div className="mt-1.5 truncate text-[20px] font-black">{dealer.login}</div>
         </Card>
       </section>
 
-      <section className="grid gap-3">
+      <section className="grid grid-cols-[minmax(0,1fr)] gap-3">
         <CardTitle>{t('dealers.promotionsTitle')}</CardTitle>
         {promotions === undefined ? (
           <Skeleton className="h-[120px] rounded-card" />
@@ -201,7 +213,7 @@ export function AdminDealerPage() {
         )}
       </section>
 
-      <section className="grid gap-3">
+      <section className="grid grid-cols-[minmax(0,1fr)] gap-3">
         <div className="flex items-baseline justify-between gap-3">
           <CardTitle>{t('dealers.purchasesTitle')}</CardTitle>
           <Link
@@ -251,6 +263,7 @@ export function AdminDealerPage() {
 /** One promotion the dealer takes part in, with where they stand in it. */
 function PromotionRow({ promotion }: { promotion: DealerPromotion }) {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const standing = promotion.standing
 
   return (
@@ -259,7 +272,7 @@ function PromotionRow({ promotion }: { promotion: DealerPromotion }) {
       className="flex items-center gap-4 py-3.5"
     >
       <div className="min-w-0 flex-1">
-        <b className="block truncate">{promotion.title_ru}</b>
+        <b className="block truncate">{localName(promotion.title_ru, promotion.title_tg)}</b>
         <span className="block text-xs font-semibold text-muted">
           {formatDate(promotion.start_date)} — {formatDate(promotion.end_date)}
         </span>

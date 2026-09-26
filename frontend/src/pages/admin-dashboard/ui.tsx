@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useDashboardSummary } from '@/entities/dashboard'
 import { usePurchases } from '@/entities/purchase'
-import { cn, formatDate, formatMoney, tierAt, useMoneyWithUnit } from '@/shared/lib'
+import { cn, formatDate, formatMoney, tierAt, useMoneyWithUnit, useLocaleName } from '@/shared/lib'
 import {
   Card,
   CardTitle,
@@ -26,6 +26,7 @@ interface RecentPurchase {
 
 export function AdminDashboardPage() {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const money = useMoneyWithUnit()
   const { data: summary, isPending } = useDashboardSummary()
   const { data: recent } = usePurchases({ per_page: RECENT_PURCHASES })
@@ -42,6 +43,7 @@ export function AdminDashboardPage() {
   const columns: Column<RecentPurchase>[] = [
     {
       key: 'date',
+      mobile: 'field',
       header: t('purchases.columnDate'),
       width: '110px',
       render: (purchase) => (
@@ -50,12 +52,14 @@ export function AdminDashboardPage() {
     },
     {
       key: 'dealer',
+      mobile: 'title',
       header: t('purchases.columnDealer'),
       width: '1fr',
       render: (purchase) => <b className="block truncate">{purchase.dealer_name ?? '—'}</b>,
     },
     {
       key: 'amount',
+      mobile: 'aside',
       header: t('purchases.columnAmount'),
       width: '140px',
       align: 'right',
@@ -68,7 +72,7 @@ export function AdminDashboardPage() {
       <PageHeader title={t('dashboard.title')} />
 
       {isPending && (
-        <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3.5 min-[480px]:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 5 }, (_, index) => (
             <Skeleton key={index} className="h-[124px] rounded-card" />
           ))}
@@ -77,7 +81,7 @@ export function AdminDashboardPage() {
 
       {summary && (
         <>
-          <section className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
+          <section className="grid grid-cols-1 gap-3.5 min-[480px]:grid-cols-2 xl:grid-cols-4">
             <StatCard
               label={t('dashboard.dealers')}
               value={summary.dealers_total}
@@ -107,7 +111,7 @@ export function AdminDashboardPage() {
             {/* The flagship card runs the full width under the four stats. */}
             <StatCard
               tone="dark"
-              className="col-span-2 xl:col-span-4"
+              className="min-[480px]:col-span-2 xl:col-span-4"
               label={t('dashboard.averagePurchase')}
               value={formatMoney(averagePurchase)}
               note={t('dashboard.averageNote')}
@@ -115,7 +119,7 @@ export function AdminDashboardPage() {
             />
           </section>
 
-          <div className="grid grid-cols-[1.4fr_1fr] gap-3.5">
+          <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
             <Card>
               <div className="flex items-baseline justify-between">
                 <CardTitle>{t('dashboard.recentPurchases')}</CardTitle>
@@ -170,7 +174,9 @@ export function AdminDashboardPage() {
                             tier={tierAt(index, summary.grades.length, grade.color)}
                             size="sm"
                           />
-                          <span className="truncate">{grade.name_ru}</span>
+                          <span className="truncate">
+                            {localName(grade.name_ru, grade.name_tg)}
+                          </span>
                           <span className="text-xs whitespace-nowrap text-muted">
                             {t('grades.from', {
                               amount: money(grade.min_purchase_amount),

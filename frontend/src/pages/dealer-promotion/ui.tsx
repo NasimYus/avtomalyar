@@ -74,136 +74,150 @@ export function DealerPromotionPage() {
         )}
       </div>
 
-      {!promotion.eligible && (
-        <Card>
-          <div className="flex items-center gap-2">
-            <LockIcon className="size-5 text-brand-red" />
-            <CardTitle>{t('cabinet.lockedTitle')}</CardTitle>
-          </div>
-          <p className="mt-1 text-[13px] font-semibold text-muted">
-            {t('cabinet.lockedDescription')}
-          </p>
-        </Card>
-      )}
-
-      {promotion.eligible && upcoming && (
-        <Card>
-          <p className="text-[13px] font-semibold text-muted">
-            {t('cabinet.startsOn', { date: formatDate(promotion.start_date) })}
-          </p>
-        </Card>
-      )}
-
-      {promotion.standing !== undefined && (
-        <Card tone="dark">
-          <span className="text-[13px] font-semibold text-white/65">
-            {finished ? t('cabinet.yourPlace') : t('cabinet.yourPlaceNow')}
-          </span>
-          <div className="mt-1.5 text-[32px] font-black">
-            {t('cabinet.placeOf', {
-              place: promotion.standing.place,
-              total: promotion.participants_count,
-            })}
-          </div>
-          <p className="mt-1 text-[13px] font-semibold text-white/65">
-            {t('cabinet.periodTotal', { amount: formatMoney(promotion.standing.period_total) })}
-          </p>
-          {promotion.standing.prize_name_ru !== undefined && (
-            <p className="mt-2 text-[13px] font-bold text-brand-yellow">
-              {finished ? t('cabinet.prizeWon') : t('cabinet.prizeNow')}:{' '}
-              {name(promotion.standing.prize_name_ru, promotion.standing.prize_name_tg)}
-            </p>
-          )}
-        </Card>
-      )}
-
-      {/*
-        Every condition, met or not (ToR 6). A dealer who already
-        qualifies still needs to know on what — the threshold they passed
-        is the reason they are in the ranking at all.
-      */}
-      <section className="flex flex-col gap-3">
-        <CardTitle>{t('cabinet.conditions')}</CardTitle>
-        <Card>
-          {promotion.requirements.length === 0 ? (
-            <p className="text-[13px] font-semibold text-muted">{t('cabinet.conditionsNone')}</p>
-          ) : (
-            <ConditionList requirements={promotion.requirements} />
-          )}
-        </Card>
-      </section>
-
-      {promotion.prize_places !== undefined && promotion.prize_places.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <TrophyIcon className="size-5 text-brand-yellow-dark" />
-            <CardTitle>{t('cabinet.prizes')}</CardTitle>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {promotion.prize_places.map((place) => (
-              <Card
-                key={place.place_rank}
-                padded={false}
-                className={cn(
-                  'flex items-center gap-3 p-3',
-                  // The top prize is the one the whole promotion is about.
-                  place.place_rank === 1 && 'bg-tier-gold/10 ring-2 ring-tier-gold',
-                )}
-              >
-                <PlaceMedal place={place.place_rank} size="md" />
-
-                {place.prize_photo_path !== undefined && (
-                  <PrizePhoto
-                    src={place.prize_photo_path}
-                    placeholder={false}
-                    className="w-16 shrink-0 rounded-[12px]"
-                  />
-                )}
-
-                <div className="min-w-0">
-                  <span className="block text-[11px] font-black tracking-[0.06em] text-muted uppercase">
-                    {t('cabinet.place', { rank: place.place_rank })}
-                  </span>
-                  <b className="block truncate text-[15px]">
-                    {name(place.prize_name_ru, place.prize_name_tg)}
-                  </b>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {promotion.eligible && (
-        <section className="flex flex-col gap-3">
-          <div className="flex items-baseline justify-between gap-3">
-            <CardTitle>{t('cabinet.ranking')}</CardTitle>
-            {promotion.ranking.length > 0 && (
-              <span className="text-xs font-semibold text-muted">
-                {promotion.final ? t('cabinet.rankingFinal') : t('cabinet.rankingLive')}
-              </span>
-            )}
-          </div>
-
-          {promotion.ranking.length === 0 ? (
-            <EmptyState
-              title={t('cabinet.rankingPendingTitle')}
-              description={
-                upcoming
-                  ? t('cabinet.emptyDescriptionRunning')
-                  : t('cabinet.rankingPendingDescription')
-              }
-            />
-          ) : (
-            <Card padded={false} className="divide-y divide-line px-[18px]">
-              {promotion.ranking.map((entry) => (
-                <RankingRow key={entry.dealer_id} entry={entry} />
-              ))}
+      {/* From lg the ranking gets its own column next to the details. */}
+      <div
+        className={cn(
+          'grid grid-cols-[minmax(0,1fr)] gap-4 lg:items-start',
+          promotion.eligible && 'lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]',
+        )}
+      >
+        <div className="grid content-start gap-4">
+          {!promotion.eligible && (
+            <Card>
+              <div className="flex items-center gap-2">
+                <LockIcon className="size-5 text-brand-red" />
+                <CardTitle>{t('cabinet.lockedTitle')}</CardTitle>
+              </div>
+              <p className="mt-1 text-[13px] font-semibold text-muted">
+                {t('cabinet.lockedDescription')}
+              </p>
             </Card>
           )}
-        </section>
-      )}
+
+          {promotion.eligible && upcoming && (
+            <Card>
+              <p className="text-[13px] font-semibold text-muted">
+                {t('cabinet.startsOn', { date: formatDate(promotion.start_date) })}
+              </p>
+            </Card>
+          )}
+
+          {promotion.standing !== undefined && (
+            <Card tone="dark">
+              <span className="text-[13px] font-semibold text-white/65">
+                {finished ? t('cabinet.yourPlace') : t('cabinet.yourPlaceNow')}
+              </span>
+              <div className="mt-1.5 text-[32px] font-black">
+                {t('cabinet.placeOf', {
+                  place: promotion.standing.place,
+                  total: promotion.participants_count,
+                })}
+              </div>
+              <p className="mt-1 text-[13px] font-semibold text-white/65">
+                {t('cabinet.periodTotal', { amount: formatMoney(promotion.standing.period_total) })}
+              </p>
+              {promotion.standing.prize_name_ru !== undefined && (
+                <p className="mt-2 text-[13px] font-bold text-brand-yellow">
+                  {finished ? t('cabinet.prizeWon') : t('cabinet.prizeNow')}:{' '}
+                  {name(promotion.standing.prize_name_ru, promotion.standing.prize_name_tg)}
+                </p>
+              )}
+            </Card>
+          )}
+
+          {/*
+            Every condition, met or not (ToR 6). A dealer who already
+            qualifies still needs to know on what — the threshold they passed
+            is the reason they are in the ranking at all.
+          */}
+          <section className="flex flex-col gap-3">
+            <CardTitle>{t('cabinet.conditions')}</CardTitle>
+            <Card>
+              {promotion.requirements.length === 0 ? (
+                <p className="text-[13px] font-semibold text-muted">
+                  {t('cabinet.conditionsNone')}
+                </p>
+              ) : (
+                <ConditionList requirements={promotion.requirements} />
+              )}
+            </Card>
+          </section>
+
+          {promotion.prize_places !== undefined && promotion.prize_places.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <TrophyIcon className="size-5 text-brand-yellow-dark" />
+                <CardTitle>{t('cabinet.prizes')}</CardTitle>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {promotion.prize_places.map((place) => (
+                  <Card
+                    key={place.place_rank}
+                    padded={false}
+                    className={cn(
+                      'flex items-center gap-3 p-3',
+                      // The top prize is the one the whole promotion is about.
+                      place.place_rank === 1 && 'bg-tier-gold/10 ring-2 ring-tier-gold',
+                    )}
+                  >
+                    <PlaceMedal place={place.place_rank} size="md" />
+
+                    {place.prize_photo_path !== undefined && (
+                      <PrizePhoto
+                        src={place.prize_photo_path}
+                        placeholder={false}
+                        className="w-16 shrink-0 rounded-[12px]"
+                      />
+                    )}
+
+                    <div className="min-w-0">
+                      <span className="block text-[11px] font-black tracking-[0.06em] text-muted uppercase">
+                        {t('cabinet.place', { rank: place.place_rank })}
+                      </span>
+                      <b className="block truncate text-[15px]">
+                        {name(place.prize_name_ru, place.prize_name_tg)}
+                      </b>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {promotion.eligible && (
+          <section className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <CardTitle>{t('cabinet.ranking')}</CardTitle>
+              {promotion.ranking.length > 0 && (
+                <span className="text-xs font-semibold text-muted">
+                  {promotion.final ? t('cabinet.rankingFinal') : t('cabinet.rankingLive')}
+                </span>
+              )}
+            </div>
+
+            {promotion.ranking.length === 0 ? (
+              <EmptyState
+                title={
+                  upcoming ? t('cabinet.rankingNotStartedTitle') : t('cabinet.rankingPendingTitle')
+                }
+                description={
+                  upcoming
+                    ? t('cabinet.rankingNotStartedDescription')
+                    : t('cabinet.rankingPendingDescription')
+                }
+              />
+            ) : (
+              <Card padded={false} className="divide-y divide-line px-[18px]">
+                {promotion.ranking.map((entry) => (
+                  <RankingRow key={entry.dealer_id} entry={entry} />
+                ))}
+              </Card>
+            )}
+          </section>
+        )}
+      </div>
     </>
   )
 }

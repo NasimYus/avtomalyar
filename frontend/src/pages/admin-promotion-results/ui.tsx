@@ -12,8 +12,8 @@ import {
 } from '@/entities/promotion'
 import { ArchivePromotionDialog } from '@/features/manage-promotion'
 import { AdjustResultModal, PublishResultsCard } from '@/features/manage-promotion-results'
-import { ApiError } from '@/shared/api'
-import { cn, formatDate, formatDateTime, formatMoney, todayISO } from '@/shared/lib'
+import { apiErrorMessage } from '@/shared/api'
+import { cn, formatDate, formatDateTime, formatMoney, todayISO, useLocaleName } from '@/shared/lib'
 import {
   ArchiveIcon,
   Badge,
@@ -41,6 +41,7 @@ function currentStep(status: PromotionStatus, periodOver: boolean): number {
 
 export function AdminPromotionResultsPage() {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const toast = useToast()
   const { id } = useParams()
   const promotionId = Number(id)
@@ -78,7 +79,7 @@ export function AdminPromotionResultsPage() {
           toast.success(awarded ? t('results.awardedSaved') : t('results.awardedCleared'))
         },
         onError: (error) => {
-          toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
+          toast.error(apiErrorMessage(error, t))
         },
       },
     )
@@ -90,7 +91,7 @@ export function AdminPromotionResultsPage() {
         toast.success(t('results.calculated', { count: items.length }))
       },
       onError: (error) => {
-        toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
+        toast.error(apiErrorMessage(error, t))
       },
     })
   }
@@ -98,6 +99,7 @@ export function AdminPromotionResultsPage() {
   const columns: Column<PromotionResult>[] = [
     {
       key: 'place',
+      mobile: 'aside',
       header: t('results.columnPlace'),
       width: '80px',
       render: (result) =>
@@ -111,6 +113,7 @@ export function AdminPromotionResultsPage() {
     },
     {
       key: 'dealer',
+      mobile: 'title',
       header: t('results.columnDealer'),
       width: '1.6fr',
       render: (result) => (
@@ -122,6 +125,7 @@ export function AdminPromotionResultsPage() {
     },
     {
       key: 'total',
+      mobile: 'aside',
       header: t('results.columnTotal'),
       width: '150px',
       align: 'right',
@@ -135,7 +139,9 @@ export function AdminPromotionResultsPage() {
         result.prize_name_ru === undefined ? (
           <span className="text-faint">—</span>
         ) : (
-          <span className="block truncate">{result.prize_name_ru}</span>
+          <span className="block truncate">
+            {localName(result.prize_name_ru, result.prize_name_tg)}
+          </span>
         ),
     },
     {
@@ -190,7 +196,7 @@ export function AdminPromotionResultsPage() {
   return (
     <>
       <PageHeader
-        title={promotion.title_ru}
+        title={localName(promotion.title_ru, promotion.title_tg)}
         actions={
           <>
             <Link to="/admin/promotions">

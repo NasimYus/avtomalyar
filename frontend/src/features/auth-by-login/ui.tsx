@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { useLogin } from '@/entities/session'
-import { ApiError } from '@/shared/api'
+import { ApiError, apiErrorMessage } from '@/shared/api'
 import { Button, FormField, Input } from '@/shared/ui'
 
 const schema = z.object({
@@ -38,7 +38,7 @@ export function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
     login.error instanceof ApiError && login.error.isUnauthorized
       ? t('auth.invalidCredentials')
       : login.isError
-        ? t('errors.generic')
+        ? apiErrorMessage(login.error, t)
         : null
 
   const onSubmit = handleSubmit((values) => {

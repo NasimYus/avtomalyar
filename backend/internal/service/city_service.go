@@ -72,7 +72,7 @@ func (s *CityService) Delete(ctx context.Context, id int64) error {
 	rows, err := s.repo.DeleteCity(ctx, id)
 	if err != nil {
 		if errors.Is(repository.TranslateError(err), domain.ErrConflict) {
-			return fmt.Errorf("%w: city is still assigned to one or more dealers", domain.ErrConflict)
+			return domain.Reasoned(domain.ErrConflict, "city_in_use", "city is still assigned to one or more dealers")
 		}
 		return fmt.Errorf("delete city: %w", repository.TranslateError(err))
 	}

@@ -3,8 +3,9 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { useCreateCity, useDeleteCity, useUpdateCity, type City } from '@/entities/city'
-import { ApiError } from '@/shared/api'
+import { ApiError, apiErrorMessage } from '@/shared/api'
 import { Button, ConfirmDialog, Drawer, FormField, Input, useToast } from '@/shared/ui'
+import { useLocaleName } from '@/shared/lib'
 
 const schema = z.object({
   name_ru: z.string().trim().min(1),
@@ -52,7 +53,7 @@ function CityForm({ city, onClose }: { city?: City; onClose: () => void }) {
       onClose()
     }
     const onError = (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
+      toast.error(apiErrorMessage(error, t))
     }
 
     if (city) {
@@ -107,13 +108,14 @@ function CityForm({ city, onClose }: { city?: City; onClose: () => void }) {
 
 export function DeleteCityDialog({ city, onClose }: { city?: City; onClose: () => void }) {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const toast = useToast()
   const remove = useDeleteCity()
 
   return (
     <ConfirmDialog
       open={city !== undefined}
-      title={t('cities.deleteTitle', { name: city?.name_ru ?? '' })}
+      title={t('cities.deleteTitle', { name: city ? localName(city.name_ru, city.name_tg) : '' })}
       description={t('cities.deleteDescription')}
       confirmLabel={t('common.delete')}
       cancelLabel={t('common.cancel')}
@@ -133,7 +135,7 @@ export function DeleteCityDialog({ city, onClose }: { city?: City; onClose: () =
             toast.error(
               error instanceof ApiError && error.isConflict
                 ? t('cities.deleteConflict')
-                : t('errors.generic'),
+                : apiErrorMessage(error, t),
             )
             onClose()
           },

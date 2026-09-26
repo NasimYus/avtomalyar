@@ -26,15 +26,15 @@ func (s *PromotionService) Calculate(ctx context.Context, id int64) ([]db.ListPr
 
 	from := domain.PromotionStatus(promotion.Status)
 	if !domain.CanTransition(from, domain.PromotionCalculated) {
-		return nil, fmt.Errorf(
-			"%w: results cannot be calculated for a %q promotion", domain.ErrConflict, from)
+		return nil, domain.Reasoned(
+			domain.ErrConflict, "promotion_not_calculable", "results cannot be calculated for a %q promotion", from)
 	}
 
 	// The ranking is only meaningful once the period is over; until then
 	// dealers can still change their position.
 	if !promotion.EndDate.Time.Before(domain.Today()) {
-		return nil, fmt.Errorf(
-			"%w: the promotion period has not ended yet", domain.ErrConflict)
+		return nil, domain.Reasoned(
+			domain.ErrConflict, "promotion_not_ended", "the promotion period has not ended yet")
 	}
 
 	participants, err := s.rankParticipants(ctx, promotion)
@@ -162,11 +162,11 @@ func (s *PromotionService) AdjustResult(
 		return db.PromotionResult{}, fmt.Errorf("get promotion: %w", repository.TranslateError(err))
 	}
 	if domain.PromotionStatus(promotion.Status) != domain.PromotionCalculated {
-		return db.PromotionResult{}, fmt.Errorf(
-			"%w: results can only be corrected before publication", domain.ErrConflict)
+		return db.PromotionResult{}, domain.Reasoned(
+			domain.ErrConflict, "results_published", "results can only be corrected before publication")
 	}
 	if adjustment.PlaceRank != nil && *adjustment.PlaceRank < 1 {
-		return db.PromotionResult{}, fmt.Errorf("%w: place must be positive", domain.ErrValidation)
+		return db.PromotionResult{}, domain.Reasoned(domain.ErrValidation, "place_not_positive", "place must be positive")
 	}
 
 	var updated db.PromotionResult
@@ -207,8 +207,8 @@ func (s *PromotionService) SetAwarded(
 
 	status := domain.PromotionStatus(promotion.Status)
 	if status != domain.PromotionCalculated && status != domain.PromotionPublished {
-		return db.PromotionResult{}, fmt.Errorf(
-			"%w: prizes can be handed over only between calculation and archiving", domain.ErrConflict)
+		return db.PromotionResult{}, domain.Reasoned(
+			domain.ErrConflict, "prize_handover_closed", "prizes can be handed over only between calculation and archiving")
 	}
 
 	// Nothing to hand over without a prize on the row.
@@ -219,8 +219,8 @@ func (s *PromotionService) SetAwarded(
 		return db.PromotionResult{}, fmt.Errorf("get promotion result: %w", repository.TranslateError(err))
 	}
 	if awarded && !result.PrizeID.Valid {
-		return db.PromotionResult{}, fmt.Errorf(
-			"%w: this participant has no prize to hand over", domain.ErrValidation)
+		return db.PromotionResult{}, domain.Reasoned(
+			domain.ErrValidation, "no_prize_to_hand_over", "this participant has no prize to hand over")
 	}
 
 	var updated db.PromotionResult

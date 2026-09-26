@@ -16,8 +16,8 @@ import {
   DeletePromotionDialog,
   PromotionFormDrawer,
 } from '@/features/manage-promotion'
-import { ApiError } from '@/shared/api'
-import { formatDate, todayISO } from '@/shared/lib'
+import { apiErrorMessage } from '@/shared/api'
+import { formatDate, todayISO, useLocaleName } from '@/shared/lib'
 import {
   ArchiveIcon,
   Badge,
@@ -36,6 +36,7 @@ import {
 
 export function AdminPromotionsPage() {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const toast = useToast()
   const navigate = useNavigate()
 
@@ -63,7 +64,7 @@ export function AdminPromotionsPage() {
         toast.success(t('promotions.started'))
       },
       onError: (error) => {
-        toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
+        toast.error(apiErrorMessage(error, t))
       },
     })
   }
@@ -75,9 +76,11 @@ export function AdminPromotionsPage() {
       width: '1.8fr',
       render: (promotion) => (
         <div className="min-w-0">
-          <b className="block truncate">{promotion.title_ru}</b>
+          <b className="block truncate">{localName(promotion.title_ru, promotion.title_tg)}</b>
           {promotion.description_ru !== undefined && (
-            <span className="block truncate text-xs text-muted">{promotion.description_ru}</span>
+            <span className="block truncate text-xs text-muted">
+              {localName(promotion.description_ru, promotion.description_tg)}
+            </span>
           )}
         </div>
       ),
@@ -101,6 +104,7 @@ export function AdminPromotionsPage() {
     },
     {
       key: 'status',
+      mobile: 'aside',
       header: t('promotions.columnStatus'),
       width: '150px',
       render: (promotion) => (

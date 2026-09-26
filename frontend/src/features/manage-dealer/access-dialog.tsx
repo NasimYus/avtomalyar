@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useResetDealerPassword, type Dealer } from '@/entities/dealer'
 import { Button, CopyIcon, IconButton, Modal, useToast } from '@/shared/ui'
+import { apiErrorMessage } from '@/shared/api'
 
 function CopyableRow({ label, value }: { label: string; value: string }) {
   const { t } = useTranslation()
@@ -78,8 +79,8 @@ export function DealerAccessDialog({ dealer, initialPassword, onClose }: DealerA
                   setIssuedPassword(next)
                   toast.success(t('dealers.passwordIssued'))
                 },
-                onError: () => {
-                  toast.error(t('errors.generic'))
+                onError: (error) => {
+                  toast.error(apiErrorMessage(error, t))
                 },
               })
             }}

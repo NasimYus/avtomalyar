@@ -15,8 +15,8 @@ import {
   type PrizePlaceInput,
   type Promotion,
 } from '@/entities/promotion'
-import { ApiError } from '@/shared/api'
-import { formatMoney, parseMoneyInput } from '@/shared/lib'
+import { ApiError, apiErrorMessage } from '@/shared/api'
+import { formatMoney, parseMoneyInput, useLocaleName } from '@/shared/lib'
 import {
   Button,
   ConfirmDialog,
@@ -75,6 +75,7 @@ export function PromotionFormDrawer({ open, promotion, onClose }: PromotionFormD
 
 function PromotionForm({ promotion, onClose }: { promotion?: Promotion; onClose: () => void }) {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const toast = useToast()
   const create = useCreatePromotion()
   const update = useUpdatePromotion()
@@ -151,7 +152,7 @@ function PromotionForm({ promotion, onClose }: { promotion?: Promotion; onClose:
     }
 
     const onError = (error: Error) => {
-      toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
+      toast.error(apiErrorMessage(error, t))
     }
 
     // Prize places live behind their own endpoint, so they go up right
@@ -190,7 +191,10 @@ function PromotionForm({ promotion, onClose }: { promotion?: Promotion; onClose:
   })
 
   const prizeOptions =
-    prizes?.map((prize) => ({ value: String(prize.id), label: prize.name_ru })) ?? []
+    prizes?.map((prize) => ({
+      value: String(prize.id),
+      label: localName(prize.name_ru, prize.name_tg),
+    })) ?? []
 
   return (
     <Drawer
@@ -286,7 +290,10 @@ function PromotionForm({ promotion, onClose }: { promotion?: Promotion; onClose:
                 setValue('city_id', next)
               }}
               options={
-                cities?.map((city) => ({ value: String(city.id), label: city.name_ru })) ?? []
+                cities?.map((city) => ({
+                  value: String(city.id),
+                  label: localName(city.name_ru, city.name_tg),
+                })) ?? []
               }
               placeholder={t('promotions.allCities')}
               searchPlaceholder={t('common.searchCity')}
@@ -306,7 +313,10 @@ function PromotionForm({ promotion, onClose }: { promotion?: Promotion; onClose:
                 setValue('grade_id', next)
               }}
               options={
-                grades?.map((grade) => ({ value: String(grade.id), label: grade.name_ru })) ?? []
+                grades?.map((grade) => ({
+                  value: String(grade.id),
+                  label: localName(grade.name_ru, grade.name_tg),
+                })) ?? []
               }
               placeholder={t('promotions.allGrades')}
               searchPlaceholder={t('common.search')}
@@ -394,13 +404,16 @@ export function DeletePromotionDialog({
   onClose: () => void
 }) {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const toast = useToast()
   const remove = useDeletePromotion()
 
   return (
     <ConfirmDialog
       open={promotion !== undefined}
-      title={t('promotions.deleteTitle', { title: promotion?.title_ru ?? '' })}
+      title={t('promotions.deleteTitle', {
+        title: promotion ? localName(promotion.title_ru, promotion.title_tg) : '',
+      })}
       description={t('promotions.deleteDescription')}
       confirmLabel={t('common.delete')}
       cancelLabel={t('common.cancel')}
@@ -418,7 +431,7 @@ export function DeletePromotionDialog({
             toast.error(
               error instanceof ApiError && error.isConflict
                 ? t('promotions.deleteConflict')
-                : t('errors.generic'),
+                : apiErrorMessage(error, t),
             )
             onClose()
           },
@@ -443,6 +456,7 @@ export function ArchivePromotionDialog({
   onClose: () => void
 }) {
   const { t } = useTranslation()
+  const localName = useLocaleName()
   const toast = useToast()
   const archive = useArchivePromotion()
   const published = promotion?.status === 'published'
@@ -450,7 +464,9 @@ export function ArchivePromotionDialog({
   return (
     <ConfirmDialog
       open={promotion !== undefined}
-      title={t('promotions.archiveTitle', { title: promotion?.title_ru ?? '' })}
+      title={t('promotions.archiveTitle', {
+        title: promotion ? localName(promotion.title_ru, promotion.title_tg) : '',
+      })}
       description={t(
         published ? 'promotions.archiveDescriptionPublished' : 'promotions.archiveDescriptionDraft',
       )}
@@ -467,7 +483,7 @@ export function ArchivePromotionDialog({
             onClose()
           },
           onError: (error) => {
-            toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
+            toast.error(apiErrorMessage(error, t))
             onClose()
           },
         })
