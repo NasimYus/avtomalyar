@@ -302,6 +302,7 @@
     "placesHint": "Один и тот же приз можно назначить на несколько мест",
     "columnTitle": "Акция",
     "columnPeriod": "Период",
+    "columnParticipants": "Участников",
     "columnStatus": "Статус",
     "allStatuses": "Все",
     "status": {

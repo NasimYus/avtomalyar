@@ -21,6 +21,8 @@ type promotionRepository interface {
 	DeletePromotion(ctx context.Context, id int64) (int64, error)
 	ListPrizePlaces(ctx context.Context, promotionID int64) ([]db.ListPrizePlacesRow, error)
 	ListPromotionResults(ctx context.Context, promotionID int64) ([]db.ListPromotionResultsRow, error)
+	ListActiveDealerSnapshots(ctx context.Context) ([]db.ListActiveDealerSnapshotsRow, error)
+	CountResultsByPromotion(ctx context.Context) ([]db.CountResultsByPromotionRow, error)
 	GetPromotionResult(ctx context.Context, arg db.GetPromotionResultParams) (db.PromotionResult, error)
 	ListActiveDealersWithPeriodTotals(
 		ctx context.Context,
@@ -60,8 +62,17 @@ func NewPromotionService(repo promotionRepository) *PromotionService {
 	return &PromotionService{repo: repo}
 }
 
+// PromotionListItem is a promotion with the participant count the list
+// screen shows beside its status and period (ToR 5.5).
+type PromotionListItem struct {
+	Promotion db.Promotion
+	// Dealers who qualify right now, or — once results exist — how many
+	// the calculation recorded.
+	ParticipantsCount int
+}
+
 // List returns promotions, optionally narrowed to one status.
-func (s *PromotionService) List(ctx context.Context, status *string) ([]db.Promotion, error) {
+func (s *PromotionService) List(ctx context.Context, status *string) ([]PromotionListItem, error) {
 	var filter pgtype.Text
 	if status != nil {
 		filter = pgtype.Text{String: *status, Valid: true}
@@ -71,7 +82,84 @@ func (s *PromotionService) List(ctx context.Context, status *string) ([]db.Promo
 	if err != nil {
 		return nil, fmt.Errorf("list promotions: %w", repository.TranslateError(err))
 	}
-	return promotions, nil
+
+	counts, err := s.participantCounts(ctx, promotions)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]PromotionListItem, len(promotions))
+	for i, promotion := range promotions {
+		items[i] = PromotionListItem{Promotion: promotion, ParticipantsCount: counts[promotion.ID]}
+	}
+	return items, nil
+}
+
+// participantCounts works out how many dealers each promotion involves.
+//
+// Once results are stored they are the answer — they record who took part
+// at the moment of calculation, and that must not drift afterwards. Until
+// then the count is how many active dealers qualify right now, decided by
+// the same domain.IsEligible the ranking uses rather than a second copy
+// of the rule in SQL.
+func (s *PromotionService) participantCounts(
+	ctx context.Context,
+	promotions []db.Promotion,
+) (map[int64]int, error) {
+	stored, err := s.repo.CountResultsByPromotion(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("count results: %w", repository.TranslateError(err))
+	}
+	counts := make(map[int64]int, len(promotions))
+	for _, row := range stored {
+		counts[row.PromotionID] = int(row.Total)
+	}
+
+	needsLiveCount := false
+	for _, promotion := range promotions {
+		if _, ok := counts[promotion.ID]; !ok {
+			needsLiveCount = true
+			break
+		}
+	}
+	if !needsLiveCount {
+		return counts, nil
+	}
+
+	dealers, err := s.repo.ListActiveDealerSnapshots(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list dealers: %w", repository.TranslateError(err))
+	}
+
+	snapshots := make([]domain.DealerSnapshot, len(dealers))
+	for i, dealer := range dealers {
+		snapshots[i] = domain.DealerSnapshot{
+			ID:                    dealer.ID,
+			CityID:                dealer.CityID,
+			GradeID:               int8ToPtr(dealer.GradeID),
+			IsActive:              true, // the query only returns active dealers
+			LifetimePurchaseTotal: dealer.LifetimePurchaseTotal,
+		}
+	}
+
+	for _, promotion := range promotions {
+		if _, ok := counts[promotion.ID]; ok {
+			continue
+		}
+		conditions := domain.PromotionConditions{
+			CityID:               int8ToPtr(promotion.CityID),
+			GradeID:              int8ToPtr(promotion.GradeID),
+			MinLifetimeThreshold: int8ToPtr(promotion.MinLifetimePurchaseThreshold),
+		}
+		eligible := 0
+		for _, snapshot := range snapshots {
+			if domain.IsEligible(snapshot, conditions) {
+				eligible++
+			}
+		}
+		counts[promotion.ID] = eligible
+	}
+	return counts, nil
 }
 
 // StatusCounts powers the status tabs above the promotions list.

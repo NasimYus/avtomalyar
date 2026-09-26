@@ -140,6 +140,48 @@ func (q *Queries) GetDealerByLogin(ctx context.Context, login string) (Dealer, e
 	return i, err
 }
 
+const listActiveDealerSnapshots = `-- name: ListActiveDealerSnapshots :many
+SELECT id, city_id, grade_id, lifetime_purchase_total
+FROM dealers
+WHERE is_active
+`
+
+type ListActiveDealerSnapshotsRow struct {
+	ID                    int64       `json:"id"`
+	CityID                int64       `json:"city_id"`
+	GradeID               pgtype.Int8 `json:"grade_id"`
+	LifetimePurchaseTotal int64       `json:"lifetime_purchase_total"`
+}
+
+// The fields a promotion's entry rules are judged on, for every active
+// dealer. Used to count participants without repeating domain.IsEligible
+// in SQL — the dealer count is in the hundreds, so one pass in Go is
+// cheaper than keeping a second copy of the rule.
+func (q *Queries) ListActiveDealerSnapshots(ctx context.Context) ([]ListActiveDealerSnapshotsRow, error) {
+	rows, err := q.db.Query(ctx, listActiveDealerSnapshots)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListActiveDealerSnapshotsRow{}
+	for rows.Next() {
+		var i ListActiveDealerSnapshotsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CityID,
+			&i.GradeID,
+			&i.LifetimePurchaseTotal,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listDealers = `-- name: ListDealers :many
 SELECT id, full_name, phone, city_id, grade_id, lifetime_purchase_total, login, password_hash, is_active, created_at, updated_at FROM dealers
 WHERE ($1::bigint IS NULL OR city_id = $1)

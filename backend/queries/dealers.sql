@@ -55,3 +55,12 @@ UPDATE dealers SET grade_id = $2 WHERE id = $1;
 
 -- name: DeleteDealer :execrows
 DELETE FROM dealers WHERE id = $1;
+
+-- name: ListActiveDealerSnapshots :many
+-- The fields a promotion's entry rules are judged on, for every active
+-- dealer. Used to count participants without repeating domain.IsEligible
+-- in SQL — the dealer count is in the hundreds, so one pass in Go is
+-- cheaper than keeping a second copy of the rule.
+SELECT id, city_id, grade_id, lifetime_purchase_total
+FROM dealers
+WHERE is_active;

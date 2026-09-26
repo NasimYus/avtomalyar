@@ -14,7 +14,7 @@ import (
 )
 
 type promotionService interface {
-	List(ctx context.Context, status *string) ([]db.Promotion, error)
+	List(ctx context.Context, status *string) ([]service.PromotionListItem, error)
 	StatusCounts(ctx context.Context) (map[string]int64, error)
 	Get(ctx context.Context, id int64) (db.Promotion, []db.ListPrizePlacesRow, error)
 	Create(ctx context.Context, input service.PromotionInput) (db.Promotion, error)
@@ -88,6 +88,9 @@ type promotionResponse struct {
 	CalculatedAt         *string              `json:"calculated_at,omitempty"`
 	PublishedAt          *string              `json:"published_at,omitempty"`
 	PrizePlaces          []prizePlaceResponse `json:"prize_places,omitempty"`
+	// Dealers taking part — live for a promotion still open, fixed at the
+	// calculation once results exist (ToR 5.5). Only on list responses.
+	ParticipantsCount *int `json:"participants_count,omitempty"`
 }
 
 type promotionResultResponse struct {
@@ -212,7 +215,9 @@ func (h *promotionHandler) list(w http.ResponseWriter, r *http.Request) {
 
 	items := make([]promotionResponse, len(promotions))
 	for i, promotion := range promotions {
-		items[i] = toPromotionResponse(promotion)
+		items[i] = toPromotionResponse(promotion.Promotion)
+		participants := promotion.ParticipantsCount
+		items[i].ParticipantsCount = &participants
 	}
 	writeJSON(w, http.StatusOK, promotionListResponse{Items: items, Counts: counts})
 }

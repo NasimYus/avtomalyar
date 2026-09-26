@@ -36,6 +36,11 @@ export interface Promotion {
   published_at?: string
   /** Only returned when a single promotion is fetched. */
   prize_places?: PrizePlace[]
+  /**
+   * Dealers taking part — live while the promotion is open, fixed at the
+   * calculation once results exist. Only on list responses.
+   */
+  participants_count?: number
 }
 
 export interface PromotionInput {

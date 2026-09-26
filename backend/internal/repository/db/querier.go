@@ -15,6 +15,10 @@ type Querier interface {
 	CountDealers(ctx context.Context, arg CountDealersParams) (int64, error)
 	CountPromotionsByStatus(ctx context.Context) ([]CountPromotionsByStatusRow, error)
 	CountPurchases(ctx context.Context, arg CountPurchasesParams) (int64, error)
+	// How many participants each promotion's stored results hold. For a
+	// promotion already calculated this is the participant count, fixed at
+	// the moment of calculation.
+	CountResultsByPromotion(ctx context.Context) ([]CountResultsByPromotionRow, error)
 	CreateAdmin(ctx context.Context, arg CreateAdminParams) (Admin, error)
 	CreateCity(ctx context.Context, arg CreateCityParams) (City, error)
 	CreateDealer(ctx context.Context, arg CreateDealerParams) (Dealer, error)
@@ -47,6 +51,11 @@ type Querier interface {
 	GetPromotionByID(ctx context.Context, id int64) (Promotion, error)
 	GetPromotionResult(ctx context.Context, arg GetPromotionResultParams) (PromotionResult, error)
 	GetPurchaseByID(ctx context.Context, id int64) (Purchase, error)
+	// The fields a promotion's entry rules are judged on, for every active
+	// dealer. Used to count participants without repeating domain.IsEligible
+	// in SQL — the dealer count is in the hundreds, so one pass in Go is
+	// cheaper than keeping a second copy of the rule.
+	ListActiveDealerSnapshots(ctx context.Context) ([]ListActiveDealerSnapshotsRow, error)
 	// Period totals for every active dealer, including those who bought
 	// nothing in the window (they still take part, with a total of 0).
 	// Eligibility filters are deliberately left to domain.IsEligible so the

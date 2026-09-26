@@ -85,12 +85,19 @@ export function AdminPromotionsPage() {
     {
       key: 'period',
       header: t('promotions.columnPeriod'),
-      width: '190px',
+      width: '180px',
       render: (promotion) => (
         <span className="text-muted">
           {formatDate(promotion.start_date)} — {formatDate(promotion.end_date)}
         </span>
       ),
+    },
+    {
+      key: 'participants',
+      header: t('promotions.columnParticipants'),
+      width: '120px',
+      align: 'right',
+      render: (promotion) => <b>{promotion.participants_count ?? 0}</b>,
     },
     {
       key: 'status',

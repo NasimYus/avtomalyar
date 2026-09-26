@@ -40,6 +40,40 @@ func (q *Queries) CountPromotionsByStatus(ctx context.Context) ([]CountPromotion
 	return items, nil
 }
 
+const countResultsByPromotion = `-- name: CountResultsByPromotion :many
+SELECT promotion_id, count(*)::bigint AS total
+FROM promotion_results
+GROUP BY promotion_id
+`
+
+type CountResultsByPromotionRow struct {
+	PromotionID int64 `json:"promotion_id"`
+	Total       int64 `json:"total"`
+}
+
+// How many participants each promotion's stored results hold. For a
+// promotion already calculated this is the participant count, fixed at
+// the moment of calculation.
+func (q *Queries) CountResultsByPromotion(ctx context.Context) ([]CountResultsByPromotionRow, error) {
+	rows, err := q.db.Query(ctx, countResultsByPromotion)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CountResultsByPromotionRow{}
+	for rows.Next() {
+		var i CountResultsByPromotionRow
+		if err := rows.Scan(&i.PromotionID, &i.Total); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createPrizePlace = `-- name: CreatePrizePlace :one
 INSERT INTO promotion_prize_places (promotion_id, place_rank, prize_id)
 VALUES ($1, $2, $3)

@@ -127,3 +127,11 @@ UPDATE promotion_results
 SET awarded = $3
 WHERE promotion_id = $1 AND dealer_id = $2
 RETURNING *;
+
+-- name: CountResultsByPromotion :many
+-- How many participants each promotion's stored results hold. For a
+-- promotion already calculated this is the participant count, fixed at
+-- the moment of calculation.
+SELECT promotion_id, count(*)::bigint AS total
+FROM promotion_results
+GROUP BY promotion_id;
