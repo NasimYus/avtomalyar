@@ -1,0 +1,15 @@
+{
+  "name": "avtomalyar-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:all-browsers": "E2E_ALL_BROWSERS=1 playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "^24.13.3",
+    "typescript": "~5.9.3"
+  }
+}

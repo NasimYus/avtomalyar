@@ -17,7 +17,7 @@ jobs:
         working-directory: backend
         run: go vet ./...
       - name: Lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
           working-directory: backend
           version: v2.14.0
@@ -55,3 +55,89 @@ jobs:
       - name: Build
         working-directory: frontend
         run: npm run build
+
+  # The whole stack — Postgres, API, built frontend — driven by Playwright
+  # in Chromium, Firefox and WebKit (Safari's engine), on desktop and
+  # emulated phones and tablets. See e2e/ and README → «E2E-тесты».
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: avtomalyar
+          POSTGRES_PASSWORD: avtomalyar
+          POSTGRES_DB: avtomalyar
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U avtomalyar"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://avtomalyar:avtomalyar@localhost:5433/avtomalyar?sslmode=disable
+      JWT_SECRET: e2e-only-secret-not-for-production
+      # The stack is served over plain http://localhost, which WebKit does
+      # not treat as secure for cookies.
+      AUTH_COOKIE_SECURE: "false"
+      ADMIN_PASSWORD: e2e-Admin-12345
+      E2E_ADMIN_PASSWORD: e2e-Admin-12345
+      E2E_ALL_BROWSERS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+      - name: Migrate and seed the database
+        working-directory: backend
+        run: |
+          go run -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.1 \
+            -database "$DATABASE_URL" -path migrations up
+          go run ./cmd/seed admin
+          go run ./cmd/seed demo
+      - name: Start the API
+        working-directory: backend
+        run: |
+          go build -o "$RUNNER_TEMP/api" ./cmd/api
+          UPLOAD_DIR="$RUNNER_TEMP/uploads" nohup "$RUNNER_TEMP/api" > "$RUNNER_TEMP/api.log" 2>&1 &
+      - name: Build and serve the frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+          nohup npx vite preview --port 4173 --strictPort > "$RUNNER_TEMP/web.log" 2>&1 &
+      - name: Install Playwright and browsers
+        working-directory: e2e
+        run: |
+          npm ci
+          npx tsc -p .
+          npx playwright install --with-deps chromium firefox webkit
+      - name: Wait for the stack
+        run: |
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:4173/api/v1/auth/me || true)
+            [ "$code" = "401" ] && exit 0
+            sleep 2
+          done
+          echo "stack did not come up"; cat "$RUNNER_TEMP/api.log" "$RUNNER_TEMP/web.log"; exit 1
+      - name: E2E tests
+        working-directory: e2e
+        run: npx playwright test
+      - name: Upload the report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
+

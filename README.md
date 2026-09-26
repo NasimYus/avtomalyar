@@ -118,7 +118,8 @@ npm run dev               # http://localhost:5173
 | `make migrate-up` / `make migrate-down` | Применить/откатить миграции БД |
 | `make sqlc` | Сгенерировать типобезопасные запросы из `backend/queries/*.sql` |
 | `make seed-admin` | Создать первого администратора |
-| `make seed-demo` | Заполнить БД демо-данными (6 городов, 3 уровня, 5 призов, 12 дилеров, ~74 покупки) |
+| `make seed-demo` | Заполнить БД демо-данными (6 городов, 5 уровней, 5 призов, 12 дилеров, ~74 покупки) |
+| `make e2e` | Сквозные тесты Playwright против запущенного стенда (см. «E2E-тесты») |
 
 Для `make lint` локально нужен установленный `golangci-lint`:
 
@@ -164,12 +165,47 @@ avtomalyar/
 Все токены — в [`frontend/src/app/styles/index.css`](frontend/src/app/styles/index.css),
 компоненты — в [`frontend/src/shared/ui`](frontend/src/shared/ui).
 
+## E2E-тесты
+
+Папка `e2e/` — сквозные тесты на Playwright против настоящего стенда
+(frontend + API + PostgreSQL с демо-данными). Они проходят то, что делают
+люди: вход и права доступа, справочники, заведение дилера и покупки с
+пересчётом уровня, полный цикл акции от создания до архива — с проверкой
+кабинета дилера на обоих языках, — а также вёрстку всех страниц на семи
+экранах, от 360px Android до 1920px десктопа.
+
+```bash
+# стенд должен быть поднят и заполнен: make up, make migrate-up,
+# ADMIN_PASSWORD=… make seed-admin, make seed-demo
+cd e2e && npm ci && npx playwright install --with-deps
+E2E_ADMIN_PASSWORD=… E2E_BASE_URL=http://localhost npx playwright test
+```
+
+- `E2E_ALL_BROWSERS=1` добавляет Firefox и WebKit (движок Safari и всех
+  браузеров на iPhone). В CI так и запускается — job `e2e`.
+- Отчёт: `npx playwright show-report`.
+- Тесты создают свои записи с префиксом «E2E» — запускать их стоит на
+  тестовой, а не на рабочей базе.
+
+## Поддерживаемые браузеры
+
+Сборка рассчитана на браузеры не старше трёх лет: Chrome/Edge 111+,
+Firefox 114+, Safari и iOS 16.4+ (iPhone 8 и новее), Samsung Internet 22+.
+Это минимум Tailwind CSS 4 и цель сборки Vite по умолчанию. Для
+полупрозрачных цветов в CSS есть запасные значения, поэтому на
+пограничных версиях вёрстка не разваливается.
+
 ## Переменные окружения
 
 См. `.env.example`. Обязательные для запуска — `JWT_SECRET` (в production
 длинное случайное значение) и настройки PostgreSQL. `UPLOAD_DIR` задаёт
 папку для фото призов (в Docker — том `/data/uploads`).
 
+`AUTH_COOKIE_SECURE` (по умолчанию `true`) — cookie сессии уходит только по
+HTTPS. На стенде, который открывают по голому HTTP через IP или имя хоста
+(не `localhost`), поставьте `false`, иначе браузер отбросит cookie и после
+входа сразу выкинет обратно. За HTTPS оставляйте `true`.
 
-karimov.b.mjex
-nMnLB2dgwifS
+За nginx из `frontend/` бэкенд берёт адрес клиента из `X-Real-IP` (только от
+прокси с частного адреса) — на нём держится ограничение попыток входа. Если
+перед приложением стоит свой прокси, он тоже должен передавать `X-Real-IP`.
