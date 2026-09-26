@@ -3,6 +3,8 @@ export interface GradeBreakdown {
   name_ru: string
   name_tg: string
   min_purchase_amount: number
+  /** The material chosen by the admin; absent means "by place in the ladder". */
+  color?: string
   dealers_count: number
 }
 

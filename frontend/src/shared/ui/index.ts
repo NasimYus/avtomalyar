@@ -1,7 +1,8 @@
 export { Button, IconButton } from './button'
 export type { ButtonVariant, ButtonSize } from './button'
 export { Card, CardTitle, StatCard } from './card'
-export { Badge, GradeBadge } from './badge'
+export { Badge } from './badge'
+export { TierBadge, TierMedal, TierProgress } from './tier'
 export type { BadgeTone } from './badge'
 export { FormField, Input, Textarea, Select, SearchInput, fieldClasses } from './field'
 export { PhoneInput } from './phone-input'
@@ -17,6 +18,7 @@ export {
   LockIcon,
   ArchiveIcon,
   CheckIcon,
+  CrownIcon,
 } from './icons'
 export type { FieldStatus, FieldVariant } from './field'
 export { FilterPill, PillGroup } from './pill'

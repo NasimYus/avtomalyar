@@ -147,7 +147,7 @@ export function DealerPromotionPage() {
                 className={cn(
                   'flex items-center gap-3 p-3',
                   // The top prize is the one the whole promotion is about.
-                  place.place_rank === 1 && 'bg-grade-gold/10 ring-2 ring-grade-gold',
+                  place.place_rank === 1 && 'bg-tier-gold/10 ring-2 ring-tier-gold',
                 )}
               >
                 <PlaceMedal place={place.place_rank} size="md" />

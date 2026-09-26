@@ -28,6 +28,7 @@ SELECT
     g.name_ru,
     g.name_tg,
     g.min_purchase_amount,
+    g.color,
     count(d.id)::bigint AS dealers_count
 FROM grades g
 LEFT JOIN dealers d ON d.grade_id = g.id

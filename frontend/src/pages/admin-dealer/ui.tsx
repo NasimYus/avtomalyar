@@ -3,16 +3,17 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { useCities } from '@/entities/city'
 import { useDealer, useDealerPromotions, type DealerPromotion } from '@/entities/dealer'
-import { gradeToneByIndex, useGrades } from '@/entities/grade'
+import { useGrades } from '@/entities/grade'
 import { usePurchases } from '@/entities/purchase'
 import {
   DealerAccessDialog,
   DealerFormDrawer,
   ToggleDealerActiveDialog,
 } from '@/features/manage-dealer'
-import { formatDate, formatMoney, useMoneyWithUnit } from '@/shared/lib'
+import { formatDate, formatMoney, tierAt, useMoneyWithUnit } from '@/shared/lib'
 import {
   Badge,
+  TierBadge,
   Button,
   Card,
   CardTitle,
@@ -119,13 +120,10 @@ export function AdminDealerPage() {
           <span className="flex flex-wrap items-center gap-2.5">
             {dealer.full_name}
             {!dealer.is_active && <Badge tone="danger">{t('dealers.inactive')}</Badge>}
-            {grade !== undefined && (
-              <Badge
-                tone={gradeToneByIndex(gradeIndex, grades?.length ?? 0)}
-                className="font-extrabold uppercase"
-              >
+            {grade !== undefined && grades !== undefined && (
+              <TierBadge tier={tierAt(gradeIndex, grades.length, grade.color)}>
                 {grade.name_ru}
-              </Badge>
+              </TierBadge>
             )}
           </span>
         }

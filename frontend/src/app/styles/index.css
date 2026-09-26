@@ -39,10 +39,19 @@
   --color-danger-bg: #fff6f6;
   --color-warning-bg: #fffbea;
 
-  /* --- grade colors --- */
-  --color-grade-bronze: #e8c3a6;
-  --color-grade-silver: #dadce1;
-  --color-grade-gold: #fcd102;
+  /* --- grade tiers: one solid per material, for dots, bars and rings.
+     The full metallic look (gradient, ink, glow) is the .tier-* palette
+     below; the order matches TIER_COLORS in shared/lib/tier.ts. --- */
+  --color-tier-bronze: #cd8a55;
+  --color-tier-silver: #c3c8d0;
+  --color-tier-gold: #fcd102;
+  --color-tier-platinum: #8fa5bb;
+  --color-tier-emerald: #0f9f66;
+  --color-tier-sapphire: #2a5ce0;
+  --color-tier-amethyst: #8b5cf6;
+  --color-tier-ruby: #d0103a;
+  --color-tier-diamond: #8fe3f7;
+  --color-tier-onyx: #27272a;
 
   /* --- typography --- */
   --font-sans: 'Montserrat', 'Bahnschrift', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -58,6 +67,7 @@
   --shadow-glow: 0 6px 18px rgb(255 0 9 / 0.3); /* primary button */
   --shadow-glow-lg: 0 0 30px rgb(255 0 9 / 0.25); /* dark flagship card */
   --shadow-glow-gold: 0 3px 12px rgb(252 209 2 / 0.45); /* winner's medal */
+  --shadow-glow-tier: 0 4px 18px var(--tier-glow); /* top grade, in its own colour */
   --shadow-modal: 0 20px 50px rgb(0 0 0 / 0.12);
   --shadow-drawer: -20px 0 50px rgb(0 0 0 / 0.1);
   --shadow-card: 0 1px 3px rgb(0 0 0 / 0.06);
@@ -85,5 +95,216 @@
   :focus-visible {
     outline: 2px solid var(--color-brand-red);
     outline-offset: 2px;
+  }
+}
+
+/*
+ * Grade tiers. A `.tier-<material>` class only sets the palette variables;
+ * what gets painted is up to the utility next to it:
+ *   .tier-surface  metallic gradient + ink (badges, medals)
+ *   .tier-fill     a bright fill with no ink (progress bars, ladder lines)
+ *   .tier-text     text in the material's bright tone — for dark cards
+ *   .tier-shine    a light sweeping across, for the upper half of the ladder
+ * Light materials carry dark ink, gems carry white ink — each pair keeps
+ * the name readable on its own gradient.
+ */
+@layer components {
+  .tier-bronze {
+    --tier-hi: #f6d3b2;
+    --tier-mid: #d08c57;
+    --tier-lo: #a9643a;
+    --tier-ink: #2b1405;
+    --tier-edge: rgb(255 255 255 / 0.45);
+    --tier-glow: rgb(208 140 87 / 0.5);
+    --tier-bright: #e7a574;
+  }
+  .tier-silver {
+    --tier-hi: #fbfcfd;
+    --tier-mid: #d3d7de;
+    --tier-lo: #a3a9b3;
+    --tier-ink: #1f2329;
+    --tier-edge: rgb(255 255 255 / 0.6);
+    --tier-glow: rgb(163 169 179 / 0.55);
+    --tier-bright: #e3e6ea;
+  }
+  .tier-gold {
+    --tier-hi: #fff4b8;
+    --tier-mid: #fcd102;
+    --tier-lo: #d9a300;
+    --tier-ink: #2e2300;
+    --tier-edge: rgb(255 255 255 / 0.55);
+    --tier-glow: rgb(252 209 2 / 0.55);
+    --tier-bright: #fcd102;
+  }
+  .tier-platinum {
+    --tier-hi: #eef4f8;
+    --tier-mid: #aebfcf;
+    --tier-lo: #7890a8;
+    --tier-ink: #0e1a26;
+    --tier-edge: rgb(255 255 255 / 0.6);
+    --tier-glow: rgb(143 165 187 / 0.6);
+    --tier-bright: #c3d3e2;
+  }
+  .tier-emerald {
+    --tier-hi: #3fd495;
+    --tier-mid: #0c8a58;
+    --tier-lo: #065236;
+    --tier-ink: #ffffff;
+    --tier-edge: rgb(255 255 255 / 0.3);
+    --tier-glow: rgb(15 159 102 / 0.5);
+    --tier-bright: #3fd495;
+  }
+  .tier-sapphire {
+    --tier-hi: #6aa8ff;
+    --tier-mid: #1f4fd1;
+    --tier-lo: #13287a;
+    --tier-ink: #ffffff;
+    --tier-edge: rgb(255 255 255 / 0.3);
+    --tier-glow: rgb(42 92 224 / 0.5);
+    --tier-bright: #7fb2ff;
+  }
+  .tier-amethyst {
+    --tier-hi: #c89bff;
+    --tier-mid: #7c3aed;
+    --tier-lo: #4a1a8f;
+    --tier-ink: #ffffff;
+    --tier-edge: rgb(255 255 255 / 0.3);
+    --tier-glow: rgb(139 92 246 / 0.5);
+    --tier-bright: #b98cff;
+  }
+  .tier-ruby {
+    --tier-hi: #ff8fa3;
+    --tier-mid: #c8103a;
+    --tier-lo: #6e0a22;
+    --tier-ink: #ffffff;
+    --tier-edge: rgb(255 255 255 / 0.3);
+    --tier-glow: rgb(208 16 58 / 0.5);
+    --tier-bright: #ff6b86;
+  }
+  .tier-diamond {
+    --tier-hi: #ffffff;
+    --tier-mid: #aeeefe;
+    --tier-lo: #c4b5fd;
+    --tier-ink: #0b2a3a;
+    --tier-edge: rgb(255 255 255 / 0.8);
+    --tier-glow: rgb(143 227 247 / 0.65);
+    --tier-bright: #aeeefe;
+  }
+  /* The black card: dark stone, gold ink and a gold edge, so it still
+     stands out on the cabinet's dark hero card. */
+  .tier-onyx {
+    --tier-hi: #5b5b64;
+    --tier-mid: #1c1c21;
+    --tier-lo: #000000;
+    --tier-ink: #fcd102;
+    --tier-edge: rgb(252 209 2 / 0.85);
+    --tier-glow: rgb(252 209 2 / 0.45);
+    --tier-bright: #fcd102;
+  }
+
+  .tier-surface {
+    background: linear-gradient(
+      135deg,
+      var(--tier-hi) 0%,
+      var(--tier-mid) 55%,
+      var(--tier-lo) 100%
+    );
+    color: var(--tier-ink);
+    box-shadow: inset 0 0 0 1px var(--tier-edge);
+  }
+
+  /* The bright tone, not the metal's own dark end: onyx is near-black,
+     and a fill must still show on the cabinet's dark card. */
+  .tier-fill {
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--tier-bright) 70%, black),
+      var(--tier-bright)
+    );
+  }
+
+  .tier-text {
+    background: linear-gradient(
+      90deg,
+      var(--tier-bright),
+      color-mix(in srgb, var(--tier-bright) 50%, white)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .tier-shine {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .tier-shine::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      115deg,
+      transparent 30%,
+      rgb(255 255 255 / 0.55) 50%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+    animation: tier-shine 3.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .animate-pop-in {
+    animation: pop-in 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  }
+  .animate-confetti {
+    animation: confetti-fall 1.8s ease-in forwards;
+  }
+}
+
+@keyframes tier-shine {
+  0%,
+  60% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+/* A level-up: confetti falling over the congratulation card. */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(220px) rotate(540deg);
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tier-shine::after {
+    animation: none;
+    opacity: 0;
+  }
+  .animate-confetti,
+  .animate-pop-in {
+    animation: none !important;
   }
 }

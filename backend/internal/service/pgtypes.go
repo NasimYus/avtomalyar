@@ -36,3 +36,12 @@ func int8ToPtr(v pgtype.Int8) *int64 {
 	value := v.Int64
 	return &value
 }
+
+// textToPtr is int8ToPtr for a nullable text column.
+func textToPtr(v pgtype.Text) *string {
+	if !v.Valid {
+		return nil
+	}
+	value := v.String
+	return &value
+}

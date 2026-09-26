@@ -113,7 +113,33 @@
     "awarded": "приз выдан",
     "backToPromotions": "К акциям",
     "promotionMissingTitle": "Акция недоступна",
-    "promotionMissingDescription": "Возможно, вы не участвуете в этой акции или её ещё не запустили"
+    "promotionMissingDescription": "Возможно, вы не участвуете в этой акции или её ещё не запустили",
+    "yourGrade": "Ваш уровень",
+    "noGrade": "Пока без уровня",
+    "levelOf": "Уровень {{level}} из {{total}}",
+    "topTitle": "Вы на вершине!",
+    "mood": {
+      "start": "Отличный старт — каждая закупка приближает новый уровень",
+      "steady": "Вы на верном пути",
+      "half": "Больше половины пути позади!",
+      "close": "Финишная прямая!",
+      "almost": "Совсем чуть-чуть — ещё одна закупка!"
+    },
+    "ladderTitle": "Путь дилера",
+    "ladderDescription": "Все уровни программы и ваше место на них",
+    "ladderReached": "Пройден",
+    "ladderCurrent": "Вы здесь",
+    "ladderRemaining": "осталось {{amount}} сом.",
+    "ladderSummit": "Вершина",
+    "ladderHidden_one": "ещё {{count}} уровень",
+    "ladderHidden_few": "ещё {{count}} уровня",
+    "ladderHidden_many": "ещё {{count}} уровней",
+    "ladderShowAll": "Показать все уровни",
+    "ladderCollapse": "Свернуть",
+    "levelUpTitle": "Новый уровень!",
+    "levelUpText": "Вы достигли уровня «{{grade}}». Так держать!",
+    "levelUpClose": "Ура!",
+    "ladderHidden_other": "ещё {{count}} уровня"
   },
   "cities": {
     "add": "+ Город",
@@ -149,7 +175,26 @@
     "deleteTitle": "Удалить уровень «{{name}}»?",
     "deleteDescription": "Дилеры с этим уровнем получат ближайший подходящий уровень — пересчёт произойдёт сразу.",
     "emptyTitle": "Уровней пока нет",
-    "emptyDescription": "Добавьте уровни — они присваиваются дилерам автоматически по сумме покупок"
+    "emptyDescription": "Добавьте уровни — они присваиваются дилерам автоматически по сумме покупок",
+    "color": "Цвет уровня",
+    "colorAuto": "Авто",
+    "colorAutoHint": "Цвет подбирается по месту уровня: чем выше, тем ценнее материал",
+    "colorNote": "Верхняя половина лестницы переливается, а высший уровень получает корону — это зависит от места уровня, а не от цвета.",
+    "autoColor": "авто",
+    "level": "Уровень {{level}}",
+    "previewTitle": "Так уровни видят дилеры",
+    "colors": {
+      "bronze": "Бронза",
+      "silver": "Серебро",
+      "gold": "Золото",
+      "platinum": "Платина",
+      "emerald": "Изумруд",
+      "sapphire": "Сапфир",
+      "amethyst": "Аметист",
+      "ruby": "Рубин",
+      "diamond": "Бриллиант",
+      "onyx": "Оникс"
+    }
   },
   "prizes": {
     "add": "+ Приз",

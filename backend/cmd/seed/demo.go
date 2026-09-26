@@ -47,8 +47,10 @@ var (
 
 	demoGrades = []demoGrade{
 		{"Бронза", "Биринҷӣ", 0},
-		{"Серебро", "Нуқра", 1_000_000},
-		{"Золото", "Тилло", 2_500_000},
+		{"Серебро", "Нуқра", 300_000},
+		{"Золото", "Тилло", 700_000},
+		{"Платина", "Платина", 1_200_000},
+		{"Бриллиант", "Алмос", 2_500_000},
 	}
 
 	demoPrizes = []demoPrize{
@@ -128,7 +130,11 @@ func seedDemo(ctx context.Context, repo *repository.Repository) error {
 	fmt.Printf("cities:   %d\n", len(demoCities))
 
 	for _, grade := range demoGrades {
-		if _, err := gradeService.Create(ctx, grade.ru, grade.tg, grade.thresholdSomoni*diramsPerSomoni); err != nil {
+		if _, err := gradeService.Create(ctx, service.GradeFields{
+			NameRu:            grade.ru,
+			NameTg:            grade.tg,
+			MinPurchaseAmount: grade.thresholdSomoni * diramsPerSomoni,
+		}); err != nil {
 			return fmt.Errorf("create grade %q: %w", grade.ru, err)
 		}
 	}
@@ -305,8 +311,8 @@ func seedDemoPromotions(
 	// List orders grades by threshold, so the last one is the top.
 	topGrade := ladder[len(ladder)-1].ID
 	club, err := promotions.Create(ctx, service.PromotionInput{
-		TitleRu:       "Клуб золотых дилеров",
-		TitleTg:       "Клуби дилерони тиллоӣ",
+		TitleRu:       "Бриллиантовый клуб",
+		TitleTg:       "Клуби алмосӣ",
 		DescriptionRu: ptr("Только для дилеров высшего уровня."),
 		DescriptionTg: ptr("Танҳо барои дилерони сатҳи болоӣ."),
 		StartDate:     today.AddDate(0, 0, -20),

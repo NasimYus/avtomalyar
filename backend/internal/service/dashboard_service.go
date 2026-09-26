@@ -23,7 +23,10 @@ type GradeBreakdown struct {
 	NameRu            string
 	NameTg            string
 	MinPurchaseAmount int64
-	DealersCount      int64
+	// The material the grade is painted in; nil when left to its place in
+	// the ladder.
+	Color        *string
+	DealersCount int64
 }
 
 // DashboardSummary is the admin dashboard's headline numbers.
@@ -75,6 +78,7 @@ func (s *DashboardService) Summary(ctx context.Context, from, to time.Time) (Das
 			NameRu:            row.NameRu,
 			NameTg:            row.NameTg,
 			MinPurchaseAmount: row.MinPurchaseAmount,
+			Color:             textToPtr(row.Color),
 			DealersCount:      row.DealersCount,
 		}
 	}

@@ -19,7 +19,9 @@ type gradeBreakdownResponse struct {
 	NameRu            string `json:"name_ru"`
 	NameTg            string `json:"name_tg"`
 	MinPurchaseAmount int64  `json:"min_purchase_amount"`
-	DealersCount      int64  `json:"dealers_count"`
+	// Absent when the grade is painted by its place in the ladder.
+	Color        *string `json:"color,omitempty"`
+	DealersCount int64   `json:"dealers_count"`
 }
 
 type dashboardSummaryResponse struct {
@@ -73,6 +75,7 @@ func (h *dashboardHandler) summary(w http.ResponseWriter, r *http.Request) {
 			NameRu:            grade.NameRu,
 			NameTg:            grade.NameTg,
 			MinPurchaseAmount: grade.MinPurchaseAmount,
+			Color:             grade.Color,
 			DealersCount:      grade.DealersCount,
 		}
 	}

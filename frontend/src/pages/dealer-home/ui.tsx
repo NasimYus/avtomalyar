@@ -1,21 +1,22 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import {
-  gradeProgress,
   splitPromotions,
   useDealerProfile,
   useMyPromotions,
   useMyPurchases,
+  GradeCard,
+  GradeLadder,
+  LevelUpCard,
   PromotionCard,
 } from '@/entities/cabinet'
-import { formatDate, formatMoney, useMoneyWithUnit, todayISO, useLocaleName } from '@/shared/lib'
-import { Badge, Card, CardTitle, EmptyState, ProgressBar, Skeleton } from '@/shared/ui'
+import { formatDate, formatMoney, todayISO, useLocaleName } from '@/shared/lib'
+import { Card, CardTitle, EmptyState, Skeleton } from '@/shared/ui'
 
 const RECENT_PURCHASES = 5
 
 export function DealerHomePage() {
   const { t } = useTranslation()
-  const money = useMoneyWithUnit()
   const name = useLocaleName()
   const { data: profile } = useDealerProfile()
   const { data: promotions } = useMyPromotions()
@@ -30,7 +31,6 @@ export function DealerHomePage() {
     )
   }
 
-  const next = profile.next_grade
   const { current, ahead } = splitPromotions(promotions ?? [], todayISO())
 
   return (
@@ -42,35 +42,9 @@ export function DealerHomePage() {
         </p>
       </div>
 
-      <Card tone="dark">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[13px] font-semibold text-white/65">
-            {t('cabinet.lifetimeTotal')}
-          </span>
-          {profile.grade !== undefined && (
-            <Badge tone="gold" className="uppercase">
-              {name(profile.grade.name_ru, profile.grade.name_tg)}
-            </Badge>
-          )}
-        </div>
-        <div className="mt-1.5 text-[32px] font-black">
-          {money(profile.lifetime_purchase_total)}
-        </div>
-
-        {next === undefined ? (
-          <p className="mt-3 text-[13px] font-semibold text-white/65">{t('cabinet.topGrade')}</p>
-        ) : (
-          <div className="mt-4">
-            <ProgressBar value={gradeProgress(profile)} tone="gold" />
-            <p className="mt-2 text-[13px] font-semibold text-white/65">
-              {t('cabinet.toNextGrade', {
-                grade: name(next.name_ru, next.name_tg),
-                amount: formatMoney(next.remaining),
-              })}
-            </p>
-          </div>
-        )}
-      </Card>
+      <LevelUpCard profile={profile} />
+      <GradeCard profile={profile} />
+      <GradeLadder profile={profile} />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
