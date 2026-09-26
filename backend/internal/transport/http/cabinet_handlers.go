@@ -54,12 +54,29 @@ type rankingEntryResponse struct {
 	IsMe        bool    `json:"is_me"`
 }
 
+type requirementResponse struct {
+	// "city", "grade" or "purchases".
+	Kind string `json:"kind"`
+	Met  bool   `json:"met"`
+	// City or grade name; absent for a purchase threshold.
+	NameRu string `json:"name_ru,omitempty"`
+	NameTg string `json:"name_tg,omitempty"`
+	// Purchase threshold and what is still missing, in dirams.
+	Threshold int64 `json:"threshold,omitempty"`
+	Remaining int64 `json:"remaining,omitempty"`
+}
+
 type cabinetPromotionResponse struct {
 	promotionResponse
-	// The dealer's own line, absent while results are being reviewed.
+	// The dealer's own line, absent while results are being reviewed and
+	// for a promotion they do not take part in.
 	Standing *rankingEntryResponse `json:"standing,omitempty"`
 	// Number of dealers taking part, so the cabinet can say "3rd of 12".
 	ParticipantsCount int `json:"participants_count"`
+	// False when the dealer does not meet the conditions yet.
+	Eligible bool `json:"eligible"`
+	// The promotion's conditions as they stand for this dealer.
+	Requirements []requirementResponse `json:"requirements"`
 }
 
 type cabinetPromotionDetailResponse struct {
@@ -176,9 +193,23 @@ func (h *cabinetHandler) purchases(w http.ResponseWriter, r *http.Request) {
 }
 
 func toCabinetPromotionResponse(promotion service.CabinetPromotion) cabinetPromotionResponse {
+	requirements := make([]requirementResponse, len(promotion.Requirements))
+	for i, requirement := range promotion.Requirements {
+		requirements[i] = requirementResponse{
+			Kind:      string(requirement.Kind),
+			Met:       requirement.Met,
+			NameRu:    requirement.NameRu,
+			NameTg:    requirement.NameTg,
+			Threshold: requirement.Threshold,
+			Remaining: requirement.Remaining,
+		}
+	}
+
 	resp := cabinetPromotionResponse{
 		promotionResponse: toPromotionResponse(promotion.Promotion),
 		ParticipantsCount: promotion.ParticipantsCount,
+		Eligible:          promotion.Eligible,
+		Requirements:      requirements,
 	}
 	if promotion.Standing != nil {
 		standing := toRankingEntryResponse(*promotion.Standing)

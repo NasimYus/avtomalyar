@@ -11,6 +11,7 @@ import (
 
 type cabinetRepository interface {
 	GetDealerProfile(ctx context.Context, id int64) (db.GetDealerProfileRow, error)
+	ListCities(ctx context.Context) ([]db.City, error)
 	ListGrades(ctx context.Context) ([]db.Grade, error)
 	ListDealerPromotions(ctx context.Context) ([]db.Promotion, error)
 	ListPrizePlaces(ctx context.Context, promotionID int64) ([]db.ListPrizePlacesRow, error)
@@ -120,6 +121,79 @@ func promotionConditions(promotion db.Promotion) domain.PromotionConditions {
 	}
 }
 
+// RequirementKind names one of a promotion's entry conditions.
+type RequirementKind string
+
+// The conditions a promotion can put on taking part (ToR 4.1).
+const (
+	// RequirementCity — the dealer must be registered in a given city.
+	RequirementCity RequirementKind = "city"
+	// RequirementGrade — the dealer must hold a given grade.
+	RequirementGrade RequirementKind = "grade"
+	// RequirementPurchases — the dealer's lifetime total must reach a figure.
+	RequirementPurchases RequirementKind = "purchases"
+)
+
+// Requirement is one entry condition together with whether this dealer
+// meets it, so the cabinet can show what is still in the way.
+type Requirement struct {
+	Kind RequirementKind
+	Met  bool
+	// City or grade name; empty for a purchase threshold.
+	NameRu string
+	NameTg string
+	// Purchase threshold and what is still missing, in dirams.
+	Threshold int64
+	Remaining int64
+}
+
+// requirements lists a promotion's conditions as they stand for a dealer.
+// Conditions the promotion does not set are left out entirely.
+func requirements(
+	promotion db.Promotion,
+	dealer db.GetDealerProfileRow,
+	cities map[int64]db.City,
+	grades map[int64]db.Grade,
+) []Requirement {
+	var list []Requirement
+
+	if promotion.CityID.Valid {
+		city := cities[promotion.CityID.Int64]
+		list = append(list, Requirement{
+			Kind:   RequirementCity,
+			Met:    dealer.CityID == promotion.CityID.Int64,
+			NameRu: city.NameRu,
+			NameTg: city.NameTg,
+		})
+	}
+
+	if promotion.GradeID.Valid {
+		grade := grades[promotion.GradeID.Int64]
+		list = append(list, Requirement{
+			Kind:   RequirementGrade,
+			Met:    dealer.GradeID.Valid && dealer.GradeID.Int64 == promotion.GradeID.Int64,
+			NameRu: grade.NameRu,
+			NameTg: grade.NameTg,
+		})
+	}
+
+	if promotion.MinLifetimePurchaseThreshold.Valid {
+		threshold := promotion.MinLifetimePurchaseThreshold.Int64
+		remaining := threshold - dealer.LifetimePurchaseTotal
+		if remaining < 0 {
+			remaining = 0
+		}
+		list = append(list, Requirement{
+			Kind:      RequirementPurchases,
+			Met:       remaining == 0,
+			Threshold: threshold,
+			Remaining: remaining,
+		})
+	}
+
+	return list
+}
+
 // RankingEntry is one line of a promotion's ranking as the cabinet shows it.
 type RankingEntry struct {
 	DealerID    int64
@@ -143,6 +217,12 @@ type CabinetPromotion struct {
 	Standing *RankingEntry
 	// How many dealers take part, so the cabinet can say "3rd of 12".
 	ParticipantsCount int
+	// False when the dealer does not meet the conditions yet. Such a
+	// promotion is still shown — its prizes are what the dealer is
+	// working towards — but never with a ranking they are not part of.
+	Eligible bool
+	// The promotion's conditions as they stand for this dealer.
+	Requirements []Requirement
 }
 
 // CabinetPromotionDetail adds the prizes and the whole ranking.
@@ -156,12 +236,14 @@ type CabinetPromotionDetail struct {
 	Final bool
 }
 
-// Promotions lists the promotions the dealer takes part in, newest first.
+// Promotions lists every promotion the shop is running that the dealer
+// may see, newest first — including the ones whose conditions they do not
+// meet yet, marked as such.
 //
-// The whole ranking is built per promotion just to pick the dealer's own
-// line out of it. That is more work than the list strictly needs, but it
-// keeps one implementation of the ranking rules; a dealer sees a handful
-// of promotions and the dealer count is in the hundreds.
+// For the ones they do take part in the whole ranking is built just to
+// pick their own line out of it. That is more work than the list strictly
+// needs, but it keeps one implementation of the ranking rules; a dealer
+// sees a handful of promotions and the dealer count is in the hundreds.
 func (s *CabinetService) Promotions(ctx context.Context, dealerID int64) ([]CabinetPromotion, error) {
 	dealer, err := s.repo.GetDealerProfile(ctx, dealerID)
 	if err != nil {
@@ -173,36 +255,75 @@ func (s *CabinetService) Promotions(ctx context.Context, dealerID int64) ([]Cabi
 		return nil, fmt.Errorf("list promotions: %w", repository.TranslateError(err))
 	}
 
+	cities, grades, err := s.referenceNames(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	snapshot := dealerSnapshot(dealer)
 	visible := make([]CabinetPromotion, 0, len(promotions))
 
 	for _, promotion := range promotions {
-		if !domain.IsEligible(snapshot, promotionConditions(promotion)) {
-			continue
+		entry := CabinetPromotion{
+			Promotion:    promotion,
+			Eligible:     domain.IsEligible(snapshot, promotionConditions(promotion)),
+			Requirements: requirements(promotion, dealer, cities, grades),
 		}
 
-		ranking, _, err := s.ranking(ctx, promotion, dealerID)
-		if err != nil {
-			return nil, err
-		}
-
-		entry := CabinetPromotion{Promotion: promotion, ParticipantsCount: len(ranking)}
-		for _, line := range ranking {
-			if line.IsMe {
-				mine := line
-				entry.Standing = &mine
-				break
+		if entry.Eligible {
+			ranking, _, err := s.ranking(ctx, promotion, dealerID)
+			if err != nil {
+				return nil, err
+			}
+			entry.ParticipantsCount = len(ranking)
+			for _, line := range ranking {
+				if line.IsMe {
+					mine := line
+					entry.Standing = &mine
+					break
+				}
 			}
 		}
+
 		visible = append(visible, entry)
 	}
 
 	return visible, nil
 }
 
-// Promotion returns one promotion with its prizes and full ranking, or
-// ErrNotFound when the dealer does not take part in it. A promotion the
-// dealer cannot see is indistinguishable from one that does not exist.
+// referenceNames loads the two small reference tables the conditions are
+// spelled out with. Both are a handful of rows, so they are fetched whole
+// rather than joined per promotion.
+func (s *CabinetService) referenceNames(
+	ctx context.Context,
+) (map[int64]db.City, map[int64]db.Grade, error) {
+	cityRows, err := s.repo.ListCities(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("list cities: %w", repository.TranslateError(err))
+	}
+	gradeRows, err := s.repo.ListGrades(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("list grades: %w", repository.TranslateError(err))
+	}
+
+	cities := make(map[int64]db.City, len(cityRows))
+	for _, city := range cityRows {
+		cities[city.ID] = city
+	}
+	grades := make(map[int64]db.Grade, len(gradeRows))
+	for _, grade := range gradeRows {
+		grades[grade.ID] = grade
+	}
+	return cities, grades, nil
+}
+
+// Promotion returns one promotion with its prizes, and the full ranking
+// when the dealer takes part in it. A dealer who does not meet the
+// conditions still sees the terms and the prizes, but never the ranking
+// of a contest they are not in.
+//
+// A promotion the cabinet does not serve at all answers ErrNotFound, so
+// it is indistinguishable from one that does not exist.
 func (s *CabinetService) Promotion(
 	ctx context.Context,
 	dealerID, promotionID int64,
@@ -217,11 +338,10 @@ func (s *CabinetService) Promotion(
 		return CabinetPromotionDetail{}, fmt.Errorf("list promotions: %w", repository.TranslateError(err))
 	}
 
-	snapshot := dealerSnapshot(dealer)
 	var promotion db.Promotion
 	found := false
 	for _, candidate := range promotions {
-		if candidate.ID == promotionID && domain.IsEligible(snapshot, promotionConditions(candidate)) {
+		if candidate.ID == promotionID {
 			promotion = candidate
 			found = true
 			break
@@ -231,25 +351,35 @@ func (s *CabinetService) Promotion(
 		return CabinetPromotionDetail{}, domain.ErrNotFound
 	}
 
+	cities, grades, err := s.referenceNames(ctx)
+	if err != nil {
+		return CabinetPromotionDetail{}, err
+	}
+
 	places, err := s.repo.ListPrizePlaces(ctx, promotionID)
 	if err != nil {
 		return CabinetPromotionDetail{}, fmt.Errorf("list prize places: %w", repository.TranslateError(err))
+	}
+
+	detail := CabinetPromotionDetail{
+		CabinetPromotion: CabinetPromotion{
+			Promotion:    promotion,
+			Eligible:     domain.IsEligible(dealerSnapshot(dealer), promotionConditions(promotion)),
+			Requirements: requirements(promotion, dealer, cities, grades),
+		},
+		PrizePlaces: places,
+	}
+	if !detail.Eligible {
+		return detail, nil
 	}
 
 	ranking, final, err := s.ranking(ctx, promotion, dealerID)
 	if err != nil {
 		return CabinetPromotionDetail{}, err
 	}
-
-	detail := CabinetPromotionDetail{
-		CabinetPromotion: CabinetPromotion{
-			Promotion:         promotion,
-			ParticipantsCount: len(ranking),
-		},
-		PrizePlaces: places,
-		Ranking:     ranking,
-		Final:       final,
-	}
+	detail.Ranking = ranking
+	detail.Final = final
+	detail.ParticipantsCount = len(ranking)
 	for _, line := range ranking {
 		if line.IsMe {
 			mine := line

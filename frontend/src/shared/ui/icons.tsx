@@ -82,3 +82,12 @@ export function TrophyIcon(props: SVGProps<SVGSVGElement>) {
     </Icon>
   )
 }
+
+export function LockIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="4.5" y="8.5" width="11" height="7.5" rx="2" />
+      <path d="M7.2 8.5V6.4a2.8 2.8 0 0 1 5.6 0v2.1" />
+    </Icon>
+  )
+}

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { cabinetStage, gradeProgress, type DealerProfile } from './model'
+import {
+  cabinetStage,
+  gradeProgress,
+  splitPromotions,
+  type CabinetPromotion,
+  type DealerProfile,
+} from './model'
 
 function profile(overrides: Partial<DealerProfile>): DealerProfile {
   return {
@@ -77,5 +83,55 @@ describe('cabinetStage', () => {
 
   it('counts the last day of the period as still running', () => {
     expect(cabinetStage('active', today, today)).toBe('running')
+  })
+})
+
+describe('splitPromotions', () => {
+  const today = '2026-09-25'
+
+  function promotion(id: number, overrides: Partial<CabinetPromotion> = {}): CabinetPromotion {
+    return {
+      id,
+      title_ru: `Акция ${String(id)}`,
+      title_tg: `Аксия ${String(id)}`,
+      start_date: '2026-09-01',
+      end_date: '2026-12-31',
+      status: 'active',
+      participants_count: 0,
+      eligible: true,
+      requirements: [],
+      ...overrides,
+    }
+  }
+
+  it('keeps a running promotion the dealer is in as current', () => {
+    const { current, ahead } = splitPromotions([promotion(1)], today)
+    expect(current.map((p) => p.id)).toEqual([1])
+    expect(ahead).toEqual([])
+  })
+
+  it('puts a promotion that has not started ahead, even when eligible', () => {
+    const { current, ahead } = splitPromotions([promotion(2, { start_date: '2026-10-05' })], today)
+    expect(current).toEqual([])
+    expect(ahead.map((p) => p.id)).toEqual([2])
+  })
+
+  it('puts a running promotion with unmet conditions ahead', () => {
+    const { current, ahead } = splitPromotions(
+      [
+        promotion(3, {
+          eligible: false,
+          requirements: [{ kind: 'purchases', met: false, threshold: 100, remaining: 40 }],
+        }),
+      ],
+      today,
+    )
+    expect(current).toEqual([])
+    expect(ahead.map((p) => p.id)).toEqual([3])
+  })
+
+  it('counts the first day of the period as started', () => {
+    const { current } = splitPromotions([promotion(4, { start_date: today })], today)
+    expect(current.map((p) => p.id)).toEqual([4])
   })
 })

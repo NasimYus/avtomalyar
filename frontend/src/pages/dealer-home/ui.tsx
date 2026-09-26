@@ -2,12 +2,13 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import {
   gradeProgress,
+  splitPromotions,
   useDealerProfile,
   useMyPromotions,
   useMyPurchases,
   PromotionCard,
 } from '@/entities/cabinet'
-import { formatDate, formatMoney, formatMoneyWithUnit, useLocaleName } from '@/shared/lib'
+import { formatDate, formatMoney, formatMoneyWithUnit, todayISO, useLocaleName } from '@/shared/lib'
 import { Badge, Card, CardTitle, EmptyState, ProgressBar, Skeleton } from '@/shared/ui'
 
 const RECENT_PURCHASES = 5
@@ -29,6 +30,7 @@ export function DealerHomePage() {
   }
 
   const next = profile.next_grade
+  const { current, ahead } = splitPromotions(promotions ?? [], todayISO())
 
   return (
     <>
@@ -82,17 +84,37 @@ export function DealerHomePage() {
 
         {promotions === undefined ? (
           <Skeleton className="h-[130px]" />
-        ) : promotions.length === 0 ? (
+        ) : current.length === 0 ? (
           <EmptyState
             title={t('cabinet.promotionsEmptyTitle')}
             description={t('cabinet.promotionsEmptyDescription')}
           />
         ) : (
-          promotions
+          current
             .slice(0, 2)
             .map((promotion) => <PromotionCard key={promotion.id} promotion={promotion} />)
         )}
       </section>
+
+      {/*
+        What the dealer can aim at next: promotions that have not started
+        and ones whose conditions they have not met. Hidden entirely when
+        there is nothing ahead, rather than shown as an empty block.
+      */}
+      {ahead.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div>
+            <CardTitle>{t('cabinet.aheadTitle')}</CardTitle>
+            <p className="mt-0.5 text-[13px] font-semibold text-muted">
+              {t('cabinet.aheadDescription')}
+            </p>
+          </div>
+
+          {ahead.slice(0, 3).map((promotion) => (
+            <PromotionCard key={promotion.id} promotion={promotion} />
+          ))}
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">

@@ -182,7 +182,7 @@ func seedDemo(ctx context.Context, repo *repository.Repository) error {
 		}
 	}
 
-	if err := seedDemoPromotions(ctx, service.NewPromotionService(repo), prizeIDs); err != nil {
+	if err := seedDemoPromotions(ctx, service.NewPromotionService(repo), gradeService, prizeIDs); err != nil {
 		return err
 	}
 
@@ -200,7 +200,12 @@ func seedDemo(ctx context.Context, repo *repository.Repository) error {
 // seedDemoPromotions creates one promotion per interesting state, so the
 // admin panel has something to show in every tab: a finished one with
 // published results, one running now, and one still being set up.
-func seedDemoPromotions(ctx context.Context, promotions *service.PromotionService, prizeIDs []int64) error {
+func seedDemoPromotions(
+	ctx context.Context,
+	promotions *service.PromotionService,
+	grades *service.GradeService,
+	prizeIDs []int64,
+) error {
 	if len(prizeIDs) < len(demoPrizes) {
 		return fmt.Errorf("expected %d demo prizes, got %d", len(demoPrizes), len(prizeIDs))
 	}
@@ -268,7 +273,59 @@ func seedDemoPromotions(ctx context.Context, promotions *service.PromotionServic
 		return fmt.Errorf("create draft promotion: %w", err)
 	}
 
-	fmt.Println("promotions: 3 (published, active, draft)")
+	// Starts later: this is what the cabinet's "ahead" block shows to
+	// every dealer, whether or not they meet any conditions.
+	upcoming, err := promotions.Create(ctx, service.PromotionInput{
+		TitleRu:       "Зимний марафон",
+		TitleTg:       "Марафони зимистона",
+		DescriptionRu: ptr("Стартует через две недели — готовьтесь."),
+		DescriptionTg: ptr("Пас аз ду ҳафта оғоз мешавад — омода шавед."),
+		StartDate:     today.AddDate(0, 0, 14),
+		EndDate:       today.AddDate(0, 0, 105),
+	})
+	if err != nil {
+		return fmt.Errorf("create upcoming promotion: %w", err)
+	}
+	if err := promotions.SetPrizePlaces(ctx, upcoming.ID, []service.PrizePlaceInput{
+		{PlaceRank: 1, PrizeID: prizeIDs[2]},
+		{PlaceRank: 2, PrizeID: prizeIDs[1]},
+	}); err != nil {
+		return fmt.Errorf("set prize places: %w", err)
+	}
+	if _, err := promotions.Start(ctx, upcoming.ID); err != nil {
+		return fmt.Errorf("start upcoming promotion: %w", err)
+	}
+
+	// Running, but only the top grade takes part — the cabinet shows this
+	// one to everyone else as a condition they have yet to meet.
+	ladder, err := grades.List(ctx)
+	if err != nil {
+		return fmt.Errorf("list grades: %w", err)
+	}
+	// List orders grades by threshold, so the last one is the top.
+	topGrade := ladder[len(ladder)-1].ID
+	club, err := promotions.Create(ctx, service.PromotionInput{
+		TitleRu:       "Клуб золотых дилеров",
+		TitleTg:       "Клуби дилерони тиллоӣ",
+		DescriptionRu: ptr("Только для дилеров высшего уровня."),
+		DescriptionTg: ptr("Танҳо барои дилерони сатҳи болоӣ."),
+		StartDate:     today.AddDate(0, 0, -20),
+		EndDate:       today.AddDate(0, 0, 70),
+		GradeID:       &topGrade,
+	})
+	if err != nil {
+		return fmt.Errorf("create club promotion: %w", err)
+	}
+	if err := promotions.SetPrizePlaces(ctx, club.ID, []service.PrizePlaceInput{
+		{PlaceRank: 1, PrizeID: prizeIDs[4]},
+	}); err != nil {
+		return fmt.Errorf("set prize places: %w", err)
+	}
+	if _, err := promotions.Start(ctx, club.ID); err != nil {
+		return fmt.Errorf("start club promotion: %w", err)
+	}
+
+	fmt.Println("promotions: 5 (published, running, upcoming, grade-only, draft)")
 	return nil
 }
 

@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { cn, formatDate, formatMoney, todayISO, useLocaleName } from '@/shared/lib'
-import { Badge, Card } from '@/shared/ui'
-import { cabinetStage, type CabinetPromotion } from './model'
+import { Badge, Card, LockIcon } from '@/shared/ui'
+import { cabinetStage, isUpcoming, type CabinetPromotion, type CabinetRequirement } from './model'
 
 /**
  * Medals for the three prize places, in the same metals the grade badges
@@ -36,14 +36,56 @@ const STAGE_TONES = {
 } as const
 
 /**
- * A promotion as it appears in the dealer's list: the period, what stage
- * it is at, and where the dealer currently stands in it.
+ * The conditions still in the way, spelled out as what the dealer has to
+ * do. Conditions they already meet are left out — this is a to-do list,
+ * not a checklist.
+ */
+export function RequirementList({ requirements }: { requirements: CabinetRequirement[] }) {
+  const unmet = requirements.filter((requirement) => !requirement.met)
+  if (unmet.length === 0) return null
+
+  return (
+    <ul className="grid gap-1.5">
+      {unmet.map((requirement) => (
+        <RequirementLine key={requirement.kind} requirement={requirement} />
+      ))}
+    </ul>
+  )
+}
+
+function RequirementLine({ requirement }: { requirement: CabinetRequirement }) {
+  const { t } = useTranslation()
+  const name = useLocaleName()
+
+  const text =
+    requirement.kind === 'purchases'
+      ? t('cabinet.needPurchases', { amount: formatMoney(requirement.remaining ?? 0) })
+      : t(requirement.kind === 'city' ? 'cabinet.needCity' : 'cabinet.needGrade', {
+          value: name(requirement.name_ru ?? '', requirement.name_tg),
+        })
+
+  return (
+    <li className="flex items-start gap-2 text-[13px] font-semibold text-muted">
+      <LockIcon className="mt-px size-4 shrink-0 text-brand-red" />
+      {text}
+    </li>
+  )
+}
+
+/**
+ * A promotion as it appears in the dealer's list. It has three faces: a
+ * contest the dealer is in shows where they stand, one that has not
+ * started shows when it will, and one whose conditions are unmet shows
+ * what is still in the way.
  */
 export function PromotionCard({ promotion }: { promotion: CabinetPromotion }) {
   const { t } = useTranslation()
   const name = useLocaleName()
-  const stage = cabinetStage(promotion.status, promotion.end_date, todayISO())
+  const today = todayISO()
+  const stage = cabinetStage(promotion.status, promotion.end_date, today)
+  const upcoming = isUpcoming(promotion, today)
   const standing = promotion.standing
+  const unmet = promotion.requirements.filter((requirement) => !requirement.met)
 
   return (
     <Link to={`/me/promotions/${String(promotion.id)}`} className="block">
@@ -57,10 +99,20 @@ export function PromotionCard({ promotion }: { promotion: CabinetPromotion }) {
               {formatDate(promotion.start_date)} — {formatDate(promotion.end_date)}
             </span>
           </div>
-          <Badge tone={STAGE_TONES[stage]}>{t(`cabinet.stage.${stage}`)}</Badge>
+          <Badge tone={upcoming ? 'warning' : STAGE_TONES[stage]}>
+            {upcoming ? t('cabinet.soon') : t(`cabinet.stage.${stage}`)}
+          </Badge>
         </div>
 
-        {standing ? (
+        {unmet.length > 0 ? (
+          <div className="mt-3.5 border-t border-line pt-3.5">
+            <RequirementList requirements={promotion.requirements} />
+          </div>
+        ) : upcoming ? (
+          <p className="mt-3.5 border-t border-line pt-3.5 text-[13px] font-semibold text-muted">
+            {t('cabinet.startsOn', { date: formatDate(promotion.start_date) })}
+          </p>
+        ) : standing ? (
           <div className="mt-3.5 flex items-end justify-between gap-3 border-t border-line pt-3.5">
             <div className="min-w-0">
               <span className="block text-[13px] font-semibold text-muted">

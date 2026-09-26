@@ -1,8 +1,15 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
-import { cabinetStage, PlaceMedal, useMyPromotion, type RankingEntry } from '@/entities/cabinet'
+import {
+  cabinetStage,
+  isUpcoming,
+  PlaceMedal,
+  RequirementList,
+  useMyPromotion,
+  type RankingEntry,
+} from '@/entities/cabinet'
 import { cn, formatDate, formatMoney, todayISO, useLocaleName } from '@/shared/lib'
-import { Badge, Card, CardTitle, EmptyState, Skeleton, TrophyIcon } from '@/shared/ui'
+import { Badge, Card, CardTitle, EmptyState, LockIcon, Skeleton, TrophyIcon } from '@/shared/ui'
 
 const STAGE_TONES = {
   running: 'success',
@@ -34,7 +41,9 @@ export function DealerPromotionPage() {
     return <Skeleton className="h-[320px]" />
   }
 
-  const stage = cabinetStage(promotion.status, promotion.end_date, todayISO())
+  const today = todayISO()
+  const stage = cabinetStage(promotion.status, promotion.end_date, today)
+  const upcoming = isUpcoming(promotion, today)
 
   return (
     <>
@@ -47,7 +56,9 @@ export function DealerPromotionPage() {
           <h1 className="text-[24px] leading-tight font-black sm:text-[28px]">
             {name(promotion.title_ru, promotion.title_tg)}
           </h1>
-          <Badge tone={STAGE_TONES[stage]}>{t(`cabinet.stage.${stage}`)}</Badge>
+          <Badge tone={upcoming ? 'warning' : STAGE_TONES[stage]}>
+            {upcoming ? t('cabinet.soon') : t(`cabinet.stage.${stage}`)}
+          </Badge>
         </div>
         <p className="mt-1 text-[13px] font-semibold text-muted">
           {formatDate(promotion.start_date)} — {formatDate(promotion.end_date)}
@@ -58,6 +69,29 @@ export function DealerPromotionPage() {
           </p>
         )}
       </div>
+
+      {!promotion.eligible && (
+        <Card>
+          <div className="flex items-center gap-2">
+            <LockIcon className="size-5 text-brand-red" />
+            <CardTitle>{t('cabinet.lockedTitle')}</CardTitle>
+          </div>
+          <p className="mt-1 text-[13px] font-semibold text-muted">
+            {t('cabinet.lockedDescription')}
+          </p>
+          <div className="mt-3">
+            <RequirementList requirements={promotion.requirements} />
+          </div>
+        </Card>
+      )}
+
+      {promotion.eligible && upcoming && (
+        <Card>
+          <p className="text-[13px] font-semibold text-muted">
+            {t('cabinet.startsOn', { date: formatDate(promotion.start_date) })}
+          </p>
+        </Card>
+      )}
 
       {promotion.standing !== undefined && (
         <Card tone="dark">
@@ -107,6 +141,12 @@ export function DealerPromotionPage() {
                     src={place.prize_photo_path}
                     alt=""
                     className="size-12 shrink-0 rounded-inner object-cover"
+                    // A prize's photo can be replaced or removed after the
+                    // promotion was set up; a broken image icon next to the
+                    // top prize is worse than no picture at all.
+                    onError={(event) => {
+                      event.currentTarget.hidden = true
+                    }}
                   />
                 )}
 
@@ -124,29 +164,35 @@ export function DealerPromotionPage() {
         </section>
       )}
 
-      <section className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <CardTitle>{t('cabinet.ranking')}</CardTitle>
-          {promotion.ranking.length > 0 && (
-            <span className="text-xs font-semibold text-muted">
-              {promotion.final ? t('cabinet.rankingFinal') : t('cabinet.rankingLive')}
-            </span>
-          )}
-        </div>
+      {promotion.eligible && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <CardTitle>{t('cabinet.ranking')}</CardTitle>
+            {promotion.ranking.length > 0 && (
+              <span className="text-xs font-semibold text-muted">
+                {promotion.final ? t('cabinet.rankingFinal') : t('cabinet.rankingLive')}
+              </span>
+            )}
+          </div>
 
-        {promotion.ranking.length === 0 ? (
-          <EmptyState
-            title={t('cabinet.rankingPendingTitle')}
-            description={t('cabinet.rankingPendingDescription')}
-          />
-        ) : (
-          <Card padded={false} className="divide-y divide-line px-[18px]">
-            {promotion.ranking.map((entry) => (
-              <RankingRow key={entry.dealer_id} entry={entry} />
-            ))}
-          </Card>
-        )}
-      </section>
+          {promotion.ranking.length === 0 ? (
+            <EmptyState
+              title={t('cabinet.rankingPendingTitle')}
+              description={
+                upcoming
+                  ? t('cabinet.emptyDescriptionRunning')
+                  : t('cabinet.rankingPendingDescription')
+              }
+            />
+          ) : (
+            <Card padded={false} className="divide-y divide-line px-[18px]">
+              {promotion.ranking.map((entry) => (
+                <RankingRow key={entry.dealer_id} entry={entry} />
+              ))}
+            </Card>
+          )}
+        </section>
+      )}
     </>
   )
 }

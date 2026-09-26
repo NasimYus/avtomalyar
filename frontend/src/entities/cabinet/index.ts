@@ -1,6 +1,6 @@
 export { useDealerProfile, useMyPurchases, useMyPromotions, useMyPromotion } from './api'
-export { cabinetKeys, gradeProgress, cabinetStage } from './model'
-export { PromotionCard, PlaceMedal } from './ui'
+export { cabinetKeys, gradeProgress, cabinetStage, isUpcoming, splitPromotions } from './model'
+export { PromotionCard, PlaceMedal, RequirementList } from './ui'
 export type {
   DealerProfile,
   GradeRef,
@@ -9,6 +9,7 @@ export type {
   CabinetPromotion,
   CabinetPromotionDetail,
   CabinetPromotionStatus,
+  CabinetRequirement,
   CabinetPrizePlace,
   CabinetPurchase,
   CabinetPurchasePage,

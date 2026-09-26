@@ -69,6 +69,21 @@ export interface CabinetPromotion {
   /** Absent while an ended promotion's results are being reviewed. */
   standing?: RankingEntry
   participants_count: number
+  /** False when the dealer does not meet the conditions yet. */
+  eligible: boolean
+  requirements: CabinetRequirement[]
+}
+
+/** One of a promotion's entry conditions, as it stands for this dealer. */
+export interface CabinetRequirement {
+  kind: 'city' | 'grade' | 'purchases'
+  met: boolean
+  /** City or grade name; absent for a purchase threshold. */
+  name_ru?: string
+  name_tg?: string
+  /** Purchase threshold and what is still missing, in dirams. */
+  threshold?: number
+  remaining?: number
 }
 
 export interface CabinetPurchase {
@@ -116,6 +131,31 @@ export function gradeProgress(profile: DealerProfile): number {
 
   const done = profile.lifetime_purchase_total - from
   return Math.min(100, Math.max(0, (done / span) * 100))
+}
+
+/** A promotion whose period has not started yet. */
+export function isUpcoming(promotion: CabinetPromotion, today: string): boolean {
+  return promotion.start_date > today
+}
+
+/**
+ * Splits the dealer's promotions into the ones they are already competing
+ * in and the ones still ahead of them — not started yet, or with
+ * conditions they have not met. The second group is what the home screen's
+ * "ahead" block shows.
+ */
+export function splitPromotions(
+  promotions: CabinetPromotion[],
+  today: string,
+): { current: CabinetPromotion[]; ahead: CabinetPromotion[] } {
+  const current: CabinetPromotion[] = []
+  const ahead: CabinetPromotion[] = []
+
+  for (const promotion of promotions) {
+    if (promotion.eligible && !isUpcoming(promotion, today)) current.push(promotion)
+    else ahead.push(promotion)
+  }
+  return { current, ahead }
 }
 
 /**
