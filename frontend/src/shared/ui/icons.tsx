@@ -1,11 +1,12 @@
 import type { SVGProps } from 'react'
+import { cn } from '@/shared/lib'
 
 /**
  * Small line icons for row actions. Hand-rolled instead of pulling in an
  * icon package — the admin needs a handful, all in the same 20×20 stroke
  * style.
  */
-function Icon({ children, ...props }: SVGProps<SVGSVGElement>) {
+function Icon({ children, className, ...props }: SVGProps<SVGSVGElement>) {
   return (
     <svg
       viewBox="0 0 20 20"
@@ -15,7 +16,9 @@ function Icon({ children, ...props }: SVGProps<SVGSVGElement>) {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
-      className="size-[18px]"
+      // Merged, not overwritten: a caller adding a margin must not lose
+      // the icon's size and end up with a full-width SVG.
+      className={cn('size-[18px] shrink-0', className)}
       {...props}
     >
       {children}

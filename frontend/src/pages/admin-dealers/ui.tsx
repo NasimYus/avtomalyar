@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { useCities } from '@/entities/city'
 import { useDealers, type Dealer } from '@/entities/dealer'
 import { gradeToneByIndex, useGrades } from '@/entities/grade'
@@ -86,18 +87,20 @@ export function AdminDealersPage() {
       header: t('dealers.columnDealer'),
       width: '2fr',
       render: (dealer) => (
-        <div className="flex items-center gap-2.5">
+        // The name opens the dealer's card. A link rather than a row
+        // click, so the row's own action buttons keep working.
+        <Link to={`/admin/dealers/${String(dealer.id)}`} className="flex items-center gap-2.5">
           <Avatar name={dealer.full_name} tone={dealer.is_active ? 'dark' : 'neutral'} />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <b className="truncate">{dealer.full_name}</b>
+              <b className="truncate hover:underline">{dealer.full_name}</b>
               {!dealer.is_active && <Badge tone="danger">{t('dealers.inactive')}</Badge>}
             </div>
             <div className="truncate text-xs text-muted">
               {dealer.phone} · {dealer.login}
             </div>
           </div>
-        </div>
+        </Link>
       ),
     },
     {

@@ -23,14 +23,18 @@ type gradeBreakdownResponse struct {
 }
 
 type dashboardSummaryResponse struct {
-	DealersTotal  int64                    `json:"dealers_total"`
-	DealersActive int64                    `json:"dealers_active"`
-	PeriodFrom    string                   `json:"period_from"`
-	PeriodTo      string                   `json:"period_to"`
-	PeriodAmount  int64                    `json:"period_amount"`
-	PeriodCount   int64                    `json:"period_count"`
-	LifetimeTotal int64                    `json:"lifetime_total"`
-	Grades        []gradeBreakdownResponse `json:"grades"`
+	DealersTotal  int64  `json:"dealers_total"`
+	DealersActive int64  `json:"dealers_active"`
+	PeriodFrom    string `json:"period_from"`
+	PeriodTo      string `json:"period_to"`
+	PeriodAmount  int64  `json:"period_amount"`
+	PeriodCount   int64  `json:"period_count"`
+	LifetimeTotal int64  `json:"lifetime_total"`
+	// Promotions running right now, and how many of those are waiting for
+	// their results to be computed (ToR 5.1).
+	PromotionsActive   int64                    `json:"promotions_active"`
+	PromotionsAwaiting int64                    `json:"promotions_awaiting"`
+	Grades             []gradeBreakdownResponse `json:"grades"`
 }
 
 type dashboardHandler struct {
@@ -74,13 +78,15 @@ func (h *dashboardHandler) summary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, dashboardSummaryResponse{
-		DealersTotal:  summary.DealersTotal,
-		DealersActive: summary.DealersActive,
-		PeriodFrom:    from.Format(dateLayout),
-		PeriodTo:      to.Format(dateLayout),
-		PeriodAmount:  summary.PeriodAmount,
-		PeriodCount:   summary.PeriodCount,
-		LifetimeTotal: summary.LifetimeTotal,
-		Grades:        grades,
+		DealersTotal:       summary.DealersTotal,
+		DealersActive:      summary.DealersActive,
+		PeriodFrom:         from.Format(dateLayout),
+		PeriodTo:           to.Format(dateLayout),
+		PeriodAmount:       summary.PeriodAmount,
+		PeriodCount:        summary.PeriodCount,
+		LifetimeTotal:      summary.LifetimeTotal,
+		PromotionsActive:   summary.PromotionsActive,
+		PromotionsAwaiting: summary.PromotionsAwaiting,
+		Grades:             grades,
 	})
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { useDealer, useDealers } from '@/entities/dealer'
 import { usePurchases, type Purchase } from '@/entities/purchase'
 import { DeletePurchaseDialog, PurchaseFormDrawer } from '@/features/manage-purchase'
@@ -44,9 +45,17 @@ export function AdminPurchasesPage() {
   const dealers = dealerPage?.items ?? []
 
   const thisMonth = currentMonthRange()
-  const [dealerId, setDealerId] = useState<number | undefined>(undefined)
-  const [dateFrom, setDateFrom] = useState<string>(thisMonth.from)
-  const [dateTo, setDateTo] = useState<string>(thisMonth.to)
+  // A dealer's card links here with the filter already chosen, so the
+  // initial value comes from the URL.
+  const [searchParams] = useSearchParams()
+  const dealerFromUrl = Number(searchParams.get('dealer_id'))
+  const [dealerId, setDealerId] = useState<number | undefined>(
+    Number.isFinite(dealerFromUrl) && dealerFromUrl > 0 ? dealerFromUrl : undefined,
+  )
+  // With a dealer chosen up front the point is their whole history, not
+  // the current month.
+  const [dateFrom, setDateFrom] = useState<string>(dealerId === undefined ? thisMonth.from : '')
+  const [dateTo, setDateTo] = useState<string>(dealerId === undefined ? thisMonth.to : '')
   const [page, setPage] = useState(1)
 
   const { data, isPending } = usePurchases({

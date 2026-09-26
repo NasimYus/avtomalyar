@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
+	"github.com/avtomalyar/backend/internal/domain"
 	"github.com/avtomalyar/backend/internal/repository"
 	"github.com/avtomalyar/backend/internal/repository/db"
 )
@@ -34,7 +35,11 @@ type DashboardSummary struct {
 	PeriodCount  int64
 	/** Sum of every dealer's lifetime total. */
 	LifetimeTotal int64
-	Grades        []GradeBreakdown
+	/** Promotions currently running (ToR 5.1). */
+	PromotionsActive int64
+	/** Of those, the ones whose period is over and results are not yet computed. */
+	PromotionsAwaiting int64
+	Grades             []GradeBreakdown
 }
 
 // DashboardService assembles the admin dashboard summary.
@@ -52,6 +57,7 @@ func (s *DashboardService) Summary(ctx context.Context, from, to time.Time) (Das
 	totals, err := s.repo.DashboardTotals(ctx, db.DashboardTotalsParams{
 		DateFrom: pgtype.Date{Time: from, Valid: true},
 		DateTo:   pgtype.Date{Time: to, Valid: true},
+		Today:    pgtype.Date{Time: domain.Today(), Valid: true},
 	})
 	if err != nil {
 		return DashboardSummary{}, fmt.Errorf("dashboard totals: %w", repository.TranslateError(err))
@@ -74,11 +80,13 @@ func (s *DashboardService) Summary(ctx context.Context, from, to time.Time) (Das
 	}
 
 	return DashboardSummary{
-		DealersTotal:  totals.DealersTotal,
-		DealersActive: totals.DealersActive,
-		PeriodAmount:  totals.PeriodAmount,
-		PeriodCount:   totals.PeriodCount,
-		LifetimeTotal: totals.LifetimeTotal,
-		Grades:        grades,
+		DealersTotal:       totals.DealersTotal,
+		DealersActive:      totals.DealersActive,
+		PeriodAmount:       totals.PeriodAmount,
+		PeriodCount:        totals.PeriodCount,
+		LifetimeTotal:      totals.LifetimeTotal,
+		PromotionsActive:   totals.PromotionsActive,
+		PromotionsAwaiting: totals.PromotionsAwaiting,
+		Grades:             grades,
 	}, nil
 }

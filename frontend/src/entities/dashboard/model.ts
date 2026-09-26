@@ -16,6 +16,10 @@ export interface DashboardSummary {
   period_count: number
   /** Sum of every dealer's lifetime total, in dirams. */
   lifetime_total: number
+  /** Promotions running right now (ToR 5.1). */
+  promotions_active: number
+  /** Of those, the ones whose period is over and results are not computed. */
+  promotions_awaiting: number
   grades: GradeBreakdown[]
 }
 

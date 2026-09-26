@@ -36,8 +36,11 @@ interface DealerFormDrawerProps {
   open: boolean
   dealer?: Dealer
   onClose: () => void
-  /** Called with the new dealer and their one-time password. */
-  onCreated: (dealer: Dealer, password: string) => void
+  /**
+   * Called with the new dealer and their one-time password. Only a screen
+   * that can create a dealer needs it; the dealer's own card only edits.
+   */
+  onCreated?: (dealer: Dealer, password: string) => void
 }
 
 export function DealerFormDrawer({ open, dealer, onClose, onCreated }: DealerFormDrawerProps) {
@@ -94,7 +97,13 @@ function DealerForm({ dealer, onClose, onCreated }: Omit<DealerFormDrawerProps, 
       create.mutate(payload, {
         onSuccess: (created) => {
           onClose()
-          onCreated(created, created.password)
+          if (onCreated) {
+            onCreated(created, created.password)
+            return
+          }
+          // The password is shown once. Without a handler to show it, say
+          // so plainly — a new one can always be issued from the card.
+          toast.success(t('dealers.createdWithoutPassword', { name: created.full_name }))
         },
         onError,
       })

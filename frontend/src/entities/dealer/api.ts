@@ -6,6 +6,7 @@ import {
   type Dealer,
   type DealerFilters,
   type DealerInput,
+  type DealerPromotion,
 } from './model'
 
 export function useDealers(filters: DealerFilters): UseQueryResult<Paginated<Dealer>> {
@@ -62,5 +63,16 @@ export function useDeleteDealer() {
   return useMutation({
     mutationFn: (id: number) => api.delete<undefined>(`/admin/dealers/${String(id)}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: dealerKeys.root }),
+  })
+}
+
+/** Promotions the dealer takes part in, for the admin's dealer card. */
+export function useDealerPromotions(id: number | undefined): UseQueryResult<DealerPromotion[]> {
+  return useQuery({
+    queryKey: dealerKeys.promotions(id ?? 0),
+    queryFn: async () =>
+      (await api.get<{ items: DealerPromotion[] }>(`/admin/dealers/${String(id)}/promotions`))
+        .items,
+    enabled: id !== undefined,
   })
 }

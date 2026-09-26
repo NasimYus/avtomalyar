@@ -25,24 +25,35 @@ SELECT
         WHERE purchases.purchase_date >= $1::date
           AND purchases.purchase_date <= $2::date
     )::bigint AS period_count,
-    (SELECT COALESCE(SUM(dealers.lifetime_purchase_total), 0) FROM dealers)::bigint AS lifetime_total
+    (SELECT COALESCE(SUM(dealers.lifetime_purchase_total), 0) FROM dealers)::bigint AS lifetime_total,
+    (SELECT count(*) FROM promotions WHERE promotions.status = 'active')::bigint AS promotions_active,
+    -- Running promotions whose period is over: these are waiting for the
+    -- admin to compute results, and are the ones worth chasing.
+    (
+        SELECT count(*) FROM promotions
+        WHERE promotions.status = 'active'
+          AND promotions.end_date < $3::date
+    )::bigint AS promotions_awaiting
 `
 
 type DashboardTotalsParams struct {
 	DateFrom pgtype.Date `json:"date_from"`
 	DateTo   pgtype.Date `json:"date_to"`
+	Today    pgtype.Date `json:"today"`
 }
 
 type DashboardTotalsRow struct {
-	DealersTotal  int64 `json:"dealers_total"`
-	DealersActive int64 `json:"dealers_active"`
-	PeriodAmount  int64 `json:"period_amount"`
-	PeriodCount   int64 `json:"period_count"`
-	LifetimeTotal int64 `json:"lifetime_total"`
+	DealersTotal       int64 `json:"dealers_total"`
+	DealersActive      int64 `json:"dealers_active"`
+	PeriodAmount       int64 `json:"period_amount"`
+	PeriodCount        int64 `json:"period_count"`
+	LifetimeTotal      int64 `json:"lifetime_total"`
+	PromotionsActive   int64 `json:"promotions_active"`
+	PromotionsAwaiting int64 `json:"promotions_awaiting"`
 }
 
 func (q *Queries) DashboardTotals(ctx context.Context, arg DashboardTotalsParams) (DashboardTotalsRow, error) {
-	row := q.db.QueryRow(ctx, dashboardTotals, arg.DateFrom, arg.DateTo)
+	row := q.db.QueryRow(ctx, dashboardTotals, arg.DateFrom, arg.DateTo, arg.Today)
 	var i DashboardTotalsRow
 	err := row.Scan(
 		&i.DealersTotal,
@@ -50,6 +61,8 @@ func (q *Queries) DashboardTotals(ctx context.Context, arg DashboardTotalsParams
 		&i.PeriodAmount,
 		&i.PeriodCount,
 		&i.LifetimeTotal,
+		&i.PromotionsActive,
+		&i.PromotionsAwaiting,
 	)
 	return i, err
 }

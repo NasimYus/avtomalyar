@@ -12,7 +12,15 @@ SELECT
         WHERE purchases.purchase_date >= sqlc.arg('date_from')::date
           AND purchases.purchase_date <= sqlc.arg('date_to')::date
     )::bigint AS period_count,
-    (SELECT COALESCE(SUM(dealers.lifetime_purchase_total), 0) FROM dealers)::bigint AS lifetime_total;
+    (SELECT COALESCE(SUM(dealers.lifetime_purchase_total), 0) FROM dealers)::bigint AS lifetime_total,
+    (SELECT count(*) FROM promotions WHERE promotions.status = 'active')::bigint AS promotions_active,
+    -- Running promotions whose period is over: these are waiting for the
+    -- admin to compute results, and are the ones worth chasing.
+    (
+        SELECT count(*) FROM promotions
+        WHERE promotions.status = 'active'
+          AND promotions.end_date < sqlc.arg('today')::date
+    )::bigint AS promotions_awaiting;
 
 -- name: DealerCountsByGrade :many
 SELECT

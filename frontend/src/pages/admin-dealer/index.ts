@@ -1,0 +1,1 @@
+export { AdminDealerPage } from './ui'

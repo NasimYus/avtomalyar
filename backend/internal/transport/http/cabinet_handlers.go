@@ -263,3 +263,27 @@ func (h *cabinetHandler) promotion(w http.ResponseWriter, r *http.Request) {
 	resp.PrizePlaces = toPrizePlaceResponses(detail.PrizePlaces)
 	writeJSON(w, http.StatusOK, resp)
 }
+
+// dealerPromotions serves an admin the promotions one dealer takes part
+// in, through the very rules that dealer's own cabinet applies — the
+// admin is looking at the dealer's card (ToR 5.3) and should see what the
+// dealer sees.
+func (h *cabinetHandler) dealerPromotions(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "validation_error", "invalid id", nil)
+		return
+	}
+
+	promotions, err := h.service.Promotions(r.Context(), id)
+	if err != nil {
+		writeError(w, h.logger, err)
+		return
+	}
+
+	items := make([]cabinetPromotionResponse, len(promotions))
+	for i, promotion := range promotions {
+		items[i] = toCabinetPromotionResponse(promotion)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}

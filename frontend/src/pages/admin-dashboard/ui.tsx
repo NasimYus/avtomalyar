@@ -73,8 +73,8 @@ export function AdminDashboardPage() {
       <PageHeader title={t('dashboard.title')} />
 
       {isPending && (
-        <div className="grid grid-cols-4 gap-3.5">
-          {Array.from({ length: 4 }, (_, index) => (
+        <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
+          {Array.from({ length: 5 }, (_, index) => (
             <Skeleton key={index} className="h-[124px] rounded-card" />
           ))}
         </div>
@@ -82,7 +82,7 @@ export function AdminDashboardPage() {
 
       {summary && (
         <>
-          <section className="grid grid-cols-4 gap-3.5">
+          <section className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
             <StatCard
               label={t('dashboard.dealers')}
               value={summary.dealers_total}
@@ -100,7 +100,19 @@ export function AdminDashboardPage() {
               note={t('common.somoni')}
             />
             <StatCard
+              label={t('dashboard.promotionsActive')}
+              value={summary.promotions_active}
+              note={
+                summary.promotions_awaiting > 0
+                  ? t('dashboard.promotionsAwaiting', { count: summary.promotions_awaiting })
+                  : t('dashboard.promotionsAllRunning')
+              }
+              noteTone={summary.promotions_awaiting > 0 ? 'gold' : 'muted'}
+            />
+            {/* The flagship card runs the full width under the four stats. */}
+            <StatCard
               tone="dark"
+              className="col-span-2 xl:col-span-4"
               label={t('dashboard.averagePurchase')}
               value={formatMoney(averagePurchase)}
               note={t('dashboard.averageNote')}

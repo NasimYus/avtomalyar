@@ -119,6 +119,7 @@ func NewRouter(deps Deps) http.Handler {
 				r.Patch("/{id}/active", dealerH.setActive)
 				r.Post("/{id}/reset-password", dealerH.resetPassword)
 				r.Delete("/{id}", dealerH.delete)
+				r.Get("/{id}/promotions", cabinetH.dealerPromotions)
 			})
 
 			r.Route("/purchases", func(r chi.Router) {
