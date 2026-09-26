@@ -11,10 +11,15 @@ import {
   type Promotion,
   type PromotionStatus,
 } from '@/entities/promotion'
-import { DeletePromotionDialog, PromotionFormDrawer } from '@/features/manage-promotion'
+import {
+  ArchivePromotionDialog,
+  DeletePromotionDialog,
+  PromotionFormDrawer,
+} from '@/features/manage-promotion'
 import { ApiError } from '@/shared/api'
 import { formatDate, todayISO } from '@/shared/lib'
 import {
+  ArchiveIcon,
   Badge,
   Button,
   DataTable,
@@ -42,6 +47,7 @@ export function AdminPromotionsPage() {
   const [editingId, setEditingId] = useState<number | undefined>(undefined)
   const { data: editing } = usePromotion(editingId)
   const [deleting, setDeleting] = useState<Promotion | undefined>(undefined)
+  const [archiving, setArchiving] = useState<Promotion | undefined>(undefined)
 
   const start = useStartPromotion()
   const today = todayISO()
@@ -153,7 +159,7 @@ export function AdminPromotionsPage() {
             </IconButton>
           )}
 
-          {promotion.status === 'draft' && (
+          {promotion.status === 'draft' ? (
             <IconButton
               label={t('common.delete')}
               variant="ghost"
@@ -164,6 +170,20 @@ export function AdminPromotionsPage() {
             >
               <TrashIcon />
             </IconButton>
+          ) : (
+            // Anything a dealer has already seen is archived, never
+            // deleted, so the history holds.
+            promotion.status !== 'archived' && (
+              <IconButton
+                label={t('promotions.archive')}
+                variant="ghost"
+                onClick={() => {
+                  setArchiving(promotion)
+                }}
+              >
+                <ArchiveIcon />
+              </IconButton>
+            )
           )}
         </div>
       ),
@@ -237,6 +257,12 @@ export function AdminPromotionsPage() {
         promotion={deleting}
         onClose={() => {
           setDeleting(undefined)
+        }}
+      />
+      <ArchivePromotionDialog
+        promotion={archiving}
+        onClose={() => {
+          setArchiving(undefined)
         }}
       />
     </>

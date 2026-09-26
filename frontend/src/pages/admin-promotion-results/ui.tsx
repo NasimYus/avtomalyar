@@ -10,10 +10,12 @@ import {
   type PromotionResult,
   type PromotionStatus,
 } from '@/entities/promotion'
+import { ArchivePromotionDialog } from '@/features/manage-promotion'
 import { AdjustResultModal, PublishResultsCard } from '@/features/manage-promotion-results'
 import { ApiError } from '@/shared/api'
 import { cn, formatDate, formatDateTime, formatMoney, todayISO } from '@/shared/lib'
 import {
+  ArchiveIcon,
   Badge,
   Button,
   Card,
@@ -49,6 +51,7 @@ export function AdminPromotionResultsPage() {
   const setAwarded = useSetAwarded()
 
   const [adjusting, setAdjusting] = useState<PromotionResult | undefined>(undefined)
+  const [archiving, setArchiving] = useState(false)
 
   if (isPending || !promotion) {
     return (
@@ -195,6 +198,18 @@ export function AdminPromotionResultsPage() {
                 {t('results.back')}
               </Button>
             </Link>
+            {promotion.status !== 'archived' && (
+              <Button
+                variant="secondary"
+                className="inline-flex items-center gap-1.5 bg-field"
+                onClick={() => {
+                  setArchiving(true)
+                }}
+              >
+                <ArchiveIcon />
+                {t('promotions.archive')}
+              </Button>
+            )}
             {canCalculate && (
               <Button disabled={calculate.isPending} onClick={runCalculation}>
                 {calculate.isPending
@@ -275,6 +290,13 @@ export function AdminPromotionResultsPage() {
       />
 
       {promotion.status === 'calculated' && <PublishResultsCard promotion={promotion} />}
+
+      <ArchivePromotionDialog
+        promotion={archiving ? promotion : undefined}
+        onClose={() => {
+          setArchiving(false)
+        }}
+      />
 
       <AdjustResultModal
         promotionId={promotionId}

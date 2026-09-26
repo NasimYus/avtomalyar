@@ -94,3 +94,13 @@ export function LockIcon(props: SVGProps<SVGSVGElement>) {
     </Icon>
   )
 }
+
+export function ArchiveIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="4" width="14" height="3.6" rx="1.2" />
+      <path d="M4.6 7.6v6.6a2 2 0 0 0 2 2h6.8a2 2 0 0 0 2-2V7.6" />
+      <path d="M8.2 11h3.6" />
+    </Icon>
+  )
+}

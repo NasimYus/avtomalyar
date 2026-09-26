@@ -7,7 +7,16 @@ export { FormField, Input, Textarea, Select, SearchInput, fieldClasses } from '.
 export { PhoneInput } from './phone-input'
 export { SearchableSelect } from './searchable-select'
 export type { SelectOption } from './searchable-select'
-export { PencilIcon, KeyIcon, PowerIcon, TrashIcon, CopyIcon, TrophyIcon, LockIcon } from './icons'
+export {
+  PencilIcon,
+  KeyIcon,
+  PowerIcon,
+  TrashIcon,
+  CopyIcon,
+  TrophyIcon,
+  LockIcon,
+  ArchiveIcon,
+} from './icons'
 export type { FieldStatus, FieldVariant } from './field'
 export { FilterPill, PillGroup } from './pill'
 export { DataTable } from './data-table'

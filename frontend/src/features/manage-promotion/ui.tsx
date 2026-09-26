@@ -7,6 +7,7 @@ import { useCities } from '@/entities/city'
 import { useGrades } from '@/entities/grade'
 import { usePrizes } from '@/entities/prize'
 import {
+  useArchivePromotion,
   useCreatePromotion,
   useDeletePromotion,
   useSetPrizePlaces,
@@ -419,6 +420,54 @@ export function DeletePromotionDialog({
                 ? t('promotions.deleteConflict')
                 : t('errors.generic'),
             )
+            onClose()
+          },
+        })
+      }}
+    />
+  )
+}
+
+/**
+ * Archiving is the way a promotion leaves the active lists — deleting is
+ * only ever available for a draft. It cannot be undone, so the dialog
+ * spells out what it costs, and that differs: an announced promotion
+ * keeps its results and moves to the dealers' archive, while one that
+ * never reached publication simply disappears from their cabinets.
+ */
+export function ArchivePromotionDialog({
+  promotion,
+  onClose,
+}: {
+  promotion?: Promotion
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  const toast = useToast()
+  const archive = useArchivePromotion()
+  const published = promotion?.status === 'published'
+
+  return (
+    <ConfirmDialog
+      open={promotion !== undefined}
+      title={t('promotions.archiveTitle', { title: promotion?.title_ru ?? '' })}
+      description={t(
+        published ? 'promotions.archiveDescriptionPublished' : 'promotions.archiveDescriptionDraft',
+      )}
+      confirmLabel={t('promotions.archive')}
+      cancelLabel={t('common.cancel')}
+      destructive
+      busy={archive.isPending}
+      onCancel={onClose}
+      onConfirm={() => {
+        if (!promotion) return
+        archive.mutate(promotion.id, {
+          onSuccess: () => {
+            toast.success(t('promotions.archived'))
+            onClose()
+          },
+          onError: (error) => {
+            toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
             onClose()
           },
         })

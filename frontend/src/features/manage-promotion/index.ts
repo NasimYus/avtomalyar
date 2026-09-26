@@ -1,1 +1,1 @@
-export { PromotionFormDrawer, DeletePromotionDialog } from './ui'
+export { PromotionFormDrawer, DeletePromotionDialog, ArchivePromotionDialog } from './ui'
