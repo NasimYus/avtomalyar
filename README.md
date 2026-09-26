@@ -147,3 +147,7 @@ avtomalyar/
 См. `.env.example`. Обязательные для запуска — `JWT_SECRET` (в production
 длинное случайное значение) и настройки PostgreSQL. `UPLOAD_DIR` задаёт
 папку для фото призов (в Docker — том `/data/uploads`).
+
+
+karimov.b.mjex
+nMnLB2dgwifS

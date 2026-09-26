@@ -1,8 +1,33 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { formatDate, formatMoney, todayISO, useLocaleName } from '@/shared/lib'
+import { cn, formatDate, formatMoney, todayISO, useLocaleName } from '@/shared/lib'
 import { Badge, Card } from '@/shared/ui'
 import { cabinetStage, type CabinetPromotion } from './model'
+
+/**
+ * Medals for the three prize places, in the same metals the grade badges
+ * use. Everything below the podium is a plain number, so the places worth
+ * chasing stand out at a glance.
+ */
+const MEDALS: Record<number, string> = {
+  1: 'bg-grade-gold text-ink shadow-glow-gold',
+  2: 'bg-grade-silver text-ink',
+  3: 'bg-grade-bronze text-ink',
+}
+
+export function PlaceMedal({ place, size = 'sm' }: { place: number; size?: 'sm' | 'md' }) {
+  return (
+    <span
+      className={cn(
+        'grid shrink-0 place-items-center rounded-full font-black',
+        size === 'md' ? 'size-10 text-[17px]' : 'size-7 text-[13px]',
+        MEDALS[place] ?? 'text-faint',
+      )}
+    >
+      {place}
+    </span>
+  )
+}
 
 const STAGE_TONES = {
   running: 'success',

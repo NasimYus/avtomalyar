@@ -70,3 +70,15 @@ export function CopyIcon(props: SVGProps<SVGSVGElement>) {
     </Icon>
   )
 }
+
+export function TrophyIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M6.5 3h7v4.5a3.5 3.5 0 0 1-7 0V3Z" />
+      <path d="M6.5 4.5h-2a2 2 0 0 0 2 3.6" />
+      <path d="M13.5 4.5h2a2 2 0 0 1-2 3.6" />
+      <path d="M10 11v2.5" />
+      <path d="M7.2 17h5.6l-.7-3.5H7.9L7.2 17Z" />
+    </Icon>
+  )
+}

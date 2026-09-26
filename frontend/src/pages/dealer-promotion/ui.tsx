@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
-import { cabinetStage, useMyPromotion, type RankingEntry } from '@/entities/cabinet'
+import { cabinetStage, PlaceMedal, useMyPromotion, type RankingEntry } from '@/entities/cabinet'
 import { cn, formatDate, formatMoney, todayISO, useLocaleName } from '@/shared/lib'
-import { Badge, Card, CardTitle, EmptyState, Skeleton } from '@/shared/ui'
+import { Badge, Card, CardTitle, EmptyState, Skeleton, TrophyIcon } from '@/shared/ui'
 
 const STAGE_TONES = {
   running: 'success',
@@ -84,17 +84,43 @@ export function DealerPromotionPage() {
 
       {promotion.prize_places !== undefined && promotion.prize_places.length > 0 && (
         <section className="flex flex-col gap-3">
-          <CardTitle>{t('cabinet.prizes')}</CardTitle>
-          <Card padded={false} className="divide-y divide-line px-[18px]">
+          <div className="flex items-center gap-2">
+            <TrophyIcon className="size-5 text-brand-yellow-dark" />
+            <CardTitle>{t('cabinet.prizes')}</CardTitle>
+          </div>
+
+          <div className="flex flex-col gap-2">
             {promotion.prize_places.map((place) => (
-              <div key={place.place_rank} className="flex items-center gap-3 py-3">
-                <span className="w-[68px] shrink-0 text-[13px] font-bold text-muted">
-                  {t('cabinet.place', { rank: place.place_rank })}
-                </span>
-                <b className="min-w-0 truncate">{name(place.prize_name_ru, place.prize_name_tg)}</b>
-              </div>
+              <Card
+                key={place.place_rank}
+                padded={false}
+                className={cn(
+                  'flex items-center gap-3 p-3',
+                  // The top prize is the one the whole promotion is about.
+                  place.place_rank === 1 && 'bg-grade-gold/10 ring-2 ring-grade-gold',
+                )}
+              >
+                <PlaceMedal place={place.place_rank} size="md" />
+
+                {place.prize_photo_path !== undefined && (
+                  <img
+                    src={place.prize_photo_path}
+                    alt=""
+                    className="size-12 shrink-0 rounded-inner object-cover"
+                  />
+                )}
+
+                <div className="min-w-0">
+                  <span className="block text-[11px] font-black tracking-[0.06em] text-muted uppercase">
+                    {t('cabinet.place', { rank: place.place_rank })}
+                  </span>
+                  <b className="block truncate text-[15px]">
+                    {name(place.prize_name_ru, place.prize_name_tg)}
+                  </b>
+                </div>
+              </Card>
             ))}
-          </Card>
+          </div>
         </section>
       )}
 
@@ -130,26 +156,30 @@ function RankingRow({ entry }: { entry: RankingEntry }) {
   const name = useLocaleName()
 
   return (
-    <div
-      className={cn(
-        'flex items-center gap-3 py-3',
-        // The dealer's own row is what they came for; it stays findable
-        // in a list of a hundred. The highlight sits inside the card's
-        // padding — bleeding it to the edges would widen the page.
-        entry.is_me && 'rounded-inner bg-field px-2.5',
+    <div className="relative flex items-center gap-3 py-3">
+      {/*
+        The dealer's own row is marked with an accent bar at the card's
+        edge and a chip by their name. A filled background across the whole
+        row reads as a block and fights with the medals beside it.
+      */}
+      {entry.is_me && (
+        <span
+          aria-hidden
+          className="absolute inset-y-1 -left-[18px] w-1 rounded-r-full bg-brand-red"
+        />
       )}
-    >
-      <span
-        className={cn(
-          'w-7 shrink-0 text-[15px] font-black',
-          entry.place <= 3 ? 'text-brand-red' : 'text-faint',
-        )}
-      >
-        {entry.place}
-      </span>
+
+      <PlaceMedal place={entry.place} />
 
       <div className="min-w-0 flex-1">
-        <b className="block truncate">{entry.dealer_name}</b>
+        <div className="flex items-center gap-1.5">
+          <b className={cn('truncate', entry.is_me && 'font-black')}>{entry.dealer_name}</b>
+          {entry.is_me && (
+            <span className="shrink-0 rounded-chip bg-brand-red px-1.5 py-px text-[10px] font-black tracking-wide text-white uppercase">
+              {t('cabinet.you')}
+            </span>
+          )}
+        </div>
         {entry.prize_name_ru !== undefined && (
           <span className="block truncate text-xs font-semibold text-muted">
             {name(entry.prize_name_ru, entry.prize_name_tg)}

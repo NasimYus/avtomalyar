@@ -57,6 +57,7 @@
   /* --- shadows --- */
   --shadow-glow: 0 6px 18px rgb(255 0 9 / 0.3); /* primary button */
   --shadow-glow-lg: 0 0 30px rgb(255 0 9 / 0.25); /* dark flagship card */
+  --shadow-glow-gold: 0 3px 12px rgb(252 209 2 / 0.45); /* winner's medal */
   --shadow-modal: 0 20px 50px rgb(0 0 0 / 0.12);
   --shadow-drawer: -20px 0 50px rgb(0 0 0 / 0.1);
   --shadow-card: 0 1px 3px rgb(0 0 0 / 0.06);
