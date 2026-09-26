@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/lib'
 import { IconButton } from './button'
@@ -22,6 +22,7 @@ interface DrawerProps {
 export function Drawer({ open, onClose, title, children, footer, className }: DrawerProps) {
   const { t } = useTranslation()
   const ref = useRef<HTMLDialogElement>(null)
+  const titleId = useId()
 
   useEffect(() => {
     const dialog = ref.current
@@ -45,6 +46,7 @@ export function Drawer({ open, onClose, title, children, footer, className }: Dr
   return (
     <dialog
       ref={ref}
+      aria-labelledby={titleId}
       onClick={(event) => {
         if (event.target === ref.current) onClose()
       }}
@@ -57,7 +59,9 @@ export function Drawer({ open, onClose, title, children, footer, className }: Dr
     >
       <div className="flex h-full flex-col gap-4 p-7">
         <div className="flex items-center justify-between">
-          <h2 className="text-[22px] font-black">{title}</h2>
+          <h2 id={titleId} className="text-[22px] font-black">
+            {title}
+          </h2>
           <IconButton label={t('common.close')} onClick={onClose}>
             ✕
           </IconButton>

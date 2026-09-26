@@ -308,3 +308,20 @@
     animation: none !important;
   }
 }
+
+/*
+ * iOS Safari zooms the page into any field whose text is under 16px when
+ * it gets focus, and does not zoom back out. Fields here are 14px, so on
+ * an iPhone every tap on an input would jump the layout. The rule is
+ * unlayered to win over Tailwind's text-size utilities, and limited to
+ * iOS (the only engine that reads -webkit-touch-callout) on touch screens.
+ */
+@supports (-webkit-touch-callout: none) {
+  @media (pointer: coarse) {
+    input:not([type='checkbox'], [type='radio'], [type='range']),
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+}

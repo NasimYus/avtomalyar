@@ -15,6 +15,8 @@ type SessionConfig struct {
 	JWTTTL       time.Duration
 	CookieName   string
 	CookieDomain string
+	// Secure sends the cookie over HTTPS only (see config.CookieSecure).
+	Secure bool
 }
 
 func (c SessionConfig) setCookie(w http.ResponseWriter, principal domain.Principal) error {
@@ -23,21 +25,23 @@ func (c SessionConfig) setCookie(w http.ResponseWriter, principal domain.Princip
 		return err
 	}
 
-	http.SetCookie(w, &http.Cookie{
+	// Secure is on unless AUTH_COOKIE_SECURE=false (a plain-HTTP test stand).
+	http.SetCookie(w, &http.Cookie{ //nolint:gosec // G124: Secure is configurable, on by default
 		Name:     c.CookieName,
 		Value:    token,
 		Path:     "/",
 		Domain:   c.CookieDomain,
 		Expires:  time.Now().Add(c.JWTTTL),
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   c.Secure,
 		SameSite: http.SameSiteLaxMode,
 	})
 	return nil
 }
 
 func (c SessionConfig) clearCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
+	// Secure is on unless AUTH_COOKIE_SECURE=false (a plain-HTTP test stand).
+	http.SetCookie(w, &http.Cookie{ //nolint:gosec // G124: Secure is configurable, on by default
 		Name:     c.CookieName,
 		Value:    "",
 		Path:     "/",
@@ -45,7 +49,7 @@ func (c SessionConfig) clearCookie(w http.ResponseWriter) {
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   c.Secure,
 		SameSite: http.SameSiteLaxMode,
 	})
 }

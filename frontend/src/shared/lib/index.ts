@@ -26,3 +26,4 @@ export {
 } from './crop'
 export type { Crop, Size } from './crop'
 export { useMediaQuery, DESKTOP_TABLE_QUERY } from './use-media-query'
+export { copyText } from './copy-text'

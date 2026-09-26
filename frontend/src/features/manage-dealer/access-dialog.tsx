@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useResetDealerPassword, type Dealer } from '@/entities/dealer'
 import { Button, CopyIcon, IconButton, Modal, useToast } from '@/shared/ui'
 import { apiErrorMessage } from '@/shared/api'
+import { copyText } from '@/shared/lib'
 
 function CopyableRow({ label, value }: { label: string; value: string }) {
   const { t } = useTranslation()
@@ -18,14 +19,8 @@ function CopyableRow({ label, value }: { label: string; value: string }) {
           variant="ghost"
           className="size-8"
           onClick={() => {
-            navigator.clipboard
-              .writeText(value)
-              .then(() => {
-                setCopied(true)
-              })
-              .catch(() => {
-                // Clipboard can be blocked; the value stays on screen.
-              })
+            // If copying is impossible the value stays on screen to retype.
+            void copyText(value).then(setCopied)
           }}
         >
           <CopyIcon />

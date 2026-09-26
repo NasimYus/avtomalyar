@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { cn } from '@/shared/lib'
 import { Button } from './button'
 
@@ -47,10 +47,12 @@ interface ModalProps {
 
 export function Modal({ open, onClose, title, kicker, children, footer, className }: ModalProps) {
   const ref = useNativeDialog(open, onClose)
+  const titleId = useId()
 
   return (
     <dialog
       ref={ref}
+      aria-labelledby={titleId}
       onClick={(event) => {
         if (event.target === ref.current) onClose()
       }}
@@ -68,7 +70,9 @@ export function Modal({ open, onClose, title, kicker, children, footer, classNam
       {kicker !== undefined && (
         <div className="text-xs font-semibold tracking-[0.04em] text-muted">{kicker}</div>
       )}
-      <h2 className="mt-2.5 text-xl font-black">{title}</h2>
+      <h2 id={titleId} className="mt-2.5 text-xl font-black">
+        {title}
+      </h2>
       {children !== undefined && (
         <div className="mt-2 text-[13px] leading-[1.55] text-ink-soft">{children}</div>
       )}

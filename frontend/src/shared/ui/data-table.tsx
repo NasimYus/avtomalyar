@@ -155,7 +155,7 @@ function GridTable<T>({
 
   return (
     <div className={cn('overflow-x-auto rounded-card bg-surface px-[22px] pt-2.5 pb-4', className)}>
-      <div className="min-w-[760px]">
+      <div className="min-w-[640px]">
         <div
           role="row"
           className="grid gap-3.5 border-b border-line pt-3.5 pb-2.5 text-xs font-bold tracking-[0.04em] text-faint"

@@ -187,16 +187,22 @@ export function PublishResultsCard({ promotion }: { promotion: Promotion }) {
           setConfirming(false)
         }}
         onConfirm={() => {
-          publish.mutate(promotion.id, {
-            onSuccess: () => {
+          // mutateAsync, not mutate with callbacks: publishing refetches the
+          // promotion, its status turns "published" and this card unmounts
+          // — often before the request settles, and TanStack Query drops
+          // mutate()'s callbacks once the component is gone, so the admin
+          // got no confirmation. The promise settles regardless.
+          publish
+            .mutateAsync(promotion.id)
+            .then(() => {
               toast.success(t('results.published'))
-              setConfirming(false)
-            },
-            onError: (error) => {
+            })
+            .catch((error: unknown) => {
               toast.error(apiErrorMessage(error, t))
+            })
+            .finally(() => {
               setConfirming(false)
-            },
-          })
+            })
         }}
       />
     </>

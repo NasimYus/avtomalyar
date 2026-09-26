@@ -119,7 +119,7 @@ export function AdminDashboardPage() {
             />
           </section>
 
-          <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-3.5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
             <Card>
               <div className="flex items-baseline justify-between">
                 <CardTitle>{t('dashboard.recentPurchases')}</CardTitle>

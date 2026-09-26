@@ -69,6 +69,7 @@ func run() error {
 			JWTTTL:       cfg.JWTTTL,
 			CookieName:   cfg.CookieName,
 			CookieDomain: cfg.CookieDomain,
+			Secure:       cfg.CookieSecure,
 		},
 		Auth:       authService,
 		Cities:     cityService,

@@ -29,6 +29,7 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-avtomalyar}:${POSTGRES_PASSWORD:-avtomalyar}@postgres:5432/${POSTGRES_DB:-avtomalyar}?sslmode=disable
       JWT_SECRET: ${JWT_SECRET}
       AUTH_COOKIE_NAME: avtomalyar_session
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
       UPLOAD_DIR: /data/uploads
     ports:
       - "8080:8080"

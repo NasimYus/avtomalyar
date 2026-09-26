@@ -15,6 +15,11 @@ type Config struct {
 	JWTTTL       time.Duration
 	CookieName   string
 	CookieDomain string
+	// CookieSecure marks the session cookie Secure, so browsers send it over
+	// HTTPS only. On by default; a test stand served over plain HTTP by IP
+	// or host name (not localhost) must turn it off, or browsers drop the
+	// cookie and every login ends on the next request.
+	CookieSecure bool
 	Env          string
 	UploadDir    string
 }
@@ -29,6 +34,7 @@ func Load() (Config, error) {
 		JWTTTL:       12 * time.Hour,
 		CookieName:   getEnv("AUTH_COOKIE_NAME", "avtomalyar_session"),
 		CookieDomain: os.Getenv("AUTH_COOKIE_DOMAIN"),
+		CookieSecure: getEnv("AUTH_COOKIE_SECURE", "true") != "false",
 		Env:          getEnv("APP_ENV", "development"),
 		UploadDir:    getEnv("UPLOAD_DIR", "./uploads"),
 	}
