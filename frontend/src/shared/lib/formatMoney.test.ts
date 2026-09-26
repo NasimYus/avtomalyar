@@ -1,5 +1,7 @@
+import { renderHook } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { formatMoney, formatMoneyWithUnit, parseMoneyInput } from './formatMoney'
+import i18n from '@/shared/i18n'
+import { formatMoney, parseMoneyInput, useMoneyWithUnit } from './formatMoney'
 
 const NBSP = '\u00A0'
 
@@ -25,9 +27,22 @@ describe('formatMoney', () => {
   it('handles zero', () => {
     expect(formatMoney(0)).toBe('0')
   })
+})
 
-  it('appends the unit when asked', () => {
-    expect(normalizeSpaces(formatMoneyWithUnit(14200000))).toBe('142 000 сом.')
+describe('useMoneyWithUnit', () => {
+  it('appends the Russian unit by default', async () => {
+    await i18n.changeLanguage('ru')
+    const { result } = renderHook(() => useMoneyWithUnit())
+
+    expect(normalizeSpaces(result.current(14200000))).toBe('142 000 сом.')
+  })
+
+  it('appends the Tajik unit when the interface is Tajik', async () => {
+    await i18n.changeLanguage('tg')
+    const { result } = renderHook(() => useMoneyWithUnit())
+
+    expect(normalizeSpaces(result.current(14200000))).toBe('142 000 сомонӣ')
+    await i18n.changeLanguage('ru')
   })
 })
 

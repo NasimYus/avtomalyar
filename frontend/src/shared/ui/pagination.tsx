@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/lib'
 
 interface PaginationProps {
@@ -29,6 +30,7 @@ export function Pagination({
   renderSummary,
   className,
 }: PaginationProps) {
+  const { t } = useTranslation()
   const lastPage = Math.max(1, Math.ceil(total / perPage))
   if (total === 0) return null
 
@@ -62,7 +64,7 @@ export function Pagination({
         ))}
         <button
           type="button"
-          aria-label="Следующая страница"
+          aria-label={t('common.nextPage')}
           disabled={page >= lastPage}
           onClick={() => {
             onPageChange(page + 1)

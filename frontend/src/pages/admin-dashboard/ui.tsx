@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useDashboardSummary } from '@/entities/dashboard'
 import { gradeToneByIndex } from '@/entities/grade'
 import { usePurchases } from '@/entities/purchase'
-import { cn, formatDate, formatMoney, formatMoneyWithUnit } from '@/shared/lib'
+import { cn, formatDate, formatMoney, useMoneyWithUnit } from '@/shared/lib'
 import {
   Card,
   CardTitle,
@@ -32,6 +32,7 @@ interface RecentPurchase {
 
 export function AdminDashboardPage() {
   const { t } = useTranslation()
+  const money = useMoneyWithUnit()
   const { data: summary, isPending } = useDashboardSummary()
   const { data: recent } = usePurchases({ per_page: RECENT_PURCHASES })
   const averagePurchase =
@@ -173,7 +174,7 @@ export function AdminDashboardPage() {
                           {grade.name_ru}
                           <span className="ml-1.5 text-xs text-muted">
                             {t('grades.from', {
-                              amount: formatMoneyWithUnit(grade.min_purchase_amount),
+                              amount: money(grade.min_purchase_amount),
                             })}
                           </span>
                         </span>

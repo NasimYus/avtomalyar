@@ -1,5 +1,5 @@
 export { cn } from './cn'
-export { formatMoney, formatMoneyWithUnit, parseMoneyInput } from './formatMoney'
+export { formatMoney, useMoneyWithUnit, parseMoneyInput } from './formatMoney'
 export {
   formatDate,
   formatDateShort,

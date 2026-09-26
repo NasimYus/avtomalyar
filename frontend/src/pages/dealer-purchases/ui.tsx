@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMyPurchases } from '@/entities/cabinet'
-import { formatDate, formatMoney, formatMoneyWithUnit } from '@/shared/lib'
+import { formatDate, formatMoney, useMoneyWithUnit } from '@/shared/lib'
 import { Card, EmptyState, Pagination, Skeleton } from '@/shared/ui'
 
 const PER_PAGE = 20
 
 export function DealerPurchasesPage() {
   const { t } = useTranslation()
+  const money = useMoneyWithUnit()
   const [page, setPage] = useState(1)
   const { data } = useMyPurchases(page, PER_PAGE)
 
@@ -19,9 +20,7 @@ export function DealerPurchasesPage() {
         <span className="text-[13px] font-semibold text-muted">
           {t('cabinet.purchasesTotal', { count: data?.total ?? 0 })}
         </span>
-        <b className="text-[20px] whitespace-nowrap">
-          {formatMoneyWithUnit(data?.total_amount ?? 0)}
-        </b>
+        <b className="text-[20px] whitespace-nowrap">{money(data?.total_amount ?? 0)}</b>
       </Card>
 
       {data === undefined ? (

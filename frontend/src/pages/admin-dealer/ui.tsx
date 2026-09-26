@@ -10,7 +10,7 @@ import {
   DealerFormDrawer,
   ToggleDealerActiveDialog,
 } from '@/features/manage-dealer'
-import { formatDate, formatMoney, formatMoneyWithUnit } from '@/shared/lib'
+import { formatDate, formatMoney, useMoneyWithUnit } from '@/shared/lib'
 import {
   Badge,
   Button,
@@ -41,6 +41,7 @@ interface PurchaseRow {
  */
 export function AdminDealerPage() {
   const { t } = useTranslation()
+  const money = useMoneyWithUnit()
   const { id } = useParams()
   const dealerId = Number(id)
 
@@ -167,7 +168,7 @@ export function AdminDealerPage() {
         <Card padded={false} className="px-[22px] py-5">
           <div className="text-[13px] font-semibold text-muted">{t('dealers.columnTotal')}</div>
           <div className="mt-1.5 text-[26px] font-black whitespace-nowrap">
-            {formatMoneyWithUnit(dealer.lifetime_purchase_total)}
+            {money(dealer.lifetime_purchase_total)}
           </div>
         </Card>
         <Card padded={false} className="px-[22px] py-5">

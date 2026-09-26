@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/lib'
 import { IconButton } from './button'
 
@@ -19,6 +20,7 @@ interface DrawerProps {
  * Escape handling.
  */
 export function Drawer({ open, onClose, title, children, footer, className }: DrawerProps) {
+  const { t } = useTranslation()
   const ref = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -56,7 +58,7 @@ export function Drawer({ open, onClose, title, children, footer, className }: Dr
       <div className="flex h-full flex-col gap-4 p-7">
         <div className="flex items-center justify-between">
           <h2 className="text-[22px] font-black">{title}</h2>
-          <IconButton label="Закрыть" onClick={onClose}>
+          <IconButton label={t('common.close')} onClick={onClose}>
             ✕
           </IconButton>
         </div>

@@ -8,7 +8,7 @@ import {
   type PromotionResult,
 } from '@/entities/promotion'
 import { ApiError } from '@/shared/api'
-import { formatMoneyWithUnit } from '@/shared/lib'
+import { useMoneyWithUnit } from '@/shared/lib'
 import {
   Button,
   ConfirmDialog,
@@ -45,6 +45,7 @@ function AdjustResultForm({
   onClose: () => void
 }) {
   const { t } = useTranslation()
+  const money = useMoneyWithUnit()
   const toast = useToast()
   const adjust = useAdjustResult()
   const { data: prizes } = usePrizes()
@@ -86,7 +87,7 @@ function AdjustResultForm({
     <Modal
       open
       onClose={onClose}
-      kicker={formatMoneyWithUnit(result.period_total)}
+      kicker={money(result.period_total)}
       title={result.dealer_name}
       footer={
         <>

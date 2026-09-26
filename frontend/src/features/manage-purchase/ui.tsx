@@ -14,7 +14,7 @@ import {
 import { ApiError } from '@/shared/api'
 import {
   formatMoney,
-  formatMoneyWithUnit,
+  useMoneyWithUnit,
   parseMoneyInput,
   todayISO,
   useDebouncedValue,
@@ -58,6 +58,7 @@ export function PurchaseFormDrawer({ open, purchase, dealerId, onClose }: Purcha
 
 function PurchaseForm({ purchase, dealerId, onClose }: Omit<PurchaseFormDrawerProps, 'open'>) {
   const { t } = useTranslation()
+  const money = useMoneyWithUnit()
   const toast = useToast()
   const create = useCreatePurchase()
   const update = useUpdatePurchase()
@@ -211,7 +212,7 @@ function PurchaseForm({ purchase, dealerId, onClose }: Omit<PurchaseFormDrawerPr
         {selected && (
           <FormNote>
             {t('purchases.dealerSummary', {
-              total: formatMoneyWithUnit(selected.lifetime_purchase_total),
+              total: money(selected.lifetime_purchase_total),
             })}
           </FormNote>
         )}
@@ -254,7 +255,7 @@ function PurchaseForm({ purchase, dealerId, onClose }: Omit<PurchaseFormDrawerPr
 
         {preview && (
           <FormNote tone="success">
-            {t('purchases.previewTotal', { total: formatMoneyWithUnit(preview.newTotal) })}
+            {t('purchases.previewTotal', { total: money(preview.newTotal) })}
             {preview.gradeChange !== null &&
               ` ${t('purchases.previewGrade', { grade: preview.gradeChange })}`}
           </FormNote>
@@ -274,6 +275,7 @@ export function DeletePurchaseDialog({
   onClose: () => void
 }) {
   const { t } = useTranslation()
+  const money = useMoneyWithUnit()
   const toast = useToast()
   const remove = useDeletePurchase()
 
@@ -283,7 +285,7 @@ export function DeletePurchaseDialog({
       title={t('purchases.deleteTitle')}
       description={t('purchases.deleteDescription', {
         dealer: dealerName ?? '',
-        amount: purchase ? formatMoneyWithUnit(purchase.amount) : '',
+        amount: purchase ? money(purchase.amount) : '',
       })}
       confirmLabel={t('common.delete')}
       cancelLabel={t('common.cancel')}

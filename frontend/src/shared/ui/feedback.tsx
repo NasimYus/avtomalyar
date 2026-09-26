@@ -1,15 +1,18 @@
 import type { HTMLAttributes, ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/lib'
 
 export function Skeleton({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return <div className={cn('animate-pulse rounded-chip bg-line', className)} {...props} />
 }
 
-export function Spinner({ className }: { className?: string }) {
+export function Spinner({ className, label }: { className?: string; label?: string }) {
+  const { t } = useTranslation()
+
   return (
     <span
       role="status"
-      aria-label="Загрузка"
+      aria-label={label ?? t('common.loading')}
       className={cn(
         'inline-block size-5 animate-spin rounded-full border-2 border-line-strong border-t-brand-red',
         className,

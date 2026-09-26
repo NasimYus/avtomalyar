@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useDealer, useDealers } from '@/entities/dealer'
 import { usePurchases, type Purchase } from '@/entities/purchase'
 import { DeletePurchaseDialog, PurchaseFormDrawer } from '@/features/manage-purchase'
-import { formatDate, formatMoney, formatMoneyWithUnit, useDebouncedValue } from '@/shared/lib'
+import { formatDate, formatMoney, useMoneyWithUnit, useDebouncedValue } from '@/shared/lib'
 import {
   Button,
   Card,
@@ -34,6 +34,7 @@ function currentMonthRange(): { from: string; to: string } {
 
 export function AdminPurchasesPage() {
   const { t } = useTranslation()
+  const money = useMoneyWithUnit()
   // Dealer names for the table come from the page currently listed; the
   // filter itself searches on the server so it scales past one page.
   const [dealerQuery, setDealerQuery] = useState('')
@@ -222,9 +223,7 @@ export function AdminPurchasesPage() {
         <span className="text-[13px] font-semibold text-muted">
           {t('purchases.periodTotal', { count: data?.total ?? 0 })}
         </span>
-        <b className="text-[22px] whitespace-nowrap">
-          {formatMoneyWithUnit(data?.total_amount ?? 0)}
-        </b>
+        <b className="text-[22px] whitespace-nowrap">{money(data?.total_amount ?? 0)}</b>
       </Card>
 
       <DataTable

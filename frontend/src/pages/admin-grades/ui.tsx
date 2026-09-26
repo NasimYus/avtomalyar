@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { gradeToneByIndex, useGrades, type Grade } from '@/entities/grade'
 import { DeleteGradeDialog, GradeFormDrawer } from '@/features/manage-grade'
-import { cn, formatMoneyWithUnit } from '@/shared/lib'
+import { cn, useMoneyWithUnit } from '@/shared/lib'
 import { Button, Card, EmptyState, PageHeader, Skeleton } from '@/shared/ui'
 
 const TONE_DOT: Record<string, string> = {
@@ -13,6 +13,7 @@ const TONE_DOT: Record<string, string> = {
 
 export function AdminGradesPage() {
   const { t } = useTranslation()
+  const money = useMoneyWithUnit()
   const { data: grades = [], isPending } = useGrades()
 
   const [formOpen, setFormOpen] = useState(false)
@@ -74,7 +75,7 @@ export function AdminGradesPage() {
                 <div className="truncate text-xs text-muted">{grade.name_tg}</div>
               </div>
               <div className="rounded-chip bg-field px-3 py-2.5 text-sm font-bold whitespace-nowrap">
-                {t('grades.from', { amount: formatMoneyWithUnit(grade.min_purchase_amount) })}
+                {t('grades.from', { amount: money(grade.min_purchase_amount) })}
               </div>
               <div className="flex gap-2">
                 <Button

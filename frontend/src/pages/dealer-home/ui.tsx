@@ -8,13 +8,14 @@ import {
   useMyPurchases,
   PromotionCard,
 } from '@/entities/cabinet'
-import { formatDate, formatMoney, formatMoneyWithUnit, todayISO, useLocaleName } from '@/shared/lib'
+import { formatDate, formatMoney, useMoneyWithUnit, todayISO, useLocaleName } from '@/shared/lib'
 import { Badge, Card, CardTitle, EmptyState, ProgressBar, Skeleton } from '@/shared/ui'
 
 const RECENT_PURCHASES = 5
 
 export function DealerHomePage() {
   const { t } = useTranslation()
+  const money = useMoneyWithUnit()
   const name = useLocaleName()
   const { data: profile } = useDealerProfile()
   const { data: promotions } = useMyPromotions()
@@ -53,7 +54,7 @@ export function DealerHomePage() {
           )}
         </div>
         <div className="mt-1.5 text-[32px] font-black">
-          {formatMoneyWithUnit(profile.lifetime_purchase_total)}
+          {money(profile.lifetime_purchase_total)}
         </div>
 
         {next === undefined ? (

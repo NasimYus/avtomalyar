@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 const DIRAMS_PER_SOMONI = 100
 
 /**
@@ -13,9 +15,14 @@ export function formatMoney(amountInDirams: number): string {
   return dirams === 0 ? formattedWhole : `${formattedWhole},${String(dirams).padStart(2, '0')}`
 }
 
-/** Same as formatMoney, with the "сом." unit the design uses in summaries. */
-export function formatMoneyWithUnit(amountInDirams: number): string {
-  return `${formatMoney(amountInDirams)} сом.`
+/**
+ * Same as formatMoney, with the somoni unit the design uses in summaries.
+ * A hook because the unit is a translated word — "сом." in Russian,
+ * "сомонӣ" in Tajik — and it moves with the interface language.
+ */
+export function useMoneyWithUnit(): (amountInDirams: number) => string {
+  const { t } = useTranslation()
+  return (amountInDirams) => t('common.amountWithUnit', { amount: formatMoney(amountInDirams) })
 }
 
 /**
