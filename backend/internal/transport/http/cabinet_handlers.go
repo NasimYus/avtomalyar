@@ -44,8 +44,11 @@ type profileResponse struct {
 }
 
 type rankingEntryResponse struct {
-	DealerID    int64   `json:"dealer_id"`
-	DealerName  string  `json:"dealer_name"`
+	DealerID   int64  `json:"dealer_id"`
+	DealerName string `json:"dealer_name"`
+	// The dealer's city — part of the public ranking line (ToR 4.7).
+	CityNameRu  string  `json:"city_name_ru"`
+	CityNameTg  string  `json:"city_name_tg"`
 	Place       int32   `json:"place"`
 	PeriodTotal int64   `json:"period_total"`
 	PrizeNameRu *string `json:"prize_name_ru,omitempty"`
@@ -90,6 +93,8 @@ func toRankingEntryResponse(entry service.RankingEntry) rankingEntryResponse {
 	return rankingEntryResponse{
 		DealerID:    entry.DealerID,
 		DealerName:  entry.DealerName,
+		CityNameRu:  entry.CityNameRu,
+		CityNameTg:  entry.CityNameTg,
 		Place:       entry.Place,
 		PeriodTotal: entry.PeriodTotal,
 		PrizeNameRu: entry.PrizeNameRu,

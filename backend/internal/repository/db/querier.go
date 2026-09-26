@@ -55,8 +55,10 @@ type Querier interface {
 	ListActiveDealersWithPeriodTotals(ctx context.Context, arg ListActiveDealersWithPeriodTotalsParams) ([]ListActiveDealersWithPeriodTotalsRow, error)
 	ListCities(ctx context.Context) ([]City, error)
 	// Promotions a dealer may see: the ones running now, the ones whose
-	// results are being reviewed, and the ones already published. Drafts and
-	// archived promotions stay out of the cabinet.
+	// results are being reviewed, the published ones, and archived ones that
+	// were published before being filed away — the cabinet's archive (ToR 6).
+	// An archived promotion that never published results was called off, so
+	// it stays out. Drafts are invisible in any case.
 	//
 	// Whether the dealer actually takes part is decided by domain.IsEligible,
 	// not here, so the rule has a single tested implementation.

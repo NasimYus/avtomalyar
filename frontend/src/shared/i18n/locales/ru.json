@@ -68,6 +68,8 @@
     "startsOn": "Начнётся {{date}}",
     "aheadTitle": "Что впереди",
     "aheadDescription": "Акции, которые ещё не начались или пока вам недоступны",
+    "archiveTitle": "Архив",
+    "archiveDescription": "Завершённые акции с объявленными итогами",
     "needCity": "Только для дилеров из города {{value}}",
     "needGrade": "Только для уровня «{{value}}»",
     "needPurchases": "Нужно закупить ещё {{amount}} сом.",
@@ -80,7 +82,8 @@
     "stage": {
       "running": "Идёт",
       "awaiting": "Подводим итоги",
-      "published": "Итоги объявлены"
+      "published": "Итоги объявлены",
+      "archived": "В архиве"
     },
     "yourPlace": "Ваше место",
     "yourPlaceNow": "Ваше место сейчас",

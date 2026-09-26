@@ -325,7 +325,39 @@ func seedDemoPromotions(
 		return fmt.Errorf("start club promotion: %w", err)
 	}
 
-	fmt.Println("promotions: 5 (published, running, upcoming, grade-only, draft)")
+	// Last season's contest, results announced and then filed away: this
+	// is what the cabinet's archive shows (ToR 6).
+	archived, err := promotions.Create(ctx, service.PromotionInput{
+		TitleRu:       "Весенний зачёт",
+		TitleTg:       "Ҳисоби баҳорӣ",
+		DescriptionRu: ptr("Прошлый сезон — итоги подведены."),
+		DescriptionTg: ptr("Мавсими гузашта — натиҷаҳо ҷамъбаст шуданд."),
+		StartDate:     today.AddDate(0, 0, -240),
+		EndDate:       today.AddDate(0, 0, -150),
+	})
+	if err != nil {
+		return fmt.Errorf("create archived promotion: %w", err)
+	}
+	if err := promotions.SetPrizePlaces(ctx, archived.ID, []service.PrizePlaceInput{
+		{PlaceRank: 1, PrizeID: prizeIDs[1]},
+		{PlaceRank: 2, PrizeID: prizeIDs[2]},
+	}); err != nil {
+		return fmt.Errorf("set prize places: %w", err)
+	}
+	if _, err := promotions.Start(ctx, archived.ID); err != nil {
+		return fmt.Errorf("start archived promotion: %w", err)
+	}
+	if _, err := promotions.Calculate(ctx, archived.ID); err != nil {
+		return fmt.Errorf("calculate archived promotion: %w", err)
+	}
+	if _, err := promotions.Publish(ctx, archived.ID); err != nil {
+		return fmt.Errorf("publish archived promotion: %w", err)
+	}
+	if _, err := promotions.Archive(ctx, archived.ID); err != nil {
+		return fmt.Errorf("archive archived promotion: %w", err)
+	}
+
+	fmt.Println("promotions: 6 (published, running, upcoming, grade-only, draft, archived)")
 	return nil
 }
 

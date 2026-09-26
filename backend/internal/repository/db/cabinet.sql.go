@@ -74,12 +74,15 @@ func (q *Queries) GetDealerProfile(ctx context.Context, id int64) (GetDealerProf
 const listDealerPromotions = `-- name: ListDealerPromotions :many
 SELECT id, title_ru, title_tg, description_ru, description_tg, start_date, end_date, city_id, grade_id, min_lifetime_purchase_threshold, status, calculated_at, published_at, created_at, updated_at FROM promotions
 WHERE status IN ('active', 'calculated', 'published')
+   OR (status = 'archived' AND published_at IS NOT NULL)
 ORDER BY end_date DESC, id DESC
 `
 
 // Promotions a dealer may see: the ones running now, the ones whose
-// results are being reviewed, and the ones already published. Drafts and
-// archived promotions stay out of the cabinet.
+// results are being reviewed, the published ones, and archived ones that
+// were published before being filed away — the cabinet's archive (ToR 6).
+// An archived promotion that never published results was called off, so
+// it stays out. Drafts are invisible in any case.
 //
 // Whether the dealer actually takes part is decided by domain.IsEligible,
 // not here, so the rule has a single tested implementation.

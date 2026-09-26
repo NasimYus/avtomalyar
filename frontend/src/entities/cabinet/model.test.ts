@@ -81,6 +81,10 @@ describe('cabinetStage', () => {
     expect(cabinetStage('published', '2026-08-31', today)).toBe('published')
   })
 
+  it('is archived once the promotion is filed away', () => {
+    expect(cabinetStage('archived', '2026-08-31', today)).toBe('archived')
+  })
+
   it('counts the last day of the period as still running', () => {
     expect(cabinetStage('active', today, today)).toBe('running')
   })
@@ -133,5 +137,31 @@ describe('splitPromotions', () => {
   it('counts the first day of the period as started', () => {
     const { current } = splitPromotions([promotion(4, { start_date: today })], today)
     expect(current.map((p) => p.id)).toEqual([4])
+  })
+
+  it('files a published promotion under the archive, not among current ones', () => {
+    const { current, archive } = splitPromotions(
+      [promotion(5, { status: 'published', end_date: '2026-08-31' })],
+      today,
+    )
+    expect(current).toEqual([])
+    expect(archive.map((p) => p.id)).toEqual([5])
+  })
+
+  it('keeps an archived promotion in the archive as well', () => {
+    const { archive } = splitPromotions(
+      [promotion(6, { status: 'archived', end_date: '2025-12-31' })],
+      today,
+    )
+    expect(archive.map((p) => p.id)).toEqual([6])
+  })
+
+  it('archives a finished promotion even when the dealer never qualified', () => {
+    const { ahead, archive } = splitPromotions(
+      [promotion(7, { status: 'published', eligible: false, end_date: '2026-08-31' })],
+      today,
+    )
+    expect(ahead).toEqual([])
+    expect(archive.map((p) => p.id)).toEqual([7])
   })
 })

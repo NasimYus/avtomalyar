@@ -92,10 +92,13 @@ SELECT
     r.*,
     d.full_name AS dealer_name,
     d.city_id AS dealer_city_id,
+    c.name_ru AS dealer_city_ru,
+    c.name_tg AS dealer_city_tg,
     pr.name_ru AS prize_name_ru,
     pr.name_tg AS prize_name_tg
 FROM promotion_results r
 JOIN dealers d ON d.id = r.dealer_id
+JOIN cities c ON c.id = d.city_id
 LEFT JOIN prizes pr ON pr.id = r.prize_id
 WHERE r.promotion_id = $1
 ORDER BY r.place_rank NULLS LAST, r.period_total DESC, r.dealer_id;

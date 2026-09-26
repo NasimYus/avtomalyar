@@ -6,7 +6,7 @@ import { CardTitle, EmptyState, Skeleton } from '@/shared/ui'
 export function DealerPromotionsPage() {
   const { t } = useTranslation()
   const { data: promotions } = useMyPromotions()
-  const { current, ahead } = splitPromotions(promotions ?? [], todayISO())
+  const { current, ahead, archive } = splitPromotions(promotions ?? [], todayISO())
 
   return (
     <>
@@ -39,6 +39,21 @@ export function DealerPromotionsPage() {
                 </p>
               </div>
               {ahead.map((promotion) => (
+                <PromotionCard key={promotion.id} promotion={promotion} />
+              ))}
+            </section>
+          )}
+
+          {/* Finished promotions with announced results — the archive (ToR 6). */}
+          {archive.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <div>
+                <CardTitle>{t('cabinet.archiveTitle')}</CardTitle>
+                <p className="mt-0.5 text-[13px] font-semibold text-muted">
+                  {t('cabinet.archiveDescription')}
+                </p>
+              </div>
+              {archive.map((promotion) => (
                 <PromotionCard key={promotion.id} promotion={promotion} />
               ))}
             </section>

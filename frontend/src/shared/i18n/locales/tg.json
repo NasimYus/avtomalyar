@@ -68,6 +68,8 @@
     "startsOn": "{{date}} оғоз мешавад",
     "aheadTitle": "Дар пеш",
     "aheadDescription": "Аксияҳое, ки ҳанӯз оғоз нашудаанд ё ҳоло барои шумо дастрас нестанд",
+    "archiveTitle": "Бойгонӣ",
+    "archiveDescription": "Аксияҳои анҷомёфта бо натиҷаҳои эълоншуда",
     "needCity": "Танҳо барои дилерони шаҳри {{value}}",
     "needGrade": "Танҳо барои сатҳи «{{value}}»",
     "needPurchases": "Бояд боз {{amount}} сомонӣ харид кунед",
@@ -80,7 +82,8 @@
     "stage": {
       "running": "Идома дорад",
       "awaiting": "Ҷамъбаст мешавад",
-      "published": "Натиҷаҳо эълон шуданд"
+      "published": "Натиҷаҳо эълон шуданд",
+      "archived": "Дар бойгонӣ"
     },
     "yourPlace": "Ҷойи шумо",
     "yourPlaceNow": "Ҷойи шумо ҳоло",

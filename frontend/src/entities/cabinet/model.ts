@@ -27,6 +27,9 @@ export interface DealerProfile {
 export interface RankingEntry {
   dealer_id: number
   dealer_name: string
+  /** The dealer's city — part of the public ranking line (ToR 4.7). */
+  city_name_ru: string
+  city_name_tg: string
   place: number
   period_total: number
   prize_name_ru?: string
@@ -37,10 +40,11 @@ export interface RankingEntry {
 }
 
 /**
- * The statuses a dealer can ever see. Drafts and archived promotions are
- * not served to the cabinet at all.
+ * The statuses a dealer can ever see. Drafts never reach the cabinet, and
+ * an archived promotion only does when its results were published before
+ * it was filed away.
  */
-export type CabinetPromotionStatus = 'active' | 'calculated' | 'published'
+export type CabinetPromotionStatus = 'active' | 'calculated' | 'published' | 'archived'
 
 export interface CabinetPrizePlace {
   place_rank: number
@@ -138,37 +142,44 @@ export function isUpcoming(promotion: CabinetPromotion, today: string): boolean 
   return promotion.start_date > today
 }
 
+/** A promotion whose results have been announced (ToR 6 — the archive). */
+export function isFinished(promotion: CabinetPromotion): boolean {
+  return promotion.status === 'published' || promotion.status === 'archived'
+}
+
 /**
- * Splits the dealer's promotions into the ones they are already competing
- * in and the ones still ahead of them — not started yet, or with
- * conditions they have not met. The second group is what the home screen's
- * "ahead" block shows.
+ * Splits the dealer's promotions into the three groups the cabinet shows:
+ * what they are competing in now, what is still ahead of them (not started
+ * or conditions unmet), and the archive of finished ones with results.
  */
 export function splitPromotions(
   promotions: CabinetPromotion[],
   today: string,
-): { current: CabinetPromotion[]; ahead: CabinetPromotion[] } {
+): { current: CabinetPromotion[]; ahead: CabinetPromotion[]; archive: CabinetPromotion[] } {
   const current: CabinetPromotion[] = []
   const ahead: CabinetPromotion[] = []
+  const archive: CabinetPromotion[] = []
 
   for (const promotion of promotions) {
-    if (promotion.eligible && !isUpcoming(promotion, today)) current.push(promotion)
+    if (isFinished(promotion)) archive.push(promotion)
+    else if (promotion.eligible && !isUpcoming(promotion, today)) current.push(promotion)
     else ahead.push(promotion)
   }
-  return { current, ahead }
+  return { current, ahead, archive }
 }
 
 /**
  * What the cabinet says about a promotion's stage. "Active" splits in two:
  * still running, or over and waiting for the shop to announce results.
  */
-export type CabinetStage = 'running' | 'awaiting' | 'published'
+export type CabinetStage = 'running' | 'awaiting' | 'published' | 'archived'
 
 export function cabinetStage(
   status: CabinetPromotionStatus,
   endDate: string,
   today: string,
 ): CabinetStage {
+  if (status === 'archived') return 'archived'
   if (status === 'published') return 'published'
   if (status === 'calculated') return 'awaiting'
   return endDate < today ? 'awaiting' : 'running'

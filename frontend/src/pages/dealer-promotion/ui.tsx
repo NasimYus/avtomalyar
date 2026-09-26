@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import {
   cabinetStage,
+  isFinished,
   isUpcoming,
   PlaceMedal,
   RequirementList,
@@ -15,6 +16,7 @@ const STAGE_TONES = {
   running: 'success',
   awaiting: 'warning',
   published: 'dark',
+  archived: 'neutral',
 } as const
 
 export function DealerPromotionPage() {
@@ -44,6 +46,7 @@ export function DealerPromotionPage() {
   const today = todayISO()
   const stage = cabinetStage(promotion.status, promotion.end_date, today)
   const upcoming = isUpcoming(promotion, today)
+  const finished = isFinished(promotion)
 
   return (
     <>
@@ -96,7 +99,7 @@ export function DealerPromotionPage() {
       {promotion.standing !== undefined && (
         <Card tone="dark">
           <span className="text-[13px] font-semibold text-white/65">
-            {stage === 'published' ? t('cabinet.yourPlace') : t('cabinet.yourPlaceNow')}
+            {finished ? t('cabinet.yourPlace') : t('cabinet.yourPlaceNow')}
           </span>
           <div className="mt-1.5 text-[32px] font-black">
             {t('cabinet.placeOf', {
@@ -109,7 +112,7 @@ export function DealerPromotionPage() {
           </p>
           {promotion.standing.prize_name_ru !== undefined && (
             <p className="mt-2 text-[13px] font-bold text-brand-yellow">
-              {stage === 'published' ? t('cabinet.prizeWon') : t('cabinet.prizeNow')}:{' '}
+              {finished ? t('cabinet.prizeWon') : t('cabinet.prizeNow')}:{' '}
               {name(promotion.standing.prize_name_ru, promotion.standing.prize_name_tg)}
             </p>
           )}
@@ -226,12 +229,13 @@ function RankingRow({ entry }: { entry: RankingEntry }) {
             </span>
           )}
         </div>
-        {entry.prize_name_ru !== undefined && (
-          <span className="block truncate text-xs font-semibold text-muted">
-            {name(entry.prize_name_ru, entry.prize_name_tg)}
-            {entry.awarded && ` · ${t('cabinet.awarded')}`}
-          </span>
-        )}
+        {/* City, then the prize — the line ToR 4.7 asks the public ranking to show. */}
+        <span className="block truncate text-xs font-semibold text-muted">
+          {name(entry.city_name_ru, entry.city_name_tg)}
+          {entry.prize_name_ru !== undefined &&
+            ` · ${name(entry.prize_name_ru, entry.prize_name_tg)}`}
+          {entry.awarded && ` · ${t('cabinet.awarded')}`}
+        </span>
       </div>
 
       <b className="shrink-0 whitespace-nowrap">{formatMoney(entry.period_total)}</b>

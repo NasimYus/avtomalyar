@@ -352,10 +352,13 @@ SELECT
     r.id, r.promotion_id, r.dealer_id, r.period_total, r.place_rank, r.prize_id, r.is_manually_adjusted, r.awarded, r.created_at, r.updated_at,
     d.full_name AS dealer_name,
     d.city_id AS dealer_city_id,
+    c.name_ru AS dealer_city_ru,
+    c.name_tg AS dealer_city_tg,
     pr.name_ru AS prize_name_ru,
     pr.name_tg AS prize_name_tg
 FROM promotion_results r
 JOIN dealers d ON d.id = r.dealer_id
+JOIN cities c ON c.id = d.city_id
 LEFT JOIN prizes pr ON pr.id = r.prize_id
 WHERE r.promotion_id = $1
 ORDER BY r.place_rank NULLS LAST, r.period_total DESC, r.dealer_id
@@ -374,6 +377,8 @@ type ListPromotionResultsRow struct {
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 	DealerName         string             `json:"dealer_name"`
 	DealerCityID       int64              `json:"dealer_city_id"`
+	DealerCityRu       string             `json:"dealer_city_ru"`
+	DealerCityTg       string             `json:"dealer_city_tg"`
 	PrizeNameRu        pgtype.Text        `json:"prize_name_ru"`
 	PrizeNameTg        pgtype.Text        `json:"prize_name_tg"`
 }
@@ -400,6 +405,8 @@ func (q *Queries) ListPromotionResults(ctx context.Context, promotionID int64) (
 			&i.UpdatedAt,
 			&i.DealerName,
 			&i.DealerCityID,
+			&i.DealerCityRu,
+			&i.DealerCityTg,
 			&i.PrizeNameRu,
 			&i.PrizeNameTg,
 		); err != nil {

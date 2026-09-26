@@ -2,7 +2,13 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { cn, formatDate, formatMoney, todayISO, useLocaleName } from '@/shared/lib'
 import { Badge, Card, LockIcon } from '@/shared/ui'
-import { cabinetStage, isUpcoming, type CabinetPromotion, type CabinetRequirement } from './model'
+import {
+  cabinetStage,
+  isFinished,
+  isUpcoming,
+  type CabinetPromotion,
+  type CabinetRequirement,
+} from './model'
 
 /**
  * Medals for the three prize places, in the same metals the grade badges
@@ -33,6 +39,7 @@ const STAGE_TONES = {
   running: 'success',
   awaiting: 'warning',
   published: 'dark',
+  archived: 'neutral',
 } as const
 
 /**
@@ -84,6 +91,9 @@ export function PromotionCard({ promotion }: { promotion: CabinetPromotion }) {
   const today = todayISO()
   const stage = cabinetStage(promotion.status, promotion.end_date, today)
   const upcoming = isUpcoming(promotion, today)
+  // Wording differs once the results are in: a place the dealer *took*,
+  // not the one they hold right now.
+  const finished = isFinished(promotion)
   const standing = promotion.standing
   const unmet = promotion.requirements.filter((requirement) => !requirement.met)
 
@@ -116,7 +126,7 @@ export function PromotionCard({ promotion }: { promotion: CabinetPromotion }) {
           <div className="mt-3.5 flex items-end justify-between gap-3 border-t border-line pt-3.5">
             <div className="min-w-0">
               <span className="block text-[13px] font-semibold text-muted">
-                {stage === 'published' ? t('cabinet.yourPlace') : t('cabinet.yourPlaceNow')}
+                {finished ? t('cabinet.yourPlace') : t('cabinet.yourPlaceNow')}
               </span>
               <b className="mt-1 block text-[22px] leading-none text-brand-red">
                 {t('cabinet.placeOf', {
@@ -137,7 +147,7 @@ export function PromotionCard({ promotion }: { promotion: CabinetPromotion }) {
 
         {standing?.prize_name_ru !== undefined && (
           <p className="mt-2 text-[13px] font-bold">
-            {stage === 'published' ? t('cabinet.prizeWon') : t('cabinet.prizeNow')}:{' '}
+            {finished ? t('cabinet.prizeWon') : t('cabinet.prizeNow')}:{' '}
             {name(standing.prize_name_ru, standing.prize_name_tg)}
           </p>
         )}

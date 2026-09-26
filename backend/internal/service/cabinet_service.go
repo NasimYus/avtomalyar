@@ -196,8 +196,11 @@ func requirements(
 
 // RankingEntry is one line of a promotion's ranking as the cabinet shows it.
 type RankingEntry struct {
-	DealerID    int64
-	DealerName  string
+	DealerID   int64
+	DealerName string
+	// The dealer's city — part of the public ranking line (ToR 4.7).
+	CityNameRu  string
+	CityNameTg  string
 	Place       int32
 	PeriodTotal int64
 	PrizeNameRu *string
@@ -271,7 +274,7 @@ func (s *CabinetService) Promotions(ctx context.Context, dealerID int64) ([]Cabi
 		}
 
 		if entry.Eligible {
-			ranking, _, err := s.ranking(ctx, promotion, dealerID)
+			ranking, _, err := s.ranking(ctx, promotion, dealerID, cities)
 			if err != nil {
 				return nil, err
 			}
@@ -373,7 +376,7 @@ func (s *CabinetService) Promotion(
 		return detail, nil
 	}
 
-	ranking, final, err := s.ranking(ctx, promotion, dealerID)
+	ranking, final, err := s.ranking(ctx, promotion, dealerID, cities)
 	if err != nil {
 		return CabinetPromotionDetail{}, err
 	}
@@ -397,9 +400,12 @@ func (s *CabinetService) ranking(
 	ctx context.Context,
 	promotion db.Promotion,
 	dealerID int64,
+	cities map[int64]db.City,
 ) (entries []RankingEntry, final bool, err error) {
 	switch domain.PromotionStatus(promotion.Status) {
-	case domain.PromotionPublished:
+	// A published promotion, and an archived one that was published before
+	// being filed away, both read from the stored results.
+	case domain.PromotionPublished, domain.PromotionArchived:
 		results, err := s.repo.ListPromotionResults(ctx, promotion.ID)
 		if err != nil {
 			return nil, false, fmt.Errorf("list promotion results: %w", repository.TranslateError(err))
@@ -410,6 +416,8 @@ func (s *CabinetService) ranking(
 			entry := RankingEntry{
 				DealerID:    result.DealerID,
 				DealerName:  result.DealerName,
+				CityNameRu:  result.DealerCityRu,
+				CityNameTg:  result.DealerCityTg,
 				PeriodTotal: result.PeriodTotal,
 				Awarded:     result.Awarded,
 				IsMe:        result.DealerID == dealerID,
@@ -428,7 +436,7 @@ func (s *CabinetService) ranking(
 		return entries, true, nil
 
 	case domain.PromotionActive:
-		return s.liveRanking(ctx, promotion, dealerID)
+		return s.liveRanking(ctx, promotion, dealerID, cities)
 
 	// Results exist but an admin may still correct them, so the cabinet
 	// shows the promotion as "being decided" rather than a ranking that
@@ -436,7 +444,7 @@ func (s *CabinetService) ranking(
 	case domain.PromotionCalculated:
 		return nil, false, nil
 
-	case domain.PromotionDraft, domain.PromotionArchived:
+	case domain.PromotionDraft:
 		return nil, false, nil
 
 	default:
@@ -450,6 +458,7 @@ func (s *CabinetService) liveRanking(
 	ctx context.Context,
 	promotion db.Promotion,
 	dealerID int64,
+	cities map[int64]db.City,
 ) ([]RankingEntry, bool, error) {
 	rows, err := s.repo.ListActiveDealersWithPeriodTotals(ctx, db.ListActiveDealersWithPeriodTotalsParams{
 		DateFrom: promotion.StartDate,
@@ -460,7 +469,7 @@ func (s *CabinetService) liveRanking(
 	}
 
 	conditions := promotionConditions(promotion)
-	names := make(map[int64]string, len(rows))
+	dealers := make(map[int64]db.ListActiveDealersWithPeriodTotalsRow, len(rows))
 	participants := make([]domain.Participant, 0, len(rows))
 
 	for _, row := range rows {
@@ -475,7 +484,7 @@ func (s *CabinetService) liveRanking(
 			continue
 		}
 
-		names[row.DealerID] = row.DealerName
+		dealers[row.DealerID] = row
 		participants = append(participants, domain.Participant{
 			DealerID:              row.DealerID,
 			PeriodTotal:           row.PeriodTotal,
@@ -493,9 +502,13 @@ func (s *CabinetService) liveRanking(
 	entries := make([]RankingEntry, len(ranked))
 	for i, participant := range ranked {
 		place := int32(participant.Place) //nolint:gosec // places are bounded by the dealer count
+		dealer := dealers[participant.DealerID]
+		city := cities[dealer.CityID]
 		entries[i] = RankingEntry{
 			DealerID:    participant.DealerID,
-			DealerName:  names[participant.DealerID],
+			DealerName:  dealer.DealerName,
+			CityNameRu:  city.NameRu,
+			CityNameTg:  city.NameTg,
 			Place:       place,
 			PeriodTotal: participant.PeriodTotal,
 			IsMe:        participant.DealerID == dealerID,
