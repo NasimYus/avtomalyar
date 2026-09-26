@@ -11,6 +11,7 @@ export {
   useArchivePromotion,
   useCalculatePromotion,
   useAdjustResult,
+  useSetAwarded,
 } from './api'
 export { promotionKeys, statusTone, isEditable, isPeriodOver, PROMOTION_STATUSES } from './model'
 export type {

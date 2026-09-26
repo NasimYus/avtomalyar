@@ -6,6 +6,7 @@ import {
   useCalculatePromotion,
   usePromotion,
   usePromotionResults,
+  useSetAwarded,
   type PromotionResult,
   type PromotionStatus,
 } from '@/entities/promotion'
@@ -45,6 +46,7 @@ export function AdminPromotionResultsPage() {
   const { data: promotion, isPending } = usePromotion(promotionId)
   const { data: results } = usePromotionResults(promotionId)
   const calculate = useCalculatePromotion()
+  const setAwarded = useSetAwarded()
 
   const [adjusting, setAdjusting] = useState<PromotionResult | undefined>(undefined)
 
@@ -61,6 +63,23 @@ export function AdminPromotionResultsPage() {
   const canCalculate =
     periodOver && (promotion.status === 'active' || promotion.status === 'calculated')
   const canAdjust = promotion.status === 'calculated'
+  // Prizes are physically handed over after the results are announced, so
+  // this outlives the correction window and closes only on archiving.
+  const canHandOver = promotion.status === 'calculated' || promotion.status === 'published'
+
+  const toggleAwarded = (result: PromotionResult, awarded: boolean) => {
+    setAwarded.mutate(
+      { id: promotionId, dealer_id: result.dealer_id, awarded },
+      {
+        onSuccess: () => {
+          toast.success(awarded ? t('results.awardedSaved') : t('results.awardedCleared'))
+        },
+        onError: (error) => {
+          toast.error(error instanceof ApiError ? error.message : t('errors.generic'))
+        },
+      },
+    )
+  }
 
   const runCalculation = () => {
     calculate.mutate(promotionId, {
@@ -113,11 +132,37 @@ export function AdminPromotionResultsPage() {
         result.prize_name_ru === undefined ? (
           <span className="text-faint">—</span>
         ) : (
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate">{result.prize_name_ru}</span>
-            {result.awarded && <Badge tone="success">{t('results.awardedMark')}</Badge>}
-          </div>
+          <span className="block truncate">{result.prize_name_ru}</span>
         ),
+    },
+    {
+      key: 'awarded',
+      header: t('results.columnAwarded'),
+      width: '110px',
+      render: (result) => {
+        if (result.prize_name_ru === undefined) return <span className="text-faint">—</span>
+        if (!canHandOver) {
+          return result.awarded ? (
+            <Badge tone="success">{t('results.awardedMark')}</Badge>
+          ) : (
+            <span className="text-faint">—</span>
+          )
+        }
+        return (
+          <label className="flex cursor-pointer items-center gap-2 text-[13px] font-semibold">
+            <input
+              type="checkbox"
+              checked={result.awarded}
+              disabled={setAwarded.isPending}
+              onChange={(event) => {
+                toggleAwarded(result, event.target.checked)
+              }}
+              className="size-4 accent-brand-red"
+            />
+            {t('results.awardedMark')}
+          </label>
+        )
+      },
     },
     {
       key: 'actions',

@@ -186,3 +186,55 @@ func (s *PromotionService) AdjustResult(
 	}
 	return updated, nil
 }
+
+// SetAwarded records whether a prize has actually been handed over
+// (ToR 3.8).
+//
+// Unlike a correction of the ranking this stays available after
+// publication, because that is when prizes are physically given out — an
+// admin publishes the results and then ticks people off over the
+// following days. Once the promotion is archived its results are closed
+// history and the flag freezes with them.
+func (s *PromotionService) SetAwarded(
+	ctx context.Context,
+	promotionID, dealerID int64,
+	awarded bool,
+) (db.PromotionResult, error) {
+	promotion, err := s.repo.GetPromotionByID(ctx, promotionID)
+	if err != nil {
+		return db.PromotionResult{}, fmt.Errorf("get promotion: %w", repository.TranslateError(err))
+	}
+
+	status := domain.PromotionStatus(promotion.Status)
+	if status != domain.PromotionCalculated && status != domain.PromotionPublished {
+		return db.PromotionResult{}, fmt.Errorf(
+			"%w: prizes can be handed over only between calculation and archiving", domain.ErrConflict)
+	}
+
+	// Nothing to hand over without a prize on the row.
+	result, err := s.repo.GetPromotionResult(ctx, db.GetPromotionResultParams{
+		PromotionID: promotionID, DealerID: dealerID,
+	})
+	if err != nil {
+		return db.PromotionResult{}, fmt.Errorf("get promotion result: %w", repository.TranslateError(err))
+	}
+	if awarded && !result.PrizeID.Valid {
+		return db.PromotionResult{}, fmt.Errorf(
+			"%w: this participant has no prize to hand over", domain.ErrValidation)
+	}
+
+	var updated db.PromotionResult
+	err = s.repo.WithTx(ctx, func(q *db.Queries) error {
+		var txErr error
+		updated, txErr = q.SetPromotionResultAwarded(ctx, db.SetPromotionResultAwardedParams{
+			PromotionID: promotionID,
+			DealerID:    dealerID,
+			Awarded:     awarded,
+		})
+		return txErr
+	})
+	if err != nil {
+		return db.PromotionResult{}, fmt.Errorf("set awarded: %w", repository.TranslateError(err))
+	}
+	return updated, nil
+}

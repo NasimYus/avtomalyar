@@ -113,3 +113,18 @@ export function useAdjustResult() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: promotionKeys.root }),
   })
 }
+
+/**
+ * Records that a prize has been handed over. Separate from useAdjustResult
+ * because it stays available after publication: prizes are given out once
+ * the results are announced.
+ */
+export function useSetAwarded() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...body }: { id: number; dealer_id: number; awarded: boolean }) =>
+      (await api.patch<ResultsResponse>(`/admin/promotions/${String(id)}/results/awarded`, body))
+        .items,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: promotionKeys.root }),
+  })
+}

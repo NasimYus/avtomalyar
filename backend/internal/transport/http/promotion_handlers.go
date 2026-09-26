@@ -27,6 +27,7 @@ type promotionService interface {
 	Calculate(ctx context.Context, id int64) ([]db.ListPromotionResultsRow, error)
 	Results(ctx context.Context, id int64) ([]db.ListPromotionResultsRow, error)
 	AdjustResult(ctx context.Context, promotionID int64, adjustment service.ResultAdjustment) (db.PromotionResult, error)
+	SetAwarded(ctx context.Context, promotionID, dealerID int64, awarded bool) (db.PromotionResult, error)
 }
 
 type promotionRequest struct {
@@ -49,6 +50,11 @@ type prizePlaceRequest struct {
 
 type prizePlacesRequest struct {
 	Places []prizePlaceRequest `json:"places" validate:"dive"`
+}
+
+type awardedRequest struct {
+	DealerID int64 `json:"dealer_id" validate:"required"`
+	Awarded  bool  `json:"awarded"`
 }
 
 type resultAdjustmentRequest struct {
@@ -427,6 +433,39 @@ func (h *promotionHandler) adjustResult(w http.ResponseWriter, r *http.Request) 
 
 	// The whole table is returned: moving one dealer changes how the
 	// ranking reads, and the screen redraws it anyway.
+	results, err := h.service.Results(r.Context(), id)
+	if err != nil {
+		writeError(w, h.logger, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": toPromotionResultResponses(results)})
+}
+
+// setAwarded records that a prize has been handed over. Unlike a
+// correction this stays available after publication — prizes are given
+// out once the results are announced.
+func (h *promotionHandler) setAwarded(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "validation_error", "invalid id", nil)
+		return
+	}
+
+	var req awardedRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "validation_error", "invalid JSON body", nil)
+		return
+	}
+	if err := h.validator.Struct(req); err != nil {
+		writeValidationErrors(w, validationFields(err))
+		return
+	}
+
+	if _, err := h.service.SetAwarded(r.Context(), id, req.DealerID, req.Awarded); err != nil {
+		writeError(w, h.logger, err)
+		return
+	}
+
 	results, err := h.service.Results(r.Context(), id)
 	if err != nil {
 		writeError(w, h.logger, err)

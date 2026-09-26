@@ -462,6 +462,41 @@ func (q *Queries) ListPromotions(ctx context.Context, status pgtype.Text) ([]Pro
 	return items, nil
 }
 
+const setPromotionResultAwarded = `-- name: SetPromotionResultAwarded :one
+UPDATE promotion_results
+SET awarded = $3
+WHERE promotion_id = $1 AND dealer_id = $2
+RETURNING id, promotion_id, dealer_id, period_total, place_rank, prize_id, is_manually_adjusted, awarded, created_at, updated_at
+`
+
+type SetPromotionResultAwardedParams struct {
+	PromotionID int64 `json:"promotion_id"`
+	DealerID    int64 `json:"dealer_id"`
+	Awarded     bool  `json:"awarded"`
+}
+
+// Marks a prize as actually handed over (ToR 3.8). Kept apart from
+// UpdatePromotionResult because this is not a correction of the ranking:
+// it touches neither the place nor the prize, and leaves the
+// is_manually_adjusted flag alone.
+func (q *Queries) SetPromotionResultAwarded(ctx context.Context, arg SetPromotionResultAwardedParams) (PromotionResult, error) {
+	row := q.db.QueryRow(ctx, setPromotionResultAwarded, arg.PromotionID, arg.DealerID, arg.Awarded)
+	var i PromotionResult
+	err := row.Scan(
+		&i.ID,
+		&i.PromotionID,
+		&i.DealerID,
+		&i.PeriodTotal,
+		&i.PlaceRank,
+		&i.PrizeID,
+		&i.IsManuallyAdjusted,
+		&i.Awarded,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const setPromotionStatus = `-- name: SetPromotionStatus :one
 UPDATE promotions
 SET status = $2,

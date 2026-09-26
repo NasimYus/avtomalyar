@@ -55,7 +55,6 @@ function AdjustResultForm({
   const [prizeId, setPrizeId] = useState(
     result.prize_id === undefined ? '' : String(result.prize_id),
   )
-  const [awarded, setAwarded] = useState(result.awarded)
 
   const placeInvalid = place.trim() !== '' && !/^[1-9]\d*$/.test(place.trim())
 
@@ -67,7 +66,9 @@ function AdjustResultForm({
         dealer_id: result.dealer_id,
         place_rank: place.trim() === '' ? null : Number(place),
         prize_id: prizeId === '' ? null : Number(prizeId),
-        awarded,
+        // Handing a prize over is tracked in the results table, not here;
+        // a correction must not silently clear that mark.
+        awarded: result.awarded,
       },
       {
         onSuccess: () => {
@@ -135,18 +136,6 @@ function AdjustResultForm({
             />
           )}
         </FormField>
-
-        <label className="flex items-center gap-2.5 text-sm font-semibold">
-          <input
-            type="checkbox"
-            checked={awarded}
-            onChange={(event) => {
-              setAwarded(event.target.checked)
-            }}
-            className="size-4 accent-brand-red"
-          />
-          {t('results.awarded')}
-        </label>
       </div>
     </Modal>
   )

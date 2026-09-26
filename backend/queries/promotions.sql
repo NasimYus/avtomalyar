@@ -117,3 +117,13 @@ SET place_rank = $3,
     is_manually_adjusted = true
 WHERE promotion_id = $1 AND dealer_id = $2
 RETURNING *;
+
+-- name: SetPromotionResultAwarded :one
+-- Marks a prize as actually handed over (ToR 3.8). Kept apart from
+-- UpdatePromotionResult because this is not a correction of the ranking:
+-- it touches neither the place nor the prize, and leaves the
+-- is_manually_adjusted flag alone.
+UPDATE promotion_results
+SET awarded = $3
+WHERE promotion_id = $1 AND dealer_id = $2
+RETURNING *;

@@ -140,6 +140,7 @@ func NewRouter(deps Deps) http.Handler {
 				r.Post("/{id}/calculate", promotionH.calculate)
 				r.Get("/{id}/results", promotionH.results)
 				r.Patch("/{id}/results", promotionH.adjustResult)
+				r.Patch("/{id}/results/awarded", promotionH.setAwarded)
 				r.Post("/{id}/publish", promotionH.transition(deps.Promotions.Publish))
 				r.Post("/{id}/archive", promotionH.transition(deps.Promotions.Archive))
 			})

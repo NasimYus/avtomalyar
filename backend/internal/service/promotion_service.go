@@ -21,6 +21,7 @@ type promotionRepository interface {
 	DeletePromotion(ctx context.Context, id int64) (int64, error)
 	ListPrizePlaces(ctx context.Context, promotionID int64) ([]db.ListPrizePlacesRow, error)
 	ListPromotionResults(ctx context.Context, promotionID int64) ([]db.ListPromotionResultsRow, error)
+	GetPromotionResult(ctx context.Context, arg db.GetPromotionResultParams) (db.PromotionResult, error)
 	ListActiveDealersWithPeriodTotals(
 		ctx context.Context,
 		arg db.ListActiveDealersWithPeriodTotalsParams,

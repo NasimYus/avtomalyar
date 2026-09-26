@@ -77,6 +77,11 @@ type Querier interface {
 	SetDealerActive(ctx context.Context, arg SetDealerActiveParams) (Dealer, error)
 	SetDealerGrade(ctx context.Context, arg SetDealerGradeParams) error
 	SetDealerPasswordHash(ctx context.Context, arg SetDealerPasswordHashParams) error
+	// Marks a prize as actually handed over (ToR 3.8). Kept apart from
+	// UpdatePromotionResult because this is not a correction of the ranking:
+	// it touches neither the place nor the prize, and leaves the
+	// is_manually_adjusted flag alone.
+	SetPromotionResultAwarded(ctx context.Context, arg SetPromotionResultAwardedParams) (PromotionResult, error)
 	SetPromotionStatus(ctx context.Context, arg SetPromotionStatusParams) (Promotion, error)
 	SumPurchases(ctx context.Context, arg SumPurchasesParams) (int64, error)
 	UpdateCity(ctx context.Context, arg UpdateCityParams) (City, error)
