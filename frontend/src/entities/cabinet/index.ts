@@ -7,7 +7,7 @@ export {
   isFinished,
   splitPromotions,
 } from './model'
-export { PromotionCard, PlaceMedal, RequirementList } from './ui'
+export { PromotionCard, PlaceMedal, RequirementList, ConditionList } from './ui'
 export type {
   DealerProfile,
   GradeRef,

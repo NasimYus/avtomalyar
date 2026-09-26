@@ -4,8 +4,8 @@ import {
   cabinetStage,
   isFinished,
   isUpcoming,
+  ConditionList,
   PlaceMedal,
-  RequirementList,
   useMyPromotion,
   type RankingEntry,
 } from '@/entities/cabinet'
@@ -82,9 +82,6 @@ export function DealerPromotionPage() {
           <p className="mt-1 text-[13px] font-semibold text-muted">
             {t('cabinet.lockedDescription')}
           </p>
-          <div className="mt-3">
-            <RequirementList requirements={promotion.requirements} />
-          </div>
         </Card>
       )}
 
@@ -118,6 +115,22 @@ export function DealerPromotionPage() {
           )}
         </Card>
       )}
+
+      {/*
+        Every condition, met or not (ToR 6). A dealer who already
+        qualifies still needs to know on what — the threshold they passed
+        is the reason they are in the ranking at all.
+      */}
+      <section className="flex flex-col gap-3">
+        <CardTitle>{t('cabinet.conditions')}</CardTitle>
+        <Card>
+          {promotion.requirements.length === 0 ? (
+            <p className="text-[13px] font-semibold text-muted">{t('cabinet.conditionsNone')}</p>
+          ) : (
+            <ConditionList requirements={promotion.requirements} />
+          )}
+        </Card>
+      </section>
 
       {promotion.prize_places !== undefined && promotion.prize_places.length > 0 && (
         <section className="flex flex-col gap-3">

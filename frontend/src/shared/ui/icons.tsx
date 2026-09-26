@@ -104,3 +104,11 @@ export function ArchiveIcon(props: SVGProps<SVGSVGElement>) {
     </Icon>
   )
 }
+
+export function CheckIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M4.5 10.5l3.6 3.6 7.4-8.2" />
+    </Icon>
+  )
+}

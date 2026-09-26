@@ -16,6 +16,7 @@ export {
   TrophyIcon,
   LockIcon,
   ArchiveIcon,
+  CheckIcon,
 } from './icons'
 export type { FieldStatus, FieldVariant } from './field'
 export { FilterPill, PillGroup } from './pill'

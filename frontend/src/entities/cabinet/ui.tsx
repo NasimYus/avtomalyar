@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { cn, formatDate, formatMoney, todayISO, useLocaleName } from '@/shared/lib'
-import { Badge, Card, LockIcon } from '@/shared/ui'
+import { Badge, Card, CheckIcon, LockIcon } from '@/shared/ui'
 import {
   cabinetStage,
   isFinished,
@@ -41,6 +41,54 @@ const STAGE_TONES = {
   published: 'dark',
   archived: 'neutral',
 } as const
+
+/**
+ * Every condition a promotion puts on taking part, each marked met or
+ * not (ToR 6 lists the conditions among what a dealer must see, whether
+ * or not they already qualify).
+ */
+export function ConditionList({ requirements }: { requirements: CabinetRequirement[] }) {
+  const { t } = useTranslation()
+  const name = useLocaleName()
+
+  if (requirements.length === 0) return null
+
+  return (
+    <ul className="grid gap-2">
+      {requirements.map((requirement) => {
+        const text =
+          requirement.kind === 'purchases'
+            ? t('cabinet.conditionPurchases', {
+                amount: formatMoney(requirement.threshold ?? 0),
+              })
+            : t(requirement.kind === 'city' ? 'cabinet.conditionCity' : 'cabinet.conditionGrade', {
+                value: name(requirement.name_ru ?? '', requirement.name_tg),
+              })
+
+        return (
+          <li key={requirement.kind} className="flex items-start gap-2 text-[13px] font-semibold">
+            {requirement.met ? (
+              <CheckIcon className="mt-px size-4 text-brand-green" />
+            ) : (
+              <LockIcon className="mt-px size-4 text-brand-red" />
+            )}
+            <span className={requirement.met ? undefined : 'text-muted'}>
+              {text}
+              {!requirement.met && requirement.kind === 'purchases' && (
+                <span className="text-brand-red">
+                  {' · '}
+                  {t('cabinet.conditionShort', {
+                    amount: formatMoney(requirement.remaining ?? 0),
+                  })}
+                </span>
+              )}
+            </span>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
 
 /**
  * The conditions still in the way, spelled out as what the dealer has to
