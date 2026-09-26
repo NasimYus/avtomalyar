@@ -22,6 +22,9 @@ type gradeRef struct {
 	NameTg string `json:"name_tg"`
 	// Lifetime purchase total at which the grade is reached, in dirams.
 	MinPurchaseAmount int64 `json:"min_purchase_amount"`
+	// The material the grade is painted in; absent when it is left to the
+	// grade's place in the ladder.
+	Color *string `json:"color,omitempty"`
 }
 
 type nextGradeResponse struct {
@@ -41,6 +44,8 @@ type profileResponse struct {
 	Grade                 *gradeRef `json:"grade,omitempty"`
 	// Absent once the top grade is reached.
 	NextGrade *nextGradeResponse `json:"next_grade,omitempty"`
+	// Every grade in ascending order of threshold.
+	Ladder []gradeRef `json:"ladder"`
 }
 
 type rankingEntryResponse struct {
@@ -123,6 +128,19 @@ func (h *cabinetHandler) profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ladder := make([]gradeRef, len(profile.Ladder))
+	colors := make(map[int64]*string, len(profile.Ladder))
+	for i, grade := range profile.Ladder {
+		ladder[i] = gradeRef{
+			ID:                grade.ID,
+			NameRu:            grade.NameRu,
+			NameTg:            grade.NameTg,
+			MinPurchaseAmount: grade.MinPurchaseAmount,
+			Color:             textToPtr(grade.Color),
+		}
+		colors[grade.ID] = ladder[i].Color
+	}
+
 	dealer := profile.Dealer
 	resp := profileResponse{
 		ID:                    dealer.ID,
@@ -132,6 +150,7 @@ func (h *cabinetHandler) profile(w http.ResponseWriter, r *http.Request) {
 		CityNameRu:            dealer.CityNameRu,
 		CityNameTg:            dealer.CityNameTg,
 		LifetimePurchaseTotal: dealer.LifetimePurchaseTotal,
+		Ladder:                ladder,
 	}
 	if dealer.GradeID.Valid {
 		resp.Grade = &gradeRef{
@@ -139,6 +158,7 @@ func (h *cabinetHandler) profile(w http.ResponseWriter, r *http.Request) {
 			NameRu:            dealer.GradeNameRu.String,
 			NameTg:            dealer.GradeNameTg.String,
 			MinPurchaseAmount: dealer.GradeMinPurchaseAmount.Int64,
+			Color:             colors[dealer.GradeID.Int64],
 		}
 	}
 	if profile.NextGrade != nil {
@@ -148,6 +168,7 @@ func (h *cabinetHandler) profile(w http.ResponseWriter, r *http.Request) {
 				NameRu:            profile.NextGrade.NameRu,
 				NameTg:            profile.NextGrade.NameTg,
 				MinPurchaseAmount: profile.NextGrade.MinPurchaseAmount,
+				Color:             colors[profile.NextGrade.GradeID],
 			},
 			Remaining: profile.NextGrade.Remaining,
 		}

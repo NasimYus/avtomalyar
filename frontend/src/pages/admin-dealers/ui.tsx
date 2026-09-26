@@ -3,17 +3,18 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useCities } from '@/entities/city'
 import { useDealers, type Dealer } from '@/entities/dealer'
-import { gradeToneByIndex, useGrades } from '@/entities/grade'
+import { useGrades } from '@/entities/grade'
 import {
   DealerAccessDialog,
   DealerFormDrawer,
   DeleteDealerDialog,
   ToggleDealerActiveDialog,
 } from '@/features/manage-dealer'
-import { formatMoney } from '@/shared/lib'
+import { formatMoney, tierOf } from '@/shared/lib'
 import {
   Avatar,
   Badge,
+  TierBadge,
   Button,
   Card,
   DataTable,
@@ -62,12 +63,6 @@ export function AdminDealersPage() {
   // dealer is created so their first password can be handed over.
   const [access, setAccess] = useState<{ dealer: Dealer; password?: string } | undefined>(undefined)
 
-  const gradeToneById = (id: number | undefined) => {
-    if (id === undefined) return 'neutral' as const
-    const index = grades.findIndex((grade) => grade.id === id)
-    return index === -1 ? ('neutral' as const) : gradeToneByIndex(index, grades.length)
-  }
-
   const gradeName = (id: number | undefined) =>
     grades.find((grade) => grade.id === id)?.name_ru ?? '—'
 
@@ -113,14 +108,15 @@ export function AdminDealersPage() {
       key: 'grade',
       header: t('dealers.columnGrade'),
       width: '1fr',
-      render: (dealer) =>
-        dealer.grade_id === undefined ? (
-          <span className="text-faint">—</span>
+      render: (dealer) => {
+        if (dealer.grade_id === undefined) return <span className="text-faint">—</span>
+        const tier = tierOf(grades, dealer.grade_id)
+        return tier === undefined ? (
+          <Badge className="font-extrabold uppercase">{gradeName(dealer.grade_id)}</Badge>
         ) : (
-          <Badge tone={gradeToneById(dealer.grade_id)} className="font-extrabold uppercase">
-            {gradeName(dealer.grade_id)}
-          </Badge>
-        ),
+          <TierBadge tier={tier}>{gradeName(dealer.grade_id)}</TierBadge>
+        )
+      },
     },
     {
       key: 'total',

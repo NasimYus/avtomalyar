@@ -8,17 +8,17 @@ import {
   isUpcoming,
   type CabinetPromotion,
   type CabinetRequirement,
-} from './model'
+} from '../model'
 
 /**
- * Medals for the three prize places, in the same metals the grade badges
+ * Medals for the three prize places, in the same metals the grade tiers
  * use. Everything below the podium is a plain number, so the places worth
  * chasing stand out at a glance.
  */
 const MEDALS: Record<number, string> = {
-  1: 'bg-grade-gold text-ink shadow-glow-gold',
-  2: 'bg-grade-silver text-ink',
-  3: 'bg-grade-bronze text-ink',
+  1: 'tier-gold tier-surface tier-shine shadow-glow-gold',
+  2: 'tier-silver tier-surface',
+  3: 'tier-bronze tier-surface',
 }
 
 export function PlaceMedal({ place, size = 'sm' }: { place: number; size?: 'sm' | 'md' }) {

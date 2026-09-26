@@ -7,22 +7,30 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createGrade = `-- name: CreateGrade :one
-INSERT INTO grades (name_ru, name_tg, min_purchase_amount)
-VALUES ($1, $2, $3)
-RETURNING id, name_ru, name_tg, min_purchase_amount, created_at, updated_at
+INSERT INTO grades (name_ru, name_tg, min_purchase_amount, color)
+VALUES ($1, $2, $3, $4)
+RETURNING id, name_ru, name_tg, min_purchase_amount, created_at, updated_at, color
 `
 
 type CreateGradeParams struct {
-	NameRu            string `json:"name_ru"`
-	NameTg            string `json:"name_tg"`
-	MinPurchaseAmount int64  `json:"min_purchase_amount"`
+	NameRu            string      `json:"name_ru"`
+	NameTg            string      `json:"name_tg"`
+	MinPurchaseAmount int64       `json:"min_purchase_amount"`
+	Color             pgtype.Text `json:"color"`
 }
 
 func (q *Queries) CreateGrade(ctx context.Context, arg CreateGradeParams) (Grade, error) {
-	row := q.db.QueryRow(ctx, createGrade, arg.NameRu, arg.NameTg, arg.MinPurchaseAmount)
+	row := q.db.QueryRow(ctx, createGrade,
+		arg.NameRu,
+		arg.NameTg,
+		arg.MinPurchaseAmount,
+		arg.Color,
+	)
 	var i Grade
 	err := row.Scan(
 		&i.ID,
@@ -31,6 +39,7 @@ func (q *Queries) CreateGrade(ctx context.Context, arg CreateGradeParams) (Grade
 		&i.MinPurchaseAmount,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Color,
 	)
 	return i, err
 }
@@ -48,7 +57,7 @@ func (q *Queries) DeleteGrade(ctx context.Context, id int64) (int64, error) {
 }
 
 const getGradeByID = `-- name: GetGradeByID :one
-SELECT id, name_ru, name_tg, min_purchase_amount, created_at, updated_at FROM grades WHERE id = $1
+SELECT id, name_ru, name_tg, min_purchase_amount, created_at, updated_at, color FROM grades WHERE id = $1
 `
 
 func (q *Queries) GetGradeByID(ctx context.Context, id int64) (Grade, error) {
@@ -61,12 +70,13 @@ func (q *Queries) GetGradeByID(ctx context.Context, id int64) (Grade, error) {
 		&i.MinPurchaseAmount,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Color,
 	)
 	return i, err
 }
 
 const listGrades = `-- name: ListGrades :many
-SELECT id, name_ru, name_tg, min_purchase_amount, created_at, updated_at FROM grades ORDER BY min_purchase_amount
+SELECT id, name_ru, name_tg, min_purchase_amount, created_at, updated_at, color FROM grades ORDER BY min_purchase_amount
 `
 
 func (q *Queries) ListGrades(ctx context.Context) ([]Grade, error) {
@@ -85,6 +95,7 @@ func (q *Queries) ListGrades(ctx context.Context) ([]Grade, error) {
 			&i.MinPurchaseAmount,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Color,
 		); err != nil {
 			return nil, err
 		}
@@ -121,16 +132,17 @@ func (q *Queries) RecomputeAllDealerGrades(ctx context.Context) error {
 
 const updateGrade = `-- name: UpdateGrade :one
 UPDATE grades
-SET name_ru = $2, name_tg = $3, min_purchase_amount = $4
+SET name_ru = $2, name_tg = $3, min_purchase_amount = $4, color = $5
 WHERE id = $1
-RETURNING id, name_ru, name_tg, min_purchase_amount, created_at, updated_at
+RETURNING id, name_ru, name_tg, min_purchase_amount, created_at, updated_at, color
 `
 
 type UpdateGradeParams struct {
-	ID                int64  `json:"id"`
-	NameRu            string `json:"name_ru"`
-	NameTg            string `json:"name_tg"`
-	MinPurchaseAmount int64  `json:"min_purchase_amount"`
+	ID                int64       `json:"id"`
+	NameRu            string      `json:"name_ru"`
+	NameTg            string      `json:"name_tg"`
+	MinPurchaseAmount int64       `json:"min_purchase_amount"`
+	Color             pgtype.Text `json:"color"`
 }
 
 func (q *Queries) UpdateGrade(ctx context.Context, arg UpdateGradeParams) (Grade, error) {
@@ -139,6 +151,7 @@ func (q *Queries) UpdateGrade(ctx context.Context, arg UpdateGradeParams) (Grade
 		arg.NameRu,
 		arg.NameTg,
 		arg.MinPurchaseAmount,
+		arg.Color,
 	)
 	var i Grade
 	err := row.Scan(
@@ -148,6 +161,7 @@ func (q *Queries) UpdateGrade(ctx context.Context, arg UpdateGradeParams) (Grade
 		&i.MinPurchaseAmount,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Color,
 	)
 	return i, err
 }

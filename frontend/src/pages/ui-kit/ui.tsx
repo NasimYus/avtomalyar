@@ -24,17 +24,34 @@ import {
   Spinner,
   StatCard,
   Textarea,
+  TierBadge,
+  TierMedal,
+  TierProgress,
   useToast,
 } from '@/shared/ui'
 import type { Column } from '@/shared/ui'
-import { formatMoney } from '@/shared/lib'
+import { autoTierColors, formatMoney, tierAt } from '@/shared/lib'
+
+const TIER_NAMES: Record<string, string> = {
+  bronze: 'Бронза',
+  silver: 'Серебро',
+  gold: 'Золото',
+  platinum: 'Платина',
+  emerald: 'Изумруд',
+  sapphire: 'Сапфир',
+  amethyst: 'Аметист',
+  ruby: 'Рубин',
+  diamond: 'Бриллиант',
+  onyx: 'Оникс',
+}
 
 interface DemoDealer {
   id: number
   name: string
   phone: string
   city: string
-  grade: 'gold' | 'silver' | 'bronze'
+  /** Place on a three-grade ladder. */
+  grade: number
   gradeName: string
   total: number
   progress: number
@@ -46,7 +63,7 @@ const DEMO_DEALERS: DemoDealer[] = [
     name: '«Рангсоз»',
     phone: '+992 92 555 01 10',
     city: 'Худжанд',
-    grade: 'gold',
+    grade: 2,
     gradeName: 'Золото',
     total: 491200000,
     progress: 100,
@@ -56,7 +73,7 @@ const DEMO_DEALERS: DemoDealer[] = [
     name: 'ООО «КрасТех»',
     phone: '+992 93 210 44 07',
     city: 'Душанбе',
-    grade: 'silver',
+    grade: 1,
     gradeName: 'Серебро',
     total: 234000000,
     progress: 78,
@@ -66,7 +83,7 @@ const DEMO_DEALERS: DemoDealer[] = [
     name: '«Кулоб-Пейнт»',
     phone: '+992 90 118 90 02',
     city: 'Куляб',
-    grade: 'bronze',
+    grade: 0,
     gradeName: 'Бронза',
     total: 87040000,
     progress: 29,
@@ -93,7 +110,7 @@ const COLUMNS: Column<DemoDealer>[] = [
     key: 'grade',
     header: 'УРОВЕНЬ',
     width: '1fr',
-    render: (row) => <Badge tone={row.grade}>{row.gradeName.toUpperCase()}</Badge>,
+    render: (row) => <TierBadge tier={tierAt(row.grade, 3)}>{row.gradeName}</TierBadge>,
   },
   {
     key: 'total',
@@ -210,12 +227,39 @@ export function UiKitPage() {
           <Badge tone="warning">черновик</Badge>
           <Badge tone="neutral">завершена</Badge>
           <Badge tone="dark">итоги</Badge>
-          <Badge tone="gold">ЗОЛОТО</Badge>
-          <Badge tone="silver">СЕРЕБРО</Badge>
-          <Badge tone="bronze">БРОНЗА</Badge>
           <Avatar name="ООО «КрасТех»" tone="red" />
           <Avatar name="«Рангсоз»" tone="dark" />
           <Avatar name="ИП Рахимов А." />
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>Уровни: лестница любой длины</CardTitle>
+        <p className="mt-1 text-[13px] text-muted">
+          Цвет — по месту в лестнице (или выбран админом), эффекты — по рангу: верхняя половина
+          переливается, вершина светится и носит корону.
+        </p>
+        {[3, 5, 10].map((total) => (
+          <div key={total} className="mt-4 grid gap-2.5">
+            <div className="text-xs font-bold text-muted">{total} уровней</div>
+            <div className="flex flex-wrap items-center gap-2">
+              {autoTierColors(total).map((color, index) => (
+                <TierBadge key={color} tier={tierAt(index, total)}>
+                  {TIER_NAMES[color]}
+                </TierBadge>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              {autoTierColors(total).map((color, index) => (
+                <TierMedal key={color} tier={tierAt(index, total)} label={TIER_NAMES[color]} />
+              ))}
+            </div>
+          </div>
+        ))}
+        <div className="mt-5 grid gap-2.5 rounded-inner bg-night p-4">
+          {[20, 55, 92].map((value, index) => (
+            <TierProgress key={value} tier={tierAt(index + 3, 5)} value={value} track="dark" />
+          ))}
         </div>
       </Card>
 

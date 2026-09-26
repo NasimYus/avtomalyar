@@ -73,6 +73,7 @@ SELECT
     g.name_ru,
     g.name_tg,
     g.min_purchase_amount,
+    g.color,
     count(d.id)::bigint AS dealers_count
 FROM grades g
 LEFT JOIN dealers d ON d.grade_id = g.id
@@ -81,11 +82,12 @@ ORDER BY g.min_purchase_amount
 `
 
 type DealerCountsByGradeRow struct {
-	ID                int64  `json:"id"`
-	NameRu            string `json:"name_ru"`
-	NameTg            string `json:"name_tg"`
-	MinPurchaseAmount int64  `json:"min_purchase_amount"`
-	DealersCount      int64  `json:"dealers_count"`
+	ID                int64       `json:"id"`
+	NameRu            string      `json:"name_ru"`
+	NameTg            string      `json:"name_tg"`
+	MinPurchaseAmount int64       `json:"min_purchase_amount"`
+	Color             pgtype.Text `json:"color"`
+	DealersCount      int64       `json:"dealers_count"`
 }
 
 func (q *Queries) DealerCountsByGrade(ctx context.Context) ([]DealerCountsByGradeRow, error) {
@@ -102,6 +104,7 @@ func (q *Queries) DealerCountsByGrade(ctx context.Context) ([]DealerCountsByGrad
 			&i.NameRu,
 			&i.NameTg,
 			&i.MinPurchaseAmount,
+			&i.Color,
 			&i.DealersCount,
 		); err != nil {
 			return nil, err

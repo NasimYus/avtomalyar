@@ -4,6 +4,8 @@ export interface GradeRef {
   name_tg: string
   /** Lifetime purchase total at which the grade is reached, in dirams. */
   min_purchase_amount: number
+  /** The material chosen by the admin; absent means "by place in the ladder". */
+  color?: string
 }
 
 export interface NextGrade extends GradeRef {
@@ -22,6 +24,8 @@ export interface DealerProfile {
   grade?: GradeRef
   /** Absent once the top grade is reached. */
   next_grade?: NextGrade
+  /** Every grade, in ascending order of threshold. */
+  ladder: GradeRef[]
 }
 
 export interface RankingEntry {
@@ -135,6 +139,69 @@ export function gradeProgress(profile: DealerProfile): number {
 
   const done = profile.lifetime_purchase_total - from
   return Math.min(100, Math.max(0, (done / span) * 100))
+}
+
+/** Where the dealer's grade sits in the ladder; -1 without a grade. */
+export function ladderIndex(profile: DealerProfile): number {
+  const grade = profile.grade
+  if (grade === undefined) return -1
+  return profile.ladder.findIndex((step) => step.id === grade.id)
+}
+
+/**
+ * The cheer above the progress bar. Bands rather than a sentence per
+ * percent: the message changes a handful of times on the way, each time
+ * a little more urgent, which is what makes the last stretch feel close.
+ */
+export type ProgressMood = 'start' | 'steady' | 'half' | 'close' | 'almost'
+
+export function progressMood(percent: number): ProgressMood {
+  if (percent >= 90) return 'almost'
+  if (percent >= 75) return 'close'
+  if (percent >= 50) return 'half'
+  if (percent >= 20) return 'steady'
+  return 'start'
+}
+
+/** Ladders up to this long are always shown whole. */
+const LADDER_FOLD_FROM = 6
+
+/**
+ * The ladder steps shown while a long ladder is folded: the one behind
+ * the dealer, their own, the next two — and always the summit, so the
+ * big goal stays in sight. Returned ascending; a jump between two
+ * indices is where the list folds.
+ */
+export function ladderWindow(total: number, current: number): number[] {
+  const all = Array.from({ length: total }, (_, i) => i)
+  if (total < LADDER_FOLD_FROM) return all
+
+  const shown = new Set([current - 1, current, current + 1, current + 2, total - 1])
+  // Without a grade yet, the first step is the one to reach.
+  if (current === -1) shown.add(0)
+  return all.filter((i) => shown.has(i))
+}
+
+/**
+ * Whether the dealer has climbed since they last opened the cabinet.
+ *
+ * `seen` is what was remembered then: a grade id, or 'none' for a dealer
+ * without one. Grades are compared by their place in today's ladder, not
+ * by threshold, so an admin editing thresholds does not throw a party.
+ * Nothing remembered (a first visit, another device) is not a level-up.
+ */
+export function isLevelUp(profile: DealerProfile, seen: string | undefined): boolean {
+  const current = ladderIndex(profile)
+  if (seen === undefined || current === -1) return false
+  if (seen === 'none') return true
+
+  const before = profile.ladder.findIndex((step) => String(step.id) === seen)
+  return before !== -1 && current > before
+}
+
+/** What isLevelUp compares against next time. */
+export function seenGrade(profile: DealerProfile): string {
+  return profile.grade === undefined ? 'none' : String(profile.grade.id)
 }
 
 /** A promotion whose period has not started yet. */

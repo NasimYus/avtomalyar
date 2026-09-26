@@ -46,6 +46,7 @@ type Grade struct {
 	MinPurchaseAmount int64              `json:"min_purchase_amount"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	Color             pgtype.Text        `json:"color"`
 }
 
 type Prize struct {

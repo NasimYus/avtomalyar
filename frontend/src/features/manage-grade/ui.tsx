@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { useCreateGrade, useDeleteGrade, useUpdateGrade, type Grade } from '@/entities/grade'
 import { ApiError } from '@/shared/api'
-import { formatMoney, parseMoneyInput } from '@/shared/lib'
+import { TIER_COLORS, cn, formatMoney, isTierColor, parseMoneyInput } from '@/shared/lib'
 import { Button, ConfirmDialog, Drawer, FormField, FormNote, Input, useToast } from '@/shared/ui'
 
 const schema = z.object({
@@ -12,6 +12,8 @@ const schema = z.object({
   name_tg: z.string().trim().min(1),
   // Typed in somoni, sent in dirams.
   threshold: z.string().refine((value) => parseMoneyInput(value) !== null, 'invalid'),
+  // A material from the palette, or '' for "by place in the ladder".
+  color: z.string(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -47,6 +49,7 @@ function GradeForm({ grade, onClose }: { grade?: Grade; onClose: () => void }) {
       name_ru: grade?.name_ru ?? '',
       name_tg: grade?.name_tg ?? '',
       threshold: grade ? formatMoney(grade.min_purchase_amount) : '',
+      color: isTierColor(grade?.color) ? grade.color : '',
     },
   })
 
@@ -60,6 +63,7 @@ function GradeForm({ grade, onClose }: { grade?: Grade; onClose: () => void }) {
       name_ru: values.name_ru,
       name_tg: values.name_tg,
       min_purchase_amount: minPurchaseAmount,
+      color: isTierColor(values.color) ? values.color : null,
     }
 
     const onSuccess = () => {
@@ -129,7 +133,39 @@ function GradeForm({ grade, onClose }: { grade?: Grade; onClose: () => void }) {
           )}
         </FormField>
 
+        <fieldset className="grid gap-1.5">
+          <legend className="mb-1.5 text-[13px] font-bold">{t('grades.color')}</legend>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {(['', ...TIER_COLORS] as const).map((color) => (
+              <label key={color || 'auto'} className="cursor-pointer">
+                <input type="radio" value={color} className="peer sr-only" {...register('color')} />
+                <span
+                  className={cn(
+                    'flex items-center gap-2 rounded-chip border-2 border-transparent bg-field px-3 py-2 text-[13px] font-bold',
+                    'peer-checked:border-ink peer-checked:bg-surface',
+                    'peer-focus-visible:outline-2 peer-focus-visible:outline-brand-red',
+                  )}
+                >
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'size-5 shrink-0 rounded-full',
+                      color === ''
+                        ? // "Auto" previews the palette it picks from.
+                          'bg-[conic-gradient(var(--color-tier-bronze),var(--color-tier-gold),var(--color-tier-emerald),var(--color-tier-sapphire),var(--color-tier-amethyst),var(--color-tier-ruby),var(--color-tier-bronze))]'
+                        : `tier-${color} tier-surface`,
+                    )}
+                  />
+                  {color === '' ? t('grades.colorAuto') : t(`grades.colors.${color}`)}
+                </span>
+              </label>
+            ))}
+          </div>
+          <span className="text-xs font-medium text-muted">{t('grades.colorAutoHint')}</span>
+        </fieldset>
+
         <FormNote>{t('grades.formNote')}</FormNote>
+        <FormNote>{t('grades.colorNote')}</FormNote>
       </form>
     </Drawer>
   )

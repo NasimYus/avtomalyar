@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useDashboardSummary } from '@/entities/dashboard'
-import { gradeToneByIndex } from '@/entities/grade'
 import { usePurchases } from '@/entities/purchase'
-import { cn, formatDate, formatMoney, useMoneyWithUnit } from '@/shared/lib'
+import { cn, formatDate, formatMoney, tierAt, useMoneyWithUnit } from '@/shared/lib'
 import {
   Card,
   CardTitle,
@@ -12,16 +11,11 @@ import {
   PageHeader,
   Skeleton,
   StatCard,
+  TierMedal,
   type Column,
 } from '@/shared/ui'
 
 const RECENT_PURCHASES = 5
-
-const GRADE_BAR_TONES: Record<string, string> = {
-  bronze: 'bg-grade-bronze',
-  silver: 'bg-grade-silver',
-  gold: 'bg-grade-gold',
-}
 
 interface RecentPurchase {
   id: number
@@ -155,7 +149,8 @@ export function AdminDashboardPage() {
                       <span
                         key={grade.grade_id}
                         className={cn(
-                          GRADE_BAR_TONES[gradeToneByIndex(index, summary.grades.length)],
+                          'tier-surface',
+                          `tier-${tierAt(index, summary.grades.length, grade.color).color}`,
                         )}
                         style={{
                           width:
@@ -168,11 +163,15 @@ export function AdminDashboardPage() {
                   </div>
 
                   <div className="mt-4 grid gap-2.5 text-sm">
-                    {summary.grades.map((grade) => (
+                    {summary.grades.map((grade, index) => (
                       <div key={grade.grade_id} className="flex justify-between gap-3">
-                        <span className="truncate font-semibold">
-                          {grade.name_ru}
-                          <span className="ml-1.5 text-xs text-muted">
+                        <span className="flex min-w-0 items-center gap-2 font-semibold">
+                          <TierMedal
+                            tier={tierAt(index, summary.grades.length, grade.color)}
+                            size="sm"
+                          />
+                          <span className="truncate">{grade.name_ru}</span>
+                          <span className="text-xs whitespace-nowrap text-muted">
                             {t('grades.from', {
                               amount: money(grade.min_purchase_amount),
                             })}

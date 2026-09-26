@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   cabinetStage,
   gradeProgress,
+  isLevelUp,
+  ladderIndex,
+  ladderWindow,
+  progressMood,
+  seenGrade,
   splitPromotions,
   type CabinetPromotion,
   type DealerProfile,
@@ -16,6 +21,7 @@ function profile(overrides: Partial<DealerProfile>): DealerProfile {
     city_name_ru: 'Худжанд',
     city_name_tg: 'Хуҷанд',
     lifetime_purchase_total: 0,
+    ladder: [],
     ...overrides,
   }
 }
@@ -163,5 +169,75 @@ describe('splitPromotions', () => {
     )
     expect(ahead).toEqual([])
     expect(archive.map((p) => p.id)).toEqual([7])
+  })
+})
+
+const bronze = { id: 1, name_ru: 'Бронза', name_tg: 'Биринҷӣ', min_purchase_amount: 0 }
+const ladder = [bronze, silver, gold]
+
+describe('ladderIndex', () => {
+  it('finds the grade in the ladder', () => {
+    expect(ladderIndex(profile({ ladder, grade: silver }))).toBe(1)
+  })
+
+  it('is -1 without a grade', () => {
+    expect(ladderIndex(profile({ ladder }))).toBe(-1)
+  })
+})
+
+describe('progressMood', () => {
+  it('gets more excited the closer the next grade is', () => {
+    expect([0, 19, 20, 50, 75, 89, 90, 100].map(progressMood)).toEqual([
+      'start',
+      'start',
+      'steady',
+      'half',
+      'close',
+      'close',
+      'almost',
+      'almost',
+    ])
+  })
+})
+
+describe('ladderWindow', () => {
+  it('shows a short ladder whole', () => {
+    expect(ladderWindow(5, 0)).toEqual([0, 1, 2, 3, 4])
+  })
+
+  it('folds a long one around the dealer, keeping the summit', () => {
+    expect(ladderWindow(10, 4)).toEqual([3, 4, 5, 6, 9])
+  })
+
+  it('starts from the first step for a dealer without a grade', () => {
+    expect(ladderWindow(10, -1)).toEqual([0, 1, 9])
+  })
+
+  it('does not step past either end', () => {
+    expect(ladderWindow(10, 0)).toEqual([0, 1, 2, 9])
+    expect(ladderWindow(10, 9)).toEqual([8, 9])
+  })
+})
+
+describe('isLevelUp', () => {
+  it('celebrates a climb since the last visit', () => {
+    expect(isLevelUp(profile({ ladder, grade: gold }), String(silver.id))).toBe(true)
+    expect(isLevelUp(profile({ ladder, grade: bronze }), 'none')).toBe(true)
+  })
+
+  it('stays quiet when nothing changed or on a first visit', () => {
+    expect(isLevelUp(profile({ ladder, grade: gold }), String(gold.id))).toBe(false)
+    expect(isLevelUp(profile({ ladder, grade: gold }), undefined)).toBe(false)
+    expect(isLevelUp(profile({ ladder }), 'none')).toBe(false)
+  })
+
+  it('does not celebrate a step down or a grade that is gone', () => {
+    expect(isLevelUp(profile({ ladder, grade: silver }), String(gold.id))).toBe(false)
+    expect(isLevelUp(profile({ ladder, grade: gold }), '999')).toBe(false)
+  })
+
+  it('remembers the grade, or its absence', () => {
+    expect(seenGrade(profile({ ladder, grade: gold }))).toBe('3')
+    expect(seenGrade(profile({ ladder }))).toBe('none')
   })
 })

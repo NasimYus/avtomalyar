@@ -28,6 +28,9 @@ type DealerProfile struct {
 	Dealer db.GetDealerProfileRow
 	// Nil once the top grade is reached.
 	NextGrade *NextGradeProgress
+	// Every grade, from the entry one up, so the cabinet can show the
+	// whole road ahead rather than just the next step.
+	Ladder []db.Grade
 }
 
 // NextGradeProgress is how far a dealer is from their next grade.
@@ -75,7 +78,7 @@ func (s *CabinetService) Profile(ctx context.Context, dealerID int64) (DealerPro
 		byID[grade.ID] = grade
 	}
 
-	profile := DealerProfile{Dealer: dealer}
+	profile := DealerProfile{Dealer: dealer, Ladder: grades}
 	next, remaining, ok := domain.NextGrade(ladder, dealer.LifetimePurchaseTotal)
 	if ok {
 		grade := byID[next.ID]

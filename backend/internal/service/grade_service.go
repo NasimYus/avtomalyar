@@ -18,6 +18,18 @@ type gradeRepository interface {
 	WithTx(ctx context.Context, fn func(q *db.Queries) error) error
 }
 
+// GradeFields is the set of editable grade attributes, shared by Create
+// and Update.
+type GradeFields struct {
+	NameRu string
+	NameTg string
+	// Lifetime purchase threshold, in dirams.
+	MinPurchaseAmount int64
+	// The material the grade is painted in; nil leaves it to the grade's
+	// place in the ladder.
+	Color *string
+}
+
 // GradeService implements CRUD for dealer grades. Every write recomputes
 // grade_id for every dealer in the same transaction, via a single bulk SQL
 // statement (queries/grades.sql, RecomputeAllDealerGrades) — see
@@ -51,12 +63,15 @@ func (s *GradeService) Get(ctx context.Context, id int64) (db.Grade, error) {
 }
 
 // Create adds a new grade and recomputes every dealer's grade.
-func (s *GradeService) Create(ctx context.Context, nameRu, nameTg string, minPurchaseAmount int64) (db.Grade, error) {
+func (s *GradeService) Create(ctx context.Context, fields GradeFields) (db.Grade, error) {
 	var grade db.Grade
 	err := s.repo.WithTx(ctx, func(q *db.Queries) error {
 		var err error
 		grade, err = q.CreateGrade(ctx, db.CreateGradeParams{
-			NameRu: nameRu, NameTg: nameTg, MinPurchaseAmount: minPurchaseAmount,
+			NameRu:            fields.NameRu,
+			NameTg:            fields.NameTg,
+			MinPurchaseAmount: fields.MinPurchaseAmount,
+			Color:             textOrNull(fields.Color),
 		})
 		if err != nil {
 			return err
@@ -72,12 +87,16 @@ func (s *GradeService) Create(ctx context.Context, nameRu, nameTg string, minPur
 // Update overwrites an existing grade's fields and recomputes every
 // dealer's grade, since a threshold change can move dealers between
 // grades.
-func (s *GradeService) Update(ctx context.Context, id int64, nameRu, nameTg string, minPurchaseAmount int64) (db.Grade, error) {
+func (s *GradeService) Update(ctx context.Context, id int64, fields GradeFields) (db.Grade, error) {
 	var grade db.Grade
 	err := s.repo.WithTx(ctx, func(q *db.Queries) error {
 		var err error
 		grade, err = q.UpdateGrade(ctx, db.UpdateGradeParams{
-			ID: id, NameRu: nameRu, NameTg: nameTg, MinPurchaseAmount: minPurchaseAmount,
+			ID:                id,
+			NameRu:            fields.NameRu,
+			NameTg:            fields.NameTg,
+			MinPurchaseAmount: fields.MinPurchaseAmount,
+			Color:             textOrNull(fields.Color),
 		})
 		if err != nil {
 			return err

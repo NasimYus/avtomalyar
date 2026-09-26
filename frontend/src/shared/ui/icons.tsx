@@ -112,3 +112,12 @@ export function CheckIcon(props: SVGProps<SVGSVGElement>) {
     </Icon>
   )
 }
+
+export function CrownIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M3.5 14.5 2.8 6.6l4.3 3.3L10 4.5l2.9 5.4 4.3-3.3-.7 7.9h-13Z" fill="currentColor" />
+      <path d="M4 16.5h12" />
+    </Icon>
+  )
+}
