@@ -1,0 +1,20 @@
+# SITE_ADDRESS is a domain (demo.example.tj) or <server-ip>.sslip.io —
+# Caddy then fetches and renews a certificate on its own. ":80" serves
+# plain HTTP without one (then set AUTH_COOKIE_SECURE=false).
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	# The frontend's nginx serves the app and proxies /api and /media to
+	# the backend. It trusts X-Real-IP from this private network, so the
+	# login rate limit sees each visitor's own address.
+	reverse_proxy frontend:80 {
+		header_up X-Real-IP {remote_host}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

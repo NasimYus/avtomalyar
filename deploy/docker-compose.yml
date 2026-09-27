@@ -1,0 +1,86 @@
+# A self-contained stand for a server: the whole app behind Caddy, which
+# gets a Let's Encrypt certificate by itself. Only ports 80 and 443 are
+# open to the world — the database and the API are reachable only from
+# inside this compose network. See deploy/README.md.
+name: avtomalyar
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: avtomalyar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}
+      POSTGRES_DB: avtomalyar
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U avtomalyar"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Applies pending migrations on every start, then exits; the API waits
+  # for it, so a new version never runs against an old schema.
+  migrate:
+    image: migrate/migrate:v4.18.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../backend/migrations:/migrations:ro
+    command:
+      - -path=/migrations
+      - -database=postgres://avtomalyar:${POSTGRES_PASSWORD}@postgres:5432/avtomalyar?sslmode=disable
+      - up
+
+  backend:
+    build:
+      context: ../backend
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      APP_ENV: production
+      HTTP_PORT: 8080
+      DATABASE_URL: postgres://avtomalyar:${POSTGRES_PASSWORD}@postgres:5432/avtomalyar?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in deploy/.env}
+      AUTH_COOKIE_NAME: avtomalyar_session
+      # Behind Caddy's HTTPS the cookie can and should be Secure. Only a
+      # stand without a certificate (SITE_ADDRESS=:80) needs "false".
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
+      UPLOAD_DIR: /data/uploads
+      # Used by `seed admin` (see install.sh).
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      - uploads:/data/uploads
+
+  frontend:
+    build:
+      context: ../frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS in deploy/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  postgres_data:
+  uploads:
+  caddy_data:
+  caddy_config:

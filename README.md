@@ -57,6 +57,12 @@
   Query, Tailwind CSS, react-i18next (ru/tg).
 - **Инфраструктура**: Docker Compose, GitHub Actions CI.
 
+## Тестовый стенд на сервере
+
+Показать заказчику: `sudo ./deploy/install.sh` на любом VPS с Ubuntu
+поднимает всё с HTTPS и демо-данными одной командой — см.
+[`deploy/README.md`](deploy/README.md).
+
 ## Быстрый старт (Docker)
 
 ```bash
@@ -186,6 +192,10 @@ E2E_ADMIN_PASSWORD=… E2E_BASE_URL=http://localhost npx playwright test
 - Отчёт: `npx playwright show-report`.
 - Тесты создают свои записи с префиксом «E2E» — запускать их стоит на
   тестовой, а не на рабочей базе.
+- Против стенда из `deploy/` (за Caddy): `E2E_BASE_URL=https://…`,
+  `E2E_BEHIND_PROXY=1` (тест лимита входа там проверяется вручную — за прокси
+  адрес клиента не подделать), для самоподписанного сертификата
+  `E2E_IGNORE_HTTPS_ERRORS=1`.
 
 ## Поддерживаемые браузеры
 

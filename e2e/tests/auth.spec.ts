@@ -78,6 +78,12 @@ test.describe('Вход и права доступа', () => {
   })
 
   test('подбор пароля упирается в лимит, но вход других не блокирует', async ({ page }) => {
+    // The test plays two clients by setting X-Real-IP, which only works when
+    // nothing rewrites it. Behind Caddy (deploy/) the header is the real
+    // address and cannot be forged — exactly what production needs — and all
+    // test traffic comes from one IP, so this check is done by hand there
+    // (see deploy/README.md).
+    test.skip(process.env.E2E_BEHIND_PROXY === '1', 'стенд за обратным прокси: X-Real-IP не подделать')
     const api = await adminApi()
     const victim = await createDealer(api, `E2E Лимит ${uniq()}`)
 

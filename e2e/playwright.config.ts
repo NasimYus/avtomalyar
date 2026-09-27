@@ -67,6 +67,8 @@ export default defineConfig({
     locale: 'ru-RU',
     timezoneId: 'Asia/Dushanbe',
     trace: 'retain-on-failure',
+    // A stand with a self-signed certificate (Caddy on localhost).
+    ignoreHTTPSErrors: process.env.E2E_IGNORE_HTTPS_ERRORS === '1',
     screenshot: 'only-on-failure',
   },
   projects,
